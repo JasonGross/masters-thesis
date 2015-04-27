@@ -1,0 +1,65 @@
+\documentclass{article}
+\usepackage{hyperref}
+\usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
+
+\begin{document}
+
+\section{Introduction} \label{sec:related}
+  The goal of this thesis is to construct an efficient verified-correct parser for the JavaScript language in Coq.
+  
+  Much work has been put into the study and design of parsers in computer science.  When computers were had less RAM and slower CPUs, many approaches to parsing involved handling only strict subsets of context free grammars, allowing guarantees of needing only a finite number of characters to decide how to parse at a given point in the string.  More recently, the functional programming community has experimented with \emph{parser combinators}~\cite{pcomb}, where parsers are built by combining a small set of typed combinators into higher-order functions.  In the past decade or so, a number of new parsing approaches have been proposed or popularized, including parsing expression grammars (PEGs)~\cite{PEG}, derivative-based parsing~\cite{Derivs}, and GLL parsers~\cite{GLL}.
+  
+  A few other past projects have verified parsers with proof assistants, applying to derivative-based parsing~\cite{DerivsCoq} and SLR~\cite{SLR} and LR(1)~\cite{LR1} parsers.  Several projects have used proof assistants to apply verified parsers within larger programming-language tools.  RockSalt~\cite{RockSalt} does run-time memory-safety enforcement for x86 binaries, relying on a verified machine-code parser that applies derivative-based parsing for regular expressions.  The verified Jitawa~\cite{Jitawa} and CakeML~\cite{CakeML} language implementations include verified parsers, handling Lisp and ML languages, respectively.
+  
+  The proposed development will start from an algorithm that is essentially the same, algorithmically, as the one demonstrated by Ridge with a verified parser-combinator system~\cite{Ridge}: the starting point is a na\"ive recursive-descent parser, combined with a layer to prevent infinite loops by pruning duplicate recursive calls.  However, rather than fixing a particular algorithm for all grammars, this research will involve developing a framework for synthesizing parsers via refinement, specialized to the grammar being handled; one goal of this research is to demonstrate the viability of constructing parsers incrementally by refinement.  As far as I know, no one has yet tried to build a framework for implementing verified parsers by refinement. [TODO: Check this]
+    
+  The target language for parsing will be JavaScript, which, to my knowledge, does not currently have an efficient, verified parser.   [TODO: Check this]
+  
+  
+\section{Timeline}
+  The end result will be a parser of JavaScript, together with a proof of its correctness.  To date, I have implemented the following:
+  \begin{itemize}
+    \item A formalization of context free grammars and parse trees
+    \item A recursive-descent parser for an arbitrary context free grammar, parameterized on a splitter which determines the computational complexity and algorithmic strategy of the parsing algorithm
+    \item A soundness proof and completeness proof for the parser
+    \item A brute-force splitter that allows one to parse any grammar in exponential time
+    \item A framework for incrementally refining splitters into more efficient splitters
+    \item Refinement rules to handle fixed-length productions and productions with at most one non-terminal
+    \item A linear parser for a grammar involving only parentheses and numbers
+  \end{itemize}
+  
+  I plan to have the following timeline for incremental progress on efficient parsing:
+  
+  \newcommand{\away}[1]{\textcolor{darkgray}{#1}}%
+  \newcommand{\awayd}[1]{\away{(#1)}}%
+  \newcommand{\awayb}[1]{\away{[Away for #1]}}%
+  \begin{center}
+  \begin{tabular}{l|l}
+  Date & Additional Incremental Progress by That Date \\ \hline
+  May 5 & Parse grammars involving $+$s and numbers \\
+  May 10 & Parse grammars involving parentheses \\
+  May 20 & Parse all arithmetical expressions in JavaScript \\
+  June 1 & Formalize the JavaScript grammar \\
+  June 10 & Parse variable assignments JavaScript \\
+  \awayd{June 12--14} & \awayb{Away for MIRI Decision Theory Workshop} \\
+  June 20 & Performance Comparisons on Parsers \\
+  \awayd{June 22--30} & \awayb{Coq Coding Sprint, Coq Workshop, UF/HoTT at TLCA 2015} \\
+  July 5 & Parse sequences of statements, function bodies and function definitions \\
+  July 10 & Submit POPL paper on the above \\
+  July 15 & Parse function calls \\
+  July 20 & Parse strings \& Regular Expressions \\
+  \awayd{July 20--25} & \awayb{Mathcamp} \\
+  August 2 & Adapt POPL paper into thesis draft \\
+  August 4 & Submit Masters Thesis \\
+  August 5 & Masters Thesis Submission Deadline
+  \end{tabular}
+  \end{center}
+
+\section{Source of Data}
+  For this thesis, the only data used will be pre-existing JavaScript parsers~\cite{} and JavaScript programs to run comparison tests against.\cite{}
+
+\nocite{*}
+\bibliographystyle{plain}
+\bibliography{references}
+
+\end{document}
