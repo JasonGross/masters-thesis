@@ -3,6 +3,32 @@
 \usepackage[usenames,dvipsnames,svgnames,table]{xcolor}
 
 \begin{document}
+\thispagestyle{empty}
+\begin{center}
+Massachusetts Institute of Technology \\
+Department of Electrical Engineering and Computer Science \\ $\left.\right.$ \\
+Proposal for Thesis Research in Partial Fulfillment \\
+of the Requirements for the Degree of \\
+Master of Science
+\end{center}
+\noindent Title: A Formally Verified JavaScript Parser in a New Extensible Framework for Synthesizing Efficient Verified Parsers \\ \\
+Submitted by: J.~S.~Gross \\
+\phantom{Submitted by: }258 Prospect Street, Apartment \# 1L \\
+\phantom{Submitted by: }Cambridge, MA 02139 \\ \\ \\
+Signature of author: \underline{\hspace{20em}} \\ \\
+Date of Submission: \today \\ \\
+Expected Date of Completion: August 2015 \\ \\
+Laboratory where thesis will be done: CSAIL \\ \\
+Brief Statement of the Problem: \\ \\
+Parsers have a long history in computer science.  This thesis proposes a novel framework for synthesizing efficient, verified parsers by refinement, and a demonstration of this framework by synthesizing a JavaScript parser competitive with existing open-source parsers.  The benefits of this framework may include more flexibility in the parsers that can be described, more control over the low-level details when necessary for performance, and automatic or mostly automatic correctness proofs. \\ \\
+Supervision Agreement: \\ \\
+The program outlined in this proposal is adequate for a Master's thesis. The supplies and facilities
+required are available, and I am willing to supervise the research and evaluate the thesis report. \\ \\
+\begin{flushright}
+\underline{\hspace*{25em}} \\ $\left.\right.$ \\
+A.~Chlipala, Assist.~Prof.~of~Elec.~Eng.~and~Comp.~Sci.
+\end{flushright}
+\clearpage
 
 \section{Introduction} \label{sec:related}
   The goal of this thesis is to construct an efficient verified-correct parser for the JavaScript language in Coq.
@@ -11,9 +37,9 @@
   
   A few other past projects have verified parsers with proof assistants, applying to derivative-based parsing~\cite{DerivsCoq} and SLR~\cite{SLR} and LR(1)~\cite{LR1} parsers.  Several projects have used proof assistants to apply verified parsers within larger programming-language tools.  RockSalt~\cite{RockSalt} does run-time memory-safety enforcement for x86 binaries, relying on a verified machine-code parser that applies derivative-based parsing for regular expressions.  The verified Jitawa~\cite{Jitawa} and CakeML~\cite{CakeML} language implementations include verified parsers, handling Lisp and ML languages, respectively.
   
-  The proposed development will start from an algorithm that is essentially the same, algorithmically, as the one demonstrated by Ridge with a verified parser-combinator system~\cite{Ridge}: the starting point is a na\"ive recursive-descent parser, combined with a layer to prevent infinite loops by pruning duplicate recursive calls.  However, rather than fixing a particular algorithm for all grammars, this research will involve developing a framework for synthesizing parsers via refinement, specialized to the grammar being handled; one goal of this research is to demonstrate the viability of constructing parsers incrementally by refinement.  As far as I know, no one has yet tried to build a framework for implementing verified parsers by refinement. [TODO: Check this]
+  The proposed development will start from an algorithm that is essentially the same, algorithmically, as the one demonstrated by Ridge with a verified parser-combinator system~\cite{Ridge}: the starting point is a na\"ive recursive-descent parser, combined with a layer to prevent infinite loops by pruning duplicate recursive calls.  However, rather than fixing a particular algorithm for all grammars, this research will involve developing a framework for synthesizing parsers via refinement, specialized to the grammar being handled; one goal of this research is to demonstrate the viability of constructing parsers incrementally by refinement.  As far as I know, no one has yet tried to build a framework for implementing verified parsers by refinement. % [TODO: Check this]
     
-  The target language for parsing will be JavaScript, which, to my knowledge, does not currently have an efficient, verified parser.   [TODO: Check this]
+  The target language for parsing will be JavaScript, which, to my knowledge, does not currently have an efficient, verified parser.   %[TODO: Check this]
   
   
 \section{Timeline}
@@ -56,7 +82,9 @@
   \end{center}
 
 \section{Source of Data}
-  For this thesis, the only data used will be pre-existing JavaScript parsers~\cite{} and JavaScript programs to run comparison tests against.\cite{}
+  For this thesis, the only data used will be pre-existing JavaScript parsers, such as~\cite{esprima,v8}
+  and JavaScript programs to run comparison tests against.
+  %\cite{}
 
 \nocite{*}
 \bibliographystyle{plain}
