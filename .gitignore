@@ -1,6 +1,7 @@
 # Other
 *.pdf
 .*.swp
+*.bib.bak
 
 ## Core latex/pdflatex auxiliary files:
 *.aux
