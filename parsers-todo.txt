@@ -1,0 +1,8 @@
+Make sure I have a JS grammar
+Formalize the grammar
+Install, run open source JS parsers
+Ponder comparing parse trees
+Retrofit parser to build parse trees instead of booleans
+{Make,find} {benchmark suite,test cases} of JS
+Figure out OCaml infrastructure for running program
+Figure out OCaml timing
