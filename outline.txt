@@ -1,0 +1,15 @@
+1. Intro - background on parsing, grammars
+1a. Related work (more serious than ICFP)
+1b. what's new here?
+(parsing parse trees for completeness; idea of parametrizing on splitting oracles to make naive recursive descent parsing efficient; particular splitter derivations for various grammars)
+2. Explanation of CFGs, recursive descent parsing, making it terminating, idea of splitting oracles
+2a. Brute force splitter
+3. soundness and completeness
+4. dependently typed parser, parsing parse trees for completeness
+5. explanation of fiat framework for refining splitters
+6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
+7. disjoint items, parsing #, +
+8. table of next binary operation at the current level, parsing #, +, ()
+(Optional: Showing that parser has "reasonable" performance on grammars with non-brute-force splitter (by using arrays and native strings))
+(Really Optional: building parse trees, not just recognizers)
+9. Future work
