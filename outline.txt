@@ -19,15 +19,25 @@ Master's Thesis
     - start from non-determinstic version
     - rewrite rules
     - explain refinement notation (ask Ben for our standard notation?)
+    - explain indexed representation change
 - 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
-  - Explain the splitting strategy: if all paths of a nonterminal result in a fixed length, then we know exactly where to split the string
+  - The splitting strategy: if all strings parsed by a given nonterminal are the same length, then we can always split the string when faced with that nonterminal.
+  - Write down the grammars we want to handle.
+  - We can compute the length reflectively.  Here is the algorithm.  <Coq code here>
+  - We relate the length to the parse trees by a few correctness criteria.
+    - Note that we need to use only well-founded recursion.
   - Reflective determination of length and validity
-  - Automatically applied
-  - Give example
+  - Because it's never suboptimal to apply this rule (explain), we do it automatically, along with the indexed representation change (explain)
+  - Example: Parse "abab"; parse "((123))"
 - 7. disjoint items, parsing #, +
   - Explain strategy, same as above
 - 8. table of next binary operation at the current level, parsing #, +, ()
   - Describe table building, table correctness
+  - Example: parsing "(1+2)+3"
+    - The generated table is
+      "5, 1, 0, -, -, 0 .
+        , 4, 3, 2, 1
+      "
 - (Optional: Showing that parser has "reasonable" performance on grammars with non-brute-force splitter (by using arrays and native strings))
 - (Really Optional: building parse trees, not just recognizers)
 - 9. Future work
