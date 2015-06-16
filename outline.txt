@@ -1,15 +1,34 @@
-1. Intro - background on parsing, grammars
-1a. Related work (more serious than ICFP)
-1b. what's new here?
-(parsing parse trees for completeness; idea of parametrizing on splitting oracles to make naive recursive descent parsing efficient; particular splitter derivations for various grammars)
-2. Explanation of CFGs, recursive descent parsing, making it terminating, idea of splitting oracles
-2a. Brute force splitter
-3. soundness and completeness
-4. dependently typed parser, parsing parse trees for completeness
-5. explanation of fiat framework for refining splitters
-6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
-7. disjoint items, parsing #, +
-8. table of next binary operation at the current level, parsing #, +, ()
-(Optional: Showing that parser has "reasonable" performance on grammars with non-brute-force splitter (by using arrays and native strings))
-(Really Optional: building parse trees, not just recognizers)
-9. Future work
+Master's Thesis
+
+- 1. Intro - background on parsing, grammars
+  - Take from ICFP paper?
+- 1a. Related work (more serious than ICFP)
+- 1b. what's new here?
+  - (parsing parse trees for completeness; idea of parametrizing on splitting oracles to make naive recursive descent parsing efficient; particular splitter derivations for various grammars)
+- 2. Explanation of CFGs, recursive descent parsing, making it terminating, idea of splitting oracles
+  - Take from ICFP paper
+- 2a. Brute force splitter
+  - Note that, for soundness and completeness, there is a trivial splitter: it returns a list of all numbers between 0 and the length of the string.  Because the parser terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting "oracle" is enough to fill the hole.
+- 3. soundness and completeness
+  - Take from ICFP paper
+- 4. dependently typed parser, parsing parse trees for completeness
+  - Take from ICFP paper
+- 5. explanation of fiat framework for refining splitters
+  - Main ideas:
+    - refinements that preserve correctness
+    - start from non-determinstic version
+    - rewrite rules
+    - explain refinement notation (ask Ben for our standard notation?)
+- 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
+  - Explain the splitting strategy: if all paths of a nonterminal result in a fixed length, then we know exactly where to split the string
+  - Reflective determination of length and validity
+  - Automatically applied
+  - Give example
+- 7. disjoint items, parsing #, +
+  - Explain strategy, same as above
+- 8. table of next binary operation at the current level, parsing #, +, ()
+  - Describe table building, table correctness
+- (Optional: Showing that parser has "reasonable" performance on grammars with non-brute-force splitter (by using arrays and native strings))
+- (Really Optional: building parse trees, not just recognizers)
+- 9. Future work
+  - JavaScript, performance
