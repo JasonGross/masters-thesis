@@ -4,22 +4,32 @@ Master's Thesis
   - Take from ICFP paper?
 - 1a. Related work (more serious than ICFP)
 - 1b. what's new here?
-  - (parsing parse trees for completeness; idea of parametrizing on splitting oracles to make naive recursive descent parsing efficient; particular splitter derivations for various grammars)
+  - The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
+    - Start with naive recursive-descent parsing, a la [Ringe <citation>].  We parameterize the parser on a "splitting oracle", which describes how to recurse. <section citation>  As far as we can tell, the idea of factoring the algorithmic complexity like this is new. <section citation>
+    - We use fiat to incrementally build efficient parsers by refinement. <section citation>
+  - The idea of reusing the parsing algorithm to prove its own completeness, by parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge. <section citation>
 - 2. Explanation of CFGs, recursive descent parsing, making it terminating, idea of splitting oracles
   - Take from ICFP paper
-- 2a. Brute force splitter
-  - Note that, for soundness and completeness, there is a trivial splitter: it returns a list of all numbers between 0 and the length of the string.  Because the parser terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting "oracle" is enough to fill the hole.
+  - 2a. Brute force splitter
+    - Note that, for soundness and completeness, there is a trivial splitter: it returns a list of all numbers between 0 and the length of the string.  Because the parser terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting "oracle" is enough to fill the hole.
 - 3. soundness and completeness
-  - Take from ICFP paper
+  - Take from ICFP paper; explain how soundness can be done without parser extensionality, at the cost of algorithmic complexity elsewhere.
 - 4. dependently typed parser, parsing parse trees for completeness
   - Take from ICFP paper
 - 5. explanation of fiat framework for refining splitters
-  - Main ideas:
-    - refinements that preserve correctness
-    - start from non-determinstic version
-    - rewrite rules
-    - explain refinement notation (ask Ben for our standard notation?)
-    - explain indexed representation change
+  - Goal: Incremental construction of efficient splitters
+  - Efficiency
+    - If the splitter returns at most one index, the parsing time is O(length of string * (# of valid nonterminals)!).
+      - <justification>
+    - To cut out (or cut down) the factor of (# of valid nonterminals)!, we also need a nonterminal-picker, which returns the list of possible nonterminals for a given string.  This is future work.  <Ask Adam about this?>
+  - Incremental construction
+    - Basic building block: possibly nondeterministic computation
+      - Monadic structure with a nondeterministic choice operation.
+    - Notion of refinement of a computation
+      - refinements that preserve correctness
+      - explain refinement notation (ask Ben for our standard notation?)
+    - Start with nondet. choice of something that is correct; use setoid-rewriting to refine
+  - First optimization: indexed representation of strings
 - 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
   - The splitting strategy: if all strings parsed by a given nonterminal are the same length, then we can always split the string when faced with that nonterminal.
   - Write down the grammars we want to handle.
@@ -30,9 +40,25 @@ Master's Thesis
   - Because it's never suboptimal to apply this rule (explain), we do it automatically, along with the indexed representation change (explain)
   - Example: Parse "abab"; parse "((123))"
 - 7. disjoint items, parsing #, +
-  - Explain strategy, same as above
+  - The splitting strategy: if the set of all characters in one item are disjoint from the set of possible first characters of the next item, then we can split at either the first character not in the first set, or at the first character that is in the second set.
+    - For example, if the nonterminal "number" accepts {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, and the nonterminal "binop" accepts {+, -}, then we can either look for the first non-digit and split there, or we can look for the first + or -, and split there.
+  - Write down the grammars we want to handle.
+  - We compute the sets reflectively.  Here is the algorithm.  Again, note the well-founded recursion.  <Coq code here>
+  - We relate the computation to the parse trees by a few correctness criteria, similar to above.
+    - Describe the structures and lemmas that go into it.
+  - This rule is not applied automatically, because we have this choice about what sets to look for.  In the future, we might pick whichever set is smaller, and do that (but perhaps we think one is more likely than the other?)  Instead we use setoid_rewrite, with [reflexivity] to solve the side-conditions.
+  - Example: Parse "1+2+3"
 - 8. table of next binary operation at the current level, parsing #, +, ()
-  - Describe table building, table correctness
+  - Example grammars we want to handle: #, +, (); S-expressions
+  - Lookup tables, in O(length)
+    - The only new rule is when we have pexpr followed by +.
+    - The key insight here is that, to know where to split, we need to know where the next "+" at the current level of parenthetization is.
+    - Building the table
+      - explain rule, keep list of binops at all levels
+    - Proving the table correct
+      - explain correctness criterion
+      - Relation of paren-balanced-hiding on a string to properties of grammar.
+  - Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
   - Example: parsing "(1+2)+3"
     - The generated table is
       "5, 1, 0, -, -, 0 .
@@ -41,4 +67,11 @@ Master's Thesis
 - (Optional: Showing that parser has "reasonable" performance on grammars with non-brute-force splitter (by using arrays and native strings))
 - (Really Optional: building parse trees, not just recognizers)
 - 9. Future work
-  - JavaScript, performance
+  - Grammars and efficiency: The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations. <lookup list of JS implementations>  We plan to profile our parser against these on <lookup test suite>
+    - Description of anticipated challenges, based on the JavaScript grammar <lookup JS grammar>
+  - Generating Parse Trees
+    - We plan to eventually generate parse trees, and error messages, rather than just booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser.
+  - Validating extraction
+    - By adapting <Clement's work>, our parsers will be able to be compiled to verified bedrock/assembly, within Coq
+  - Esoterica
+    - Take from ICFP
