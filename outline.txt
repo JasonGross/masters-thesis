@@ -17,18 +17,17 @@ Master's Thesis
 - 4. dependently typed parser, parsing parse trees for completeness
   - Take from ICFP paper
 - 5. explanation of fiat framework for refining splitters
-  - Goal: Incremental construction of efficient splitters
-  - Efficiency
-    - If the splitter returns at most one index, the parsing time is O(length of string * (# of valid nonterminals)!).
-      - <justification>
-    - To cut out (or cut down) the factor of (# of valid nonterminals)!, we also need a nonterminal-picker, which returns the list of possible nonterminals for a given string.  This is future work.  <Ask Adam about this?>
+  - We present a framework for constructing efficient splitters incrementally, by refinement.  We make use of prior work on the Fiat framework [citation].  To be usable, the parser must be efficient.  To be usable as a library, it is useful to be able to construct the splitters incrementally, so we don't have to do all of the work in one go, and can reuse basic building blocks, automatically.
   - Incremental construction
-    - Basic building block: possibly nondeterministic computation
-      - Monadic structure with a nondeterministic choice operation.
-    - Notion of refinement of a computation
+    - The basic building block of the framework is a possibly nondeterministic computation.  The Fiat language is a standard monad with a special nondeterministic choice operation.  We express the specification of the splitter as a nondeterministic choice of a list of split locations, such that any splitting location that results in a valid parse tree is contained in the list.
+    - The development process in the Fiat language consists of replacing nondeterministic choice with successively more computational implementations of the algorithm.  For example, if we are looking to split the string at the location of the first '+' character, we might first pick the list of "valid locations to split at", and then refine that into a computation that picks the location of the first '+', and returns the singleton list containing that, and then replace the remaining bit of nondeterminism with a computation of the location of the first '+'.
       - refinements that preserve correctness
       - explain refinement notation (ask Ben for our standard notation?)
     - Start with nondet. choice of something that is correct; use setoid-rewriting to refine
+  - Efficiency
+    - To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is O(length of string * (product over all nonterminals of the number of possible rules for that nonterminal)).
+      - <justification>
+    - To cut out (or cut down) the factor of (# of valid nonterminals)!, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be O(length of string).  This is future work.
   - First optimization: indexed representation of strings
 - 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
   - The splitting strategy: if all strings parsed by a given nonterminal are the same length, then we can always split the string when faced with that nonterminal.
