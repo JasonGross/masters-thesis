@@ -29,15 +29,25 @@ Master's Thesis
       - <justification>
     - To cut out (or cut down) the factor of (# of valid nonterminals)!, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be O(length of string).  This is future work.
   - First optimization: indexed representation of strings
+    - One optimization that is always possible is to represent the current string being parsed in this recursive call as a pair of indices into the original string.  This allows us to optimize the code doing string manipulation, as it will no longer need to copy strings around, only do index arithmetic.
+  - Intro to next sections
+    - In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this paper.  We begin by tying up the (ab)* grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and "+", and then expressions with numbers, "+" and parentheses.
+    - For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the (ab)* grammar looks like this: <INSERT GOAL>.  To get to this goal, we write this code: <COQ CODE HERE, with comments describing what each line does>  We thus have to describe how to split a string for the rules <RULES HERE>, and provide proofs that these splitting strategies are complete.  We begin the next section with this splitting strategy.
 - 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
-  - The splitting strategy: if all strings parsed by a given nonterminal are the same length, then we can always split the string when faced with that nonterminal.
-  - Write down the grammars we want to handle.
-  - We can compute the length reflectively.  Here is the algorithm.  <Coq code here>
-  - We relate the length to the parse trees by a few correctness criteria.
-    - Note that we need to use only well-founded recursion.
-  - Reflective determination of length and validity
-  - Because it's never suboptimal to apply this rule (explain), we do it automatically, along with the indexed representation change (explain)
-  - Example: Parse "abab"; parse "((123))"
+  - Intro: In this section we explain how to parse grammars such as the grammar for the regular expression (ab)*; the grammar accepting numbers; and the grammar accepting parenthesized numbers.
+  - Describing the splitting strategy: if all strings parsed by a given item are the same length, then we can always split the string when faced with that nonterminal.
+    - Walk through an example of parsing "abab" as "(ab)*", describing the splitting at each point.
+    - Another example: "((123))"
+    - For (ab)*, the item "a", and the item "b" only parse strings of length 1.  Thus when asked for the split for "a", then "b(ab)*", we can split after one character, and similarly after "b". 
+    - For numbers with parentheses (of which numbers are a subgrammar), digits always have length 1, so we can split after the first character.
+  - Implementation as a refinement rule:
+    - Describe the obligation Fiat presents us with for the splitter for (#)
+    - Describe how each rule is handled
+    - For the relevant rules, we can compute the length at compile time.  Here is the algorithm. <Coq code here>
+    - To actually make use of this, we must satisfy the correctness criterion.  This is what refinement means.  We relate the length to the parse trees by a few correctness criteria.
+      - Note that we need to use only well-founded recursion.
+    - We provide a decision procedure for the validity of this rule.
+  - In practice, we don't actually need to rewrite it; because it's never suboptimal to apply this rule (returning a single split location is just about the best we can do (TODO: handle invalid parses and backtracking better)), so we do it automatically, baking it into the initial goal, along with the indexed representation change (explain)
 - 7. disjoint items, parsing #, +
   - The splitting strategy: if the set of all characters in one item are disjoint from the set of possible first characters of the next item, then we can split at either the first character not in the first set, or at the first character that is in the second set.
     - For example, if the nonterminal "number" accepts {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, and the nonterminal "binop" accepts {+, -}, then we can either look for the first non-digit and split there, or we can look for the first + or -, and split there.
