@@ -11,12 +11,18 @@ Master's Thesis
 - 2. Explanation of CFGs, recursive descent parsing, making it terminating, idea of splitting oracles
   - Take from ICFP paper
   - 2a. Brute force splitter
-    - Note that, for soundness and completeness, there is a trivial splitter: it returns a list of all numbers between 0 and the length of the string.  Because the parser terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting "oracle" is enough to fill the hole.
+    - Note that, for soundness and completeness, there is a trivial splitter: it returns a list of all numbers between 0 and the length of the string.  Because the parser terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting "oracle" is enough to fill the hole.  Thus, we can largely separate concerns about correctness and concerns about efficiency.  In sections BLAH BLAH BLAH, we focus only on correctness, we set up the framework we use to achieve efficiency in section BLAH, and we demonstrate the use of the framework in sections BLAH BLAH BLAH.
 - 3. soundness and completeness
   - Take from ICFP paper; explain how soundness can be done without parser extensionality, at the cost of algorithmic complexity elsewhere.
 - 4. dependently typed parser, parsing parse trees for completeness
   - Take from ICFP paper
 - 5. explanation of fiat framework for refining splitters
+  - Goals
+    - Already described parsing, already have goals (build efficient parser) (refresh memory on this, and justify), now describe the tools
+    - Describe why these are the pieces we need
+    - Describe Fiat
+    - Describe Splitter Refinement
+    - Describe Basic Optimizations
   - We present a framework for constructing efficient splitters incrementally, by refinement.  We make use of prior work on the Fiat framework [citation].  To be usable, the parser must be efficient.  To be usable as a library, it is useful to be able to construct the splitters incrementally, so we don't have to do all of the work in one go, and can reuse basic building blocks, automatically.
   - Incremental construction
     - The basic building block of the framework is a possibly nondeterministic computation.  The Fiat language is a standard monad with a special nondeterministic choice operation.  We express the specification of the splitter as a nondeterministic choice of a list of split locations, such that any splitting location that results in a valid parse tree is contained in the list.
@@ -34,6 +40,9 @@ Master's Thesis
     - In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this paper.  We begin by tying up the (ab)* grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and "+", and then expressions with numbers, "+" and parentheses.
     - For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the (ab)* grammar looks like this: <INSERT GOAL>.  To get to this goal, we write this code: <COQ CODE HERE, with comments describing what each line does>  We thus have to describe how to split a string for the rules <RULES HERE>, and provide proofs that these splitting strategies are complete.  We begin the next section with this splitting strategy.
 - 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
+  - Goals
+    - Explore the framework
+    - Demonstrate that we can implement the "obvious" rules to handle a large swath of CFG rules
   - Intro: In this section we explain how to parse grammars such as the grammar for the regular expression (ab)*; the grammar accepting numbers; and the grammar accepting parenthesized numbers.
   - Describing the splitting strategy: if all strings parsed by a given item are the same length, then we can always split the string when faced with that nonterminal.
     - Walk through an example of parsing "abab" as "(ab)*", describing the splitting at each point.
@@ -49,6 +58,9 @@ Master's Thesis
     - We provide a decision procedure for the validity of this rule.
   - In practice, we don't actually need to rewrite it; because it's never suboptimal to apply this rule (returning a single split location is just about the best we can do (TODO: handle invalid parses and backtracking better)), so we do it automatically, baking it into the initial goal, along with the indexed representation change (explain)
 - 7. disjoint items, parsing #, +
+  - Goals
+    - More exploration
+    - Demonstrate a slightly less obvious strategy that handles even more rules
   - The splitting strategy: if the set of all characters in one item are disjoint from the set of possible first characters of the next item, then we can split at either the first character not in the first set, or at the first character that is in the second set.
     - For example, if the nonterminal "number" accepts {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, and the nonterminal "binop" accepts {+, -}, then we can either look for the first non-digit and split there, or we can look for the first + or -, and split there.
   - Write down the grammars we want to handle.
@@ -58,6 +70,12 @@ Master's Thesis
   - This rule is not applied automatically, because we have this choice about what sets to look for.  In the future, we might pick whichever set is smaller, and do that (but perhaps we think one is more likely than the other?)  Instead we use setoid_rewrite, with [reflexivity] to solve the side-conditions.
   - Example: Parse "1+2+3"
 - 8. table of next binary operation at the current level, parsing #, +, ()
+  - Goals:
+    - Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable
+    - Demo the main interesting splitting strategy
+      - Explain how it can be used
+      - Explain the ideas behind the table
+      - Explain the way it's implemented
   - Example grammars we want to handle: #, +, (); S-expressions
   - Lookup tables, in O(length)
     - The only new rule is when we have pexpr followed by +.
