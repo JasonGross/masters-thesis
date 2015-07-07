@@ -23,27 +23,29 @@ Master's Thesis
     - Describe Fiat
     - Describe Splitter Refinement
     - Describe Basic Optimizations
-  - We present a framework for constructing efficient splitters incrementally, by refinement.  We make use of prior work on the Fiat framework [citation].  To be usable, the parser must be efficient.  To be usable as a library, it is useful to be able to construct the splitters incrementally, so we don't have to do all of the work in one go, and can reuse basic building blocks, automatically.
-  - Incremental construction
+  - [Rehash parsing, rehash goals, intro rest of paper]
+  - [Remention fiat, splitters]
+  - [Justification of tools] Efficiency
+    - To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is O(length of string * (product over all nonterminals of the number of possible rules for that nonterminal)).
+      - <justification>
+    - To cut out (or cut down) the factor of (# of valid nonterminals)!, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be O(length of string).  This is future work.
+  - [Describe Fiat] We present a framework for constructing efficient splitters incrementally, by refinement.  We make use of prior work on the Fiat framework [citation].  To be usable, the parser must be efficient.  To be usable as a library, it is useful to be able to construct the splitters incrementally, so we don't have to do all of the work in one go, and can reuse basic building blocks, automatically.
+  - [Describe Splitter] Incremental construction
     - The basic building block of the framework is a possibly nondeterministic computation.  The Fiat language is a standard monad with a special nondeterministic choice operation.  We express the specification of the splitter as a nondeterministic choice of a list of split locations, such that any splitting location that results in a valid parse tree is contained in the list.
     - The development process in the Fiat language consists of replacing nondeterministic choice with successively more computational implementations of the algorithm.  For example, if we are looking to split the string at the location of the first '+' character, we might first pick the list of "valid locations to split at", and then refine that into a computation that picks the location of the first '+', and returns the singleton list containing that, and then replace the remaining bit of nondeterminism with a computation of the location of the first '+'.
       - refinements that preserve correctness
       - explain refinement notation (ask Ben for our standard notation?)
     - Start with nondet. choice of something that is correct; use setoid-rewriting to refine
-  - Efficiency
-    - To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is O(length of string * (product over all nonterminals of the number of possible rules for that nonterminal)).
-      - <justification>
-    - To cut out (or cut down) the factor of (# of valid nonterminals)!, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be O(length of string).  This is future work.
-  - First optimization: indexed representation of strings
+  - [Basic opt] First optimization: indexed representation of strings
     - One optimization that is always possible is to represent the current string being parsed in this recursive call as a pair of indices into the original string.  This allows us to optimize the code doing string manipulation, as it will no longer need to copy strings around, only do index arithmetic.
-  - Intro to next sections
+  - [Basic opt] Intro to next sections
     - In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this paper.  We begin by tying up the (ab)* grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and "+", and then expressions with numbers, "+" and parentheses.
     - For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the (ab)* grammar looks like this: <INSERT GOAL>.  To get to this goal, we write this code: <COQ CODE HERE, with comments describing what each line does>  We thus have to describe how to split a string for the rules <RULES HERE>, and provide proofs that these splitting strategies are complete.  We begin the next section with this splitting strategy.
 - 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
   - Goals
     - Explore the framework
     - Demonstrate that we can implement the "obvious" rules to handle a large swath of CFG rules
-  - Intro: In this section we explain how to parse grammars such as the grammar for the regular expression (ab)*; the grammar accepting numbers; and the grammar accepting parenthesized numbers.
+  - [Intro] In this section we explain how to parse grammars such as the grammar for the regular expression (ab)*; the grammar accepting numbers; and the grammar accepting parenthesized numbers.
   - Describing the splitting strategy: if all strings parsed by a given item are the same length, then we can always split the string when faced with that nonterminal.
     - Walk through an example of parsing "abab" as "(ab)*", describing the splitting at each point.
     - Another example: "((123))"
@@ -61,6 +63,7 @@ Master's Thesis
   - Goals
     - More exploration
     - Demonstrate a slightly less obvious strategy that handles even more rules
+  - [Intro]
   - The splitting strategy: if the set of all characters in one item are disjoint from the set of possible first characters of the next item, then we can split at either the first character not in the first set, or at the first character that is in the second set.
     - For example, if the nonterminal "number" accepts {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, and the nonterminal "binop" accepts {+, -}, then we can either look for the first non-digit and split there, or we can look for the first + or -, and split there.
   - Write down the grammars we want to handle.
@@ -76,8 +79,9 @@ Master's Thesis
       - Explain how it can be used
       - Explain the ideas behind the table
       - Explain the way it's implemented
-  - Example grammars we want to handle: #, +, (); S-expressions
-  - Lookup tables, in O(length)
+  - [nontrivial] Example grammars we want to handle: #, +, (); S-expressions
+  - [nontrivial] Explain commonalities (balance, binops)
+  - [idea] Lookup tables, in O(length)
     - The only new rule is when we have pexpr followed by +.
     - The key insight here is that, to know where to split, we need to know where the next "+" at the current level of parenthetization is.
     - Building the table
@@ -85,7 +89,8 @@ Master's Thesis
     - Proving the table correct
       - explain correctness criterion
       - Relation of paren-balanced-hiding on a string to properties of grammar.
-  - Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
+  - [explain implementation]
+  - [impl detail] Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
   - Example: parsing "(1+2)+3"
     - The generated table is
       "5, 1, 0, -, -, 0 .
