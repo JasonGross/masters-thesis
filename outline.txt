@@ -24,6 +24,9 @@ Master's Thesis
     - Describe Splitter Refinement
     - Describe Basic Optimizations
   - [Rehash parsing, rehash goals, intro rest of paper]
+    - At a Glance
+      - We have now finished describing the general parsing algorithm, as well as its correctness proofs; we have an algorithm, parametrized on an "oracle" that describes how to split the string for each rule, that decides whether or not a given structure can be imposed on any block of unstructured text.  For the remainder of this paper, we will focus on how to implement the splitting oracle.  Correctness is not enough, in general; algorithms also need to be fast to use.  We thus focus primarily on efficiency when designing splitting algorithms.
+      - The goals of this work, as mentioned in section [INTRO], are to present a framework for constructing proven-correct parsers incrementally, and argue for its eventual feasability.  To this end, we build on the previous work of Fiat [CITE], to allow us to build programs incrementally while maintaining correctness guarantees.  This section will describe Fiat, and how it is used in this project.  The following sections will focus more on the details of the splitting algorithms, and less on the details of Fiat.
   - [Remention fiat, splitters]
   - [Justification of tools] Efficiency
     - To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is O(length of string * (product over all nonterminals of the number of possible rules for that nonterminal)).
