@@ -1,0 +1,19 @@
+\section{fixed length nonterminals, parsing (ab)*; parsing \#s; parsing \#, ()}
+  \begin{itemize} \item  Goals
+    \begin{itemize} \item  Explore the framework 
+    \item  Demonstrate that we can implement the "obvious" rules to handle a large swath of CFG rules \end{itemize}
+  \item  At a Glance
+    \begin{itemize} \item  There are some strategies that are obvious enough that it's easy for the computer to decide whether or not it's good to apply them.  For example, if a rule starts with a terminal, then we should split off one character, because terminals are always single characters.  These rules are enough to parse some simple grammars, such as the regular expression grammar (ab)*; the grammar accepting numbers; and the grammar accepting parenthesized numbers.  {}[GIVE GRAMMARS HERE]  In this section, we explain how we parse these grammars. \end{itemize}
+  \item  The splitting strategy: if all strings parsed by a given item are the same length, then we can always split the string when faced with that nonterminal.
+    \begin{itemize} \item  Walk through an example of parsing "abab" as "(ab)*", describing the splitting at each point. 
+    \item  Another example: "((123))" 
+    \item  For (ab)*, the item "a", and the item "b" only parse strings of length 1.  Thus when asked for the split for "a", then "b(ab)*", we can split after one character, and similarly after "b".  
+    \item  For numbers with parentheses (of which numbers are a subgrammar), digits always have length 1, so we can split after the first character. \end{itemize}
+  \item  Implementation as a refinement rule:
+    \begin{itemize} \item  Describe the obligation Fiat presents us with for the splitter for (\#) {}[CODE HERE] 
+    \item  Describe how each rule is handled 
+    \item  For the relevant rules, we can compute the length at compile time.  Here is the algorithm. <Coq code here> 
+    \item  To actually make use of this, we must satisfy the correctness criterion.  This is what refinement means.  We relate the length to the parse trees by a few correctness criteria. 
+      \begin{itemize} \item  Note that we need to use only well-founded recursion. \end{itemize} 
+    \item  We provide a decision procedure for the validity of this rule. \end{itemize}
+  \item  In practice, we don't actually need to rewrite it; because it's never suboptimal to apply this rule (returning a single split location is just about the best we can do (TODO: handle invalid parses and backtracking better)), so we do it automatically, baking it into the initial goal, along with the indexed representation change (explain) \end{itemize}

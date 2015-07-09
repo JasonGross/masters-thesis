@@ -1,0 +1,25 @@
+\chapter{table of next binary operation at the current level, parsing \#, +, ()}
+  \begin{itemize} \item  Goals:
+    \begin{itemize} \item  Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable 
+    \item  Demo the main interesting splitting strategy 
+      \begin{itemize} \item  Explain how it can be used 
+      \item  Explain the ideas behind the table 
+      \item  Explain the way it's implemented \end{itemize} \end{itemize}
+  \item  {}[nontrivial] Example grammars we want to handle: \#, +, (); S-expressions
+  \item  {}[nontrivial] Explain commonalities (balance, binops)
+  \item  {}[idea] Lookup tables, in O(length)
+    \begin{itemize} \item  The only new rule is when we have pexpr followed by +. 
+    \item  The key insight here is that, to know where to split, we need to know where the next "+" at the current level of parenthetization is. 
+    \item  Building the table 
+      \begin{itemize} \item  explain rule, keep list of binops at all levels \end{itemize} 
+    \item  Proving the table correct 
+      \begin{itemize} \item  explain correctness criterion 
+      \item  Relation of paren-balanced-hiding on a string to properties of grammar. \end{itemize} \end{itemize}
+  \item  {}[explain implementation]
+  \item  {}[impl detail] Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
+  \item  Example: parsing "(1+2)+3"
+    \begin{itemize} \item  The generated table is  \\
+      "5, 1, 0, -, -, 0 .
+        , 4, 3, 2, 1
+      "
+\end{itemize} \end{itemize}

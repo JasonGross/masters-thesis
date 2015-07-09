@@ -25,14 +25,14 @@
 %% Page Intentionally Left Blank'', use the ``leftblank'' option, as
 %% above. 
 
-\documentclass[12pt,vi,twoside]{mitthesis}
+\documentclass[12pt,vi,twoside,singlespace]{mitthesis}
 \usepackage{lgrind}
 %% These have been added at the request of the MIT Libraries, because
 %% some PDF conversions mess up the ligatures.  -LB, 1/22/2014
 \usepackage{cmap}
 \usepackage[T1]{fontenc}
 \pagestyle{plain}
-\usepackage{xcolor,graphicx}
+\input{packages}
 
 %% This bit allows you to either specify only the files which you wish to
 %% process, or `all' to process all files which you \include.
@@ -42,9 +42,18 @@
 \def\all{all}
 \ifx\files\all \typeout{Including all files.} \else \typeout{Including only \files.} \includeonly{\files} \fi
 
+\setlength{\parskip}{\baselineskip}%
+\setlength{\parindent}{0pt}%
+
 \begin{document}
 
-\include{todo}
+\lstset{language=Haskell}
+
+\special{papersize=8.5in,11in}
+\setlength{\pdfpageheight}{\paperheight}
+\setlength{\pdfpagewidth}{\paperwidth}
+
+\input{todo}
 
 \include{cover}
 % Some departments (e.g. 5) require an additional signature page.  See
@@ -52,10 +61,7 @@
 % applicable.
 % \include{signature}
 \pagestyle{plain}
-\include{contents}
-\include{chap1}
-\include{parsing-parse-trees}
-\include{chap2}
+\input{main-files}
 \appendix
 \include{appa}
 \include{appb}

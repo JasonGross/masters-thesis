@@ -1,0 +1,13 @@
+\chapter{disjoint items, parsing \#, +}
+  \begin{itemize} \item  Goals
+    \begin{itemize} \item  More exploration 
+    \item  Demonstrate a slightly less obvious strategy that handles even more rules \end{itemize}
+  \item  {}[Intro]
+  \item  The splitting strategy: if the set of all characters in one item are disjoint from the set of possible first characters of the next item, then we can split at either the first character not in the first set, or at the first character that is in the second set.
+    \begin{itemize} \item  For example, if the nonterminal "number" accepts {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, and the nonterminal "binop" accepts {+, -}, then we can either look for the first non-digit and split there, or we can look for the first + or -, and split there. \end{itemize}
+  \item  Write down the grammars we want to handle.
+  \item  We compute the sets reflectively.  Here is the algorithm.  Again, note the well-founded recursion.  <Coq code here>
+  \item  We relate the computation to the parse trees by a few correctness criteria, similar to above.
+    \begin{itemize} \item  Describe the structures and lemmas that go into it. \end{itemize}
+  \item  This rule is not applied automatically, because we have this choice about what sets to look for.  In the future, we might pick whichever set is smaller, and do that (but perhaps we think one is more likely than the other?)  Instead we use \verb|setoid_rewrite|, with {}[reflexivity] to solve the side-conditions.
+  \item  Example: Parse "1+2+3" \end{itemize}

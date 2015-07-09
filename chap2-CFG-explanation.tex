@@ -1,0 +1,191 @@
+\chapter{Parsing Context Free Grammars}
+
+  We begin with an overview of the general setting, and a description of our approach to parsing.
+
+\section{Parsing}
+  The job of a parser is to decompose a flat list of characters, called a \emph{string}, into a structured tree, called a \emph{parse tree}, on which further operations can be performed.  As a simple example, we can parse \str{ab} as an instance of the regular expression \regex{(ab)$^*$}, giving this parse tree, where we write $\cdot$ for string concatenation.
+  \begin{prooftree}
+    \AxiomC{}\UnaryInfC{\str{a} $\in$ \terminal{a}}
+    \AxiomC{}\UnaryInfC{\str{b} $\in$ \terminal{b}}
+    \AxiomC{} \UnaryInfC{\str{} $\in$ $\epsilon$}
+    \UnaryInfC{\str{} $\in$ \regex{(ab)$^*$}}
+    \TrinaryInfC{\llstrcat{\str{a}}{\llstrcat{\str{b}}{\str{}}} $\in$ \regex{ab(ab)$^*$}}
+    \UnaryInfC{\str{ab} $\in$ \regex{(ab)$^*$}}
+  \end{prooftree}
+
+  Our parse tree is implicitly constructed from a set of general inference rules for parsing.  There is a naive approach to parsing a string $s$: run the inference rules as a logic program.  Several execution orders work: we may proceed bottom-up, by generating all of the strings that are in the language and not longer than $s$, checking each one for equality with $s$; or top-down, by splitting $s$ into smaller parts in a way that mirrors the inference rules.  In this paper, we present an implementation based on the second strategy, parameterizing over a ``splitting oracle'' that provides a list of candidate locations at which to split the string, based on the available inference rules.  Soundness of the algorithm is independent of the splitting oracle; each location in the list is attempted.  To be complete, if any split of the string yields a valid parse, the oracle must give at least one splitting location that also yields a valid parse.  Different splitters yield different simple recursive-descent parsers. %~\cite{}. \todoAdamOrJason{Find a reference}
+
+  Note that, for soundness and completeness, there is a trivial splitter: it returns a list of all numbers between 0 and the length of the string. 
+  
+  There is a trivial, brute-force splitter that suffices for proving correctness: simply return the list of all locations in the string, the list of all numbers between 0 and the length of the string.  Because we construct a parser that terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting ``oracle'' is enough to fill the oracle-shaped-hole in the correctness proofs.  Thus, we can largely separate concerns about correctness and concerns about efficiency.  In sections \todo{secref}, we focus only on correctness, we set up the framework we use to achieve efficiency in section \todo{secref}, and we demonstrate the use of the framework in sections \todo{secref}.
+
+  Although this simple splitter is sufficient for proving the algorithm correct, it is horribly inefficient, running in time $\mathcal O(n!)$, where $n$ is the length of the string.  We synthesize more efficient splitters in later chapters; we believe that parameterizing the parser over a splitter gives us enough expressiveness to implement essentially all optimizations of interest, while being a sufficiently simple language to make proofs relatively straightforward.  For example, to achieve linear parse time on the \regex{(ab)$^*$} grammar, we could have a splitter that, when trying to parse \llstrcat{\llstrcat{\terminal{\farg{c$_1$}}}{\terminal{\farg{c$_2$}}}}{\farg{s}} as \regex{ab(ab)$^*$}, splits the string into (\terminal{\farg{c$_1$}}, \terminal{\farg{c$_2$}}, \farg{s}); and when trying to parse \farg{s} as $\epsilon$, does not split the string at all.
+  
+  Parameterizing over a splitting oracle allows us to largely separate correctness concerns from efficiency concerns.
+
+  %By making the splitter stateful and recording where in the tree we are, we can prevent backtracking by not returning the empty list of splits for some productions.
+
+  %Thus this construction can be instantiated to give both predictive recursive-descent parsers (which, by definition, are the non-backtracking ones~\cite{}), as well as being able to handle arbitrary context-free-grammars, which entirely predictive parsers cannot~\cite{}.
+
+  Proving completeness---that our parser succeeds whenever there is a valid parse tree---is conceptually straightforward: trace the algorithm, showing that if the parser returns \false\space at a given point, then assuming a corresponding parse tree exists yields a contradiction.  The one wrinkle in this approach is that the algorithm, the logic program, is not guaranteed to terminate.
+
+  \subsection{Infinite regress} \label{sec:loopy-grammar-example}
+    Since we have programmed our parser in Coq, our program must be terminating by construction.  However, naive recursive-descent parsers do not always terminate!
+
+    To see how such parsers can diverge, consider the following example.  When defining the grammar \regex{(ab)$^*$}, perhaps we give the following production rules:
+
+    \begin{center}
+      %\AxiomC{} %\RightLabel{\scriptsize(\str{})}
+      %\UnaryInfC{\str{} $\in$ $\epsilon$}
+    %\DisplayProof\qquad
+      \AxiomC{$s$ $\in$ $\epsilon$}
+      \RightLabel{\scriptsize($\epsilon$)}
+      \UnaryInfC{$s$ $\in$ \regex{(ab)$^*$}}
+    \DisplayProof\qquad
+      \AxiomC{$s_0$ $\in$ \terminal{a}}
+      \AxiomC{$s_1$ $\in$ \terminal{b}}
+      \RightLabel{\scriptsize(\str{ab})}
+      \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \regex{(ab)$^*$}}
+    \DisplayProof
+    \end{center}
+    \begin{center}
+      \AxiomC{$s_0$ $\in$ \regex{(ab)$^*$}}
+      \AxiomC{$s_1$ $\in$ \regex{(ab)$^*$}}
+      \RightLabel{\scriptsize(\regex{(ab)$^*$}\regex{(ab)$^*$})}
+      \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \regex{(ab)$^*$}}
+    \DisplayProof
+    \end{center}
+
+    Now, let us try to parse the string \str{ab} as \regex{(ab)$^*$}:
+    \begin{center}
+      \AxiomC{} \UnaryInfC{\str{} $\in$ $\epsilon$}
+      \UnaryInfC{\str{} $\in$ \regex{(ab)$^*$}}
+
+      \AxiomC{} \UnaryInfC{\str{} $\in$ $\epsilon$}
+      \UnaryInfC{\str{} $\in$ \regex{(ab)$^*$}}
+
+      \AxiomC{\reflectbox{$\ddots$}}
+      \UnaryInfC{\str{ab} $\in$ \regex{(ab)$^*$}}
+      \BinaryInfC{\llstrcat{\str{}}{\str{ab}} $\in$ \regex{(ab)$^*$}}
+
+      \UnaryInfC{\str{ab} $\in$ \regex{(ab)$^*$}}
+
+      \BinaryInfC{\llstrcat{\str{}}{\str{ab}} $\in$ \regex{(ab)$^*$}}
+      \UnaryInfC{\str{ab} $\in$ \regex{(ab)$^*$}}
+    \DisplayProof
+    \end{center}
+
+    Thus, by making a poor choice in how we split strings and choose productions, we can quickly hit an infinite regress.
+
+    Assuming we have a function $\oftype{\fname{split}}{\String \typeto \typelistp{\typeprod{\String}{\String}}}$ which is our splitting oracle, we may write out a potentially divergent parser specialized to this grammar.
+    \begin{align*}
+      & \fname{any\_parses} \oftypesep \typelistp{\typeprod{\String}{\String}} \typeto \Bool \\
+      & \fname{any\_parses}~\nil \defeq \false \\
+      & \fname{any\_parses}~(\cons{(\str{a}, \str{b})}{\hole}) \defeq \true \\
+      & \fname{any\_parses}~(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{rest\_splits}}) \\
+      & \phantom{\fname{any}} \defeq \left(\fname{parses}~\farg{s$_1$} \booland \fname{parses}~\farg{s$_2$}\right) \boolor \fname{any\_parses}~\farg{rest\_splits} \\
+      \\
+      & \fname{parses} \oftypesep \String \typeto \Bool \\
+      & \fname{parses}~\str{} \defeq \true \\
+      & \fname{parses}~\farg{str} \defeq \fname{any\_parses}~(\fname{split}~\farg{str})
+    \end{align*}
+
+    If \fname{split} returns $(\str{}, \str{ab})$ as the first item in its list when given \str{ab}, then the code given above will diverge in the way demonstrated above with the infinite derivation tree.
+
+  \subsection{Aborting early} \label{sec:solve-nontermination}
+
+    To work around this wrinkle, we keep track of what nonterminals we have not yet tried to parse the current string as, and we abort early if we see a repeat.  Note that this strategy only works for grammars with finite sets of nonterminals, in line with most formalizations of context-free grammars.  For our example grammar, since there is only one nonterminal, we only need to keep track of the current string.  We refactor the above code to introduce a new parameter \farg{prev\_s}, recording the previous string we were parsing.  We use $\farg{s} < \farg{prev\_s}$ to denote the test that \farg{s} is strictly shorter than \farg{prev\_s}. \label{sec:valid-param-parser}
+    \begin{align*}
+      & \fname{any\_parses} \oftypesep \String \typeto \typelistp{\typeprod{\String}{\String}} \typeto \Bool \\
+      & \fname{any\_parses}~~\hole~~\nil \defeq \false \\
+      & \fname{any\_parses}~~\hole~~(\cons{(\str{a}, \str{b})}{\hole}) \defeq \true \\
+      & \fname{any\_parses}~~\farg{prev\_s}~~(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{rest\_splits}}) \\
+      & \quad \defeq \left( \farg{s$_1$} < \farg{prev\_s} \booland \farg{s$_2$} < \farg{prev\_s} \right. \\
+      & \phantom{\quad \defeq \left(\right.} \left.\booland \fname{parses}~~\farg{s$_1$} \booland \fname{parses}~~\farg{s$_2$}\right) \\
+      & \phantom{\quad \defeq {}} \boolor \fname{any\_parses}~~\farg{prev\_s}~~\farg{rest\_splits} \\
+      \\
+      & \fname{parses} \oftypesep \String \typeto \Bool \\
+      & \fname{parses}~~\aswidthof{\str{}}{\farg{str}} \defeq \true \\
+      & \fname{parses}~~\farg{str} \defeq \fname{any\_parses}~~\farg{str}~~(\fname{split}~~\farg{str})
+    \end{align*}
+
+    We can convince Coq that this definition is total via well-founded recursion on the length of the string passed to \fname{parses}.  For a more-complicated grammar, we'd need to use a well-founded relation that also included the number of nonterminals not yet tried for this string; we do this in \autoref{fig:parser-impl} in \autoref{sec:parser-impl}.
+
+    %Correctness is still straightforward; we can still simply trace the parsing algorithm, generating the corresponding tree at each step.
+
+    With this refactoring, however, completeness is no longer straightforward.  We must show that aborting early does not eliminate good parse trees.
+
+    We devote the rest of this paper to describing an elegant approach to proving completeness.  Ridge~\cite{Ridge} carried out a proof about essentially the same algorithm in HOL4, a proof assistant that does not support dependent types.  We instead refine our parser to have a more general polymorphic type signature that takes advantage of dependent types, supporting a proof strategy with a different kind of aesthetic appeal.  Relational parametricity frees us from worrying about different control flows with different instantiations of the arguments: when care is taken to ensure that the execution of the algorithm does not depend on the values of the arguments, we are guaranteed that all instantiations succeed or fail together.  Freed from this worry, we convince our parser to prove its own soundness and completeness by instantiating its arguments correctly.
+
+\section{Standard Formal Definitions} \label{sec:standard-definitions}
+  Before proceeding, we pause to standardize on terminology and notation for context-free grammars and parsers.  In service of clarity for some of our later explanations, we formalize grammars via natural-deduction inference rules, a slightly nonstandard choice.
+
+  \subsection{Context Free Grammar}
+    A \emph{context-free grammar} consists of \emph{items}, which may be either \emph{terminals} (characters) or \emph{nonterminals}; plus a set of \emph{productions}, each mapping a nonterminal to a sequence of items.
+
+    \subsubsection{Example: \texorpdfstring{\regex{(ab)$^*$}}{(ab)*}}
+      The inference rules of the regular-expression grammar \regex{(ab)$^*$} are:
+
+      \noindent Terminals:
+      \begin{center}
+        \AxiomC{} %\RightLabel{\scriptsize \terminal{a}}
+        \UnaryInfC{\str{a} $\in$ \terminal{a}}
+      \DisplayProof\qquad
+        \AxiomC{} %\RightLabel{\scriptsize \terminal{b}}
+        \UnaryInfC{\str{b} $\in$ \terminal{b}}
+      \DisplayProof
+      \end{center}
+
+      \noindent Productions and nonterminals:
+      \begin{center}
+        \AxiomC{$s$ $\in$ $\epsilon$} %\RightLabel{\scriptsize\regex{(ab)$^*_0$}}
+        \UnaryInfC{$s$ $\in$ \regex{(ab)$^*$}}
+      \DisplayProof\qquad
+        \AxiomC{} %\RightLabel{\scriptsize$\epsilon$}
+        \UnaryInfC{\str{} $\in$ $\epsilon$}
+      \DisplayProof
+      \end{center}
+      \vspace{1ex}
+      \begin{center}
+        \AxiomC{$s_0$ $\in$ \terminal{a}}
+        \AxiomC{$s_1$ $\in$ \terminal{b}}
+        \AxiomC{$s_2$ $\in$ \regex{(ab)$^*$}}
+        %\RightLabel{\scriptsize\regex{ab(ab)$^*$}}
+        \TrinaryInfC{\strcat{\strcat{$s_0$}{$s_1$}}{$s_2$} $\in$ \regex{(ab)$^*$}}
+      \DisplayProof
+      \end{center}
+
+  \subsection{Parse Trees} \label{sec:formal-parse-tree-definition}
+    A string \farg{s} \emph{parses} as:
+    \begin{itemize}
+      \item a given terminal \farg{ch} iff $\farg{s} = \terminal{\farg{ch}}$.
+      \item a given sequence of items \farg{x$_i$} iff \farg{s} splits into a sequence of strings \farg{s$_i$}, each of which parses as the corresponding item \farg{x$_i$}.
+      \item a given nonterminal \farg{nt} iff \farg{s} parses as one of the item sequences that \farg{nt} maps to under the set of productions.
+    \end{itemize}
+
+    We may define mutually inductive dependent type families of \indname{ParseTreeOf}s and \indname{ParseItemsTreeOf}s for a given grammar:
+    \begin{align*}
+      \indname{ParseTreeOf} & \oftypesep \indname{Item} \typeto \String \typeto \Type \\
+      \indname{ParseItemsTreeOf} & \oftypesep \typelist{\indname{Item}} \typeto \String \typeto \Type
+    \end{align*}
+    For any terminal character \farg{ch}, we have the constructor
+    \begin{align*}
+      (\terminal{\farg{ch}}) & \oftypesep \indname{ParseTreeOf}~\terminal{\farg{ch}}~\str{\farg{ch}}
+    \end{align*}
+    For any production \farg{rule} mapping a nonterminal \farg{nt} to a sequence of items \farg{its}, and any string \farg{s}, we have this constructor:
+    \begin{align*}
+      & (\farg{rule}) \oftypesep \indname{ParseItemsTreeOf}~~\farg{its}~~\farg{s} \typeto \indname{ParseTreeOf}~~\farg{nt}~~\farg{s}
+    \end{align*}
+    We have the following two constructors of \indname{ParseItemsTree}.  In writing the type of the latter constructor, we adopt a common space-saving convention where we assume that all free variables are quantified implicitly with dependent function ($\Pi$) types.  We also write constructors in the form of schematic natural-deduction rules, since that notation will be convenient to use later on.
+    \begin{align*}
+      \overline{\str{}\in\epsilon} & \oftypesep \indname{ParseItemsTreeOf}~~\nil~~\str{} \\
+      \frac{\farg{s$_1$}\in \farg{it}\qquad \farg{s$_2$}\in \farg{its}}{\strcat{\farg{s$_1$}}{\farg{s$_2$}}\in \cons{\farg{it}}{\farg{its}}} & \oftypesep \indname{ParseTreeOf}~~\farg{it}~~\farg{s$_1$} \\
+      & \typeto \indname{ParseItemsTreeOf}~~\farg{its}~~\farg{s$_2$} \\
+      & \typeto
+      \indname{ParseItemsTreeOf}~~(\cons{\farg{it}}{\farg{its}})~~\strcat{\farg{s$_1$}}{\farg{s$_2$}}
+    \end{align*}
+
+    For brevity, we will sometimes use the notation \parsetreetype{\farg{X}}{\farg{s}} to denote both \indname{ParseTreeOf}~\farg{X}~\farg{s} and \indname{ParseItemsTreeOf}~\farg{X}~\farg{s}, relying on context to disambiguate based on the type of \farg{X}.  Additionally, we will sometimes fold the constructors of \indname{ParseItemsTreeOf} into the (\farg{rule}) constructors of \indname{ParseTreeOf}, to mimic the natural-deduction trees.
+
+    We also define a type of all parse trees, independent of the string and item, as this dependent-pair ($\Sigma$) type, using set-builder notation; we use \indname{ParseTree} to denote the type
+    $$\left\{\oftype{(\farg{nt}, \farg{s})}{\typeprod{\Nonterminal}{\String}}\ \middle|\ \indname{ParseTreeOf}~\farg{nt}~\farg{s}\right\}$$

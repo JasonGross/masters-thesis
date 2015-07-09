@@ -1,0 +1,9 @@
+\chapter{Future work}
+  \begin{itemize} \item  Grammars and efficiency: The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations. <lookup list of JS implementations>  We plan to profile our parser against these on <lookup test suite>
+    \begin{itemize} \item  Description of anticipated challenges, based on the JavaScript grammar <lookup JS grammar> \end{itemize}
+  \item  Generating Parse Trees
+    \begin{itemize} \item  We plan to eventually generate parse trees, and error messages, rather than just booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser. \end{itemize}
+  \item  Validating extraction
+    \begin{itemize} \item  By adapting <Clement's work>, our parsers will be able to be compiled to verified bedrock/assembly, within Coq \end{itemize}
+  \item  Esoterica
+    \begin{itemize} \item  Take from ICFP \end{itemize} \end{itemize}
