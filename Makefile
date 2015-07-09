@@ -1,9 +1,13 @@
-.PHONY: all paper
-all: paper
+.PHONY: all paper thesis
+all: paper thesis
+
+PDFS = jgross-thesis-proposal.pdf jgross-thesis.pdf
 
 paper: jgross-thesis-proposal.pdf
 
-jgross-thesis-proposal.pdf: references.bib
+thesis: jgross-thesis.pdf
+
+jgross-thesis-proposal.pdf jgross-thesis.pdf: references.bib
 
 
 %.pdf: %.tex
@@ -13,5 +17,5 @@ jgross-thesis-proposal.pdf: references.bib
 	@ pdflatex -synctex=1 $<
 
 clean:
-	@ rm -f *.aux *.out *.nav *.toc *.vrb *.pdf *.snm *.log *.bbl *.blg
+	@ rm -f *.aux *.out *.nav *.toc *.vrb $(PDFS) *.snm *.log *.bbl *.blg
 
