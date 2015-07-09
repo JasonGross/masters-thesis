@@ -1,13 +1,22 @@
-.PHONY: all paper thesis
-all: paper thesis
+.PHONY: all proposal thesis update-thesis
+all: proposal thesis
 
-PDFS = jgross-thesis-proposal.pdf jgross-thesis.pdf
+PROPOSAL_PDFS = jgross-thesis-proposal.pdf 
+THESIS_PDFS = jgross-thesis.pdf
+THESIS_TEXS = contents.tex mitthesis.cls abstract.tex cover.tex new-date.tex todo.tex
+PDFS = $(PROPOSAL_PDFS) $(THESIS_PDFS)
 
-paper: jgross-thesis-proposal.pdf
+proposal: $(PROPOSAL_PDFS)
 
-thesis: jgross-thesis.pdf
+thesis: $(THESIS_PDFS)
 
-jgross-thesis-proposal.pdf jgross-thesis.pdf: references.bib
+update-thesis::
+	echo "\\thesisdate{`date +'%B %-d, %Y'`}" > new-date.tex
+	$(MAKE) thesis
+
+$(PDFS): references.bib
+
+$(THESIS_PDFS): $(THESIS_TEXS)
 
 
 %.pdf: %.tex
