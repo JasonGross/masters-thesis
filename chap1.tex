@@ -5,246 +5,116 @@
 %% \files=
 %% prompt when you run the file main.tex through LaTeX.
 \chapter{Introduction}
-
-Micro-optimization is a technique to reduce the overall operation count of
-floating point operations.  In a standard floating point unit, floating
-point operations are fairly high level, such as ``multiply'' and ``add'';
-in a micro floating point unit ($\mu$FPU), these have been broken down into
-their constituent low-level floating point operations on the mantissas and
-exponents of the floating point numbers.
-
-Chapter two describes the architecture of the $\mu$FPU unit, and the
-motivations for the design decisions made.
-
-Chapter three describes the design of the compiler, as well as how the
-optimizations discussed in section~\ref{ch1:opts} were implemented.
-
-Chapter four describes the purpose of test code that was compiled, and which
-statistics were gathered by running it through the simulator.  The purpose
-is to measure what effect the micro-optimizations had, compared to
-unoptimized code.  Possible future expansions to the project are also
-discussed.
-
-\section{Motivations for micro-optimization}
-
-The idea of micro-optimization is motivated by the recent trends in computer
-architecture towards low-level parallelism and small, pipelineable
-instruction sets \cite{patterson:risc,rad83}.  By getting rid of more
-complex instructions and concentrating on optimizing frequently used
-instructions, substantial increases in performance were realized.
-
-Another important motivation was the trend towards placing more of the
-burden of performance on the compiler.  Many of the new architectures depend
-on an intelligent, optimizing compiler in order to realize anywhere near
-their peak performance
-\cite{ellis:bulldog,pet87,coutant:precision-compilers}.  In these cases, the
-compiler not only is responsible for faithfully generating native code to
-match the source language, but also must be aware of instruction latencies,
-delayed branches, pipeline stages, and a multitude of other factors in order
-to generate fast code \cite{gib86}.
-
-Taking these ideas one step further, it seems that the floating point
-operations that are normally single, large instructions can be further broken
-down into smaller, simpler, faster instructions, with more control in the
-compiler and less in the hardware.  This is the idea behind a
-micro-optimizing FPU; break the floating point instructions down into their
-basic components and use a small, fast implementation, with a large part of
-the burden of hardware allocation and optimization shifted towards
-compile-time.
-
-Along with the hardware speedups possible by using a $\mu$FPU, there are
-also optimizations that the compiler can perform on the code that is
-generated.  In a normal sequence of floating point operations, there are
-many hidden redundancies that can be eliminated by allowing the compiler to
-control the floating point operations down to their lowest level.  These
-optimizations are described in detail in section~\ref{ch1:opts}.
-
-\section{Description of micro-optimization}\label{ch1:opts}
-
-In order to perform a sequence of floating point operations, a normal FPU
-performs many redundant internal shifts and normalizations in the process of
-performing a sequence of operations.  However, if a compiler can
-decompose the floating point operations it needs down to the lowest level,
-it then can optimize away many of these redundant operations.  
-
-If there is some additional hardware support specifically for
-micro-optimization, there are additional optimizations that can be
-performed.  This hardware support entails extra ``guard bits'' on the
-standard floating point formats, to allow several unnormalized operations to
-be performed in a row without the loss information\footnote{A description of
-the floating point format used is shown in figures~\ref{exponent-format}
-and~\ref{mantissa-format}.}.  A discussion of the mathematics behind
-unnormalized arithmetic is in appendix~\ref{unnorm-math}.
-
-The optimizations that the compiler can perform fall into several categories:
-
-\subsection{Post Multiply Normalization}
-
-When more than two multiplications are performed in a row, the intermediate
-normalization of the results between multiplications can be eliminated.
-This is because with each multiplication, the mantissa can become
-denormalized by at most one bit.  If there are guard bits on the mantissas
-to prevent bits from ``falling off'' the end during multiplications, the
-normalization can be postponed until after a sequence of several
-multiplies\footnote{Using unnormalized numbers for math is not a new idea; a
-good example of it is the Control Data CDC 6600, designed by Seymour Cray.
-\cite{thornton:cdc6600} The CDC 6600 had all of its instructions performing
-unnormalized arithmetic, with a separate {\tt NORMALIZE} instruction.}.
-
-% This is an example of how you would use tgrind to include an example
-% of source code; it is commented out in this template since the code
-% example file does not exist.  To use it, you need to remove the '%' on the
-% beginning of the line, and insert your own information in the call.
-%
-%\tagrind[htbp]{code/pmn.s.tex}{Post Multiply Normalization}{opt:pmn}
-
-As you can see, the intermediate results can be multiplied together, with no
-need for intermediate normalizations due to the guard bit.  It is only at
-the end of the operation that the normalization must be performed, in order
-to get it into a format suitable for storing in memory\footnote{Note that
-for purposed of clarity, the pipeline delays were considered to be 0, and
-the branches were not delayed.}.
-
-\subsection{Block Exponent}
-
-In a unoptimized sequence of additions, the sequence of operations is as
-follows for each pair of numbers ($m_1$,$e_1$) and ($m_2$,$e_2$).
-\begin{enumerate}
-  \item Compare $e_1$ and $e_2$.
-  \item Shift the mantissa associated with the smaller exponent $|e_1-e_2|$
-        places to the right.
-  \item Add $m_1$ and $m_2$.
-  \item Find the first one in the resulting mantissa.
-  \item Shift the resulting mantissa so that normalized
-  \item Adjust the exponent accordingly.
-\end{enumerate}
-
-Out of 6 steps, only one is the actual addition, and the rest are involved
-in aligning the mantissas prior to the add, and then normalizing the result
-afterward.  In the block exponent optimization, the largest mantissa is
-found to start with, and all the mantissa's shifted before any additions
-take place.  Once the mantissas have been shifted, the additions can take
-place one after another\footnote{This requires that for n consecutive
-additions, there are $\log_{2}n$ high guard bits to prevent overflow.  In
-the $\mu$FPU, there are 3 guard bits, making up to 8 consecutive additions
-possible.}.  An example of the Block Exponent optimization on the expression
-X = A + B + C is given in figure~\ref{opt:be}.
-
-% This is an example of how you would use tgrind to include an example
-% of source code; it is commented out in this template since the code
-% example file does not exist.  To use it, you need to remove the '%' on the
-% beginning of the line, and insert your own information in the call.
-%
-%\tgrind[htbp]{code/be.s.tex}{Block Exponent}{opt:be}
-
-\section{Integer optimizations}
-
-As well as the floating point optimizations described above, there are
-also integer optimizations that can be used in the $\mu$FPU.  In concert
-with the floating point optimizations, these can provide a significant
-speedup.  
-
-\subsection{Conversion to fixed point}
-
-Integer operations are much faster than floating point operations; if it is
-possible to replace floating point operations with fixed point operations,
-this would provide a significant increase in speed.
-
-This conversion can either take place automatically or or based on a
-specific request from the programmer.  To do this automatically, the
-compiler must either be very smart, or play fast and loose with the accuracy
-and precision of the programmer's variables.  To be ``smart'', the computer
-must track the ranges of all the floating point variables through the
-program, and then see if there are any potential candidates for conversion
-to floating point.  This technique is discussed further in
-section~\ref{range-tracking}, where it was implemented.
-
-The other way to do this is to rely on specific hints from the programmer
-that a certain value will only assume a specific range, and that only a
-specific precision is desired.  This is somewhat more taxing on the
-programmer, in that he has to know the ranges that his values will take at
-declaration time (something normally abstracted away), but it does provide
-the opportunity for fine-tuning already working code.
-
-Potential applications of this would be simulation programs, where the
-variable represents some physical quantity; the constraints of the physical
-system may provide bounds on the range the variable can take.
-\subsection{Small Constant Multiplications}
-
-One other class of optimizations that can be done is to replace
-multiplications by small integer constants into some combination of
-additions and shifts.  Addition and shifting can be significantly faster
-than multiplication.  This is done by using some combination of
-\begin{eqnarray*}
-a_i & = & a_j + a_k \\
-a_i & = & 2a_j + a_k \\
-a_i & = & 4a_j + a_k \\
-a_i & = & 8a_j + a_k \\
-a_i & = & a_j - a_k \\
-a_i & = & a_j \ll m \mbox{shift}
-\end{eqnarray*}
-instead of the multiplication.  For example, to multiply $s$ by 10 and store
-the result in $r$, you could use:
-\begin{eqnarray*}
-r & = & 4s + s\\
-r & = & r + r
-\end{eqnarray*}
-Or by 59:
-\begin{eqnarray*}
-t & = & 2s + s \\
-r & = & 2t + s \\
-r & = & 8r + t
-\end{eqnarray*}
-Similar combinations can be found for almost all of the smaller
-integers\footnote{This optimization is only an ``optimization'', of course,
-when the amount of time spent on the shifts and adds is less than the time
-that would be spent doing the multiplication.  Since the time costs of these
-operations are known to the compiler in order for it to do scheduling, it is
-easy for the compiler to determine when this optimization is worth using.}.
-\cite{magenheimer:precision}
-
-\section{Other optimizations}
-
-\subsection{Low-level parallelism}
-
-The current trend is towards duplicating hardware at the lowest level to
-provide parallelism\footnote{This can been seen in the i860; floating point
-additions and multiplications can proceed at the same time, and the RISC
-core be moving data in and out of the floating point registers and providing
-flow control at the same time the floating point units are active. \cite{byte:i860}}
-
-Conceptually, it is easy to take advantage to low-level parallelism in the
-instruction stream by simply adding more functional units to the $\mu$FPU,
-widening the instruction word to control them, and then scheduling as many
-operations to take place at one time as possible.
-
-However, simply adding more functional units can only be done so many times;
-there is only a limited amount of parallelism directly available in the
-instruction stream, and without it, much of the extra resources will go to
-waste.  One process used to make more instructions potentially schedulable
-at any given time is ``trace scheduling''.  This technique originated in the
-Bulldog compiler for the original VLIW machine, the ELI-512.
-\cite{ellis:bulldog,colwell:vliw}  In trace scheduling, code can be
-scheduled through many basic blocks at one time, following a single
-potential ``trace'' of program execution.  In this way, instructions that
-{\em might\/} be executed depending on a conditional branch further down in
-the instruction stream are scheduled, allowing an increase in the potential
-parallelism.  To account for the cases where the expected branch wasn't
-taken, correction code is inserted after the branches to undo the effects of
-any prematurely executed instructions.
-
-\subsection{Pipeline optimizations}
-
-In addition to having operations going on in parallel across functional
-units, it is also typical to have several operations in various stages of
-completion in each unit.  This pipelining allows the throughput of the
-functional units to be increased, with no increase in latency.
-
-There are several ways pipelined operations can be optimized.  On the
-hardware side, support can be added to allow data to be recirculated back
-into the beginning of the pipeline from the end, saving a trip through the
-registers.  On the software side, the compiler can utilize several tricks to
-try to fill up as many of the pipeline delay slots as possible, as
-seendescribed by Gibbons. \cite{gib86}
+- 1. Intro - background on parsing, grammars
+  - Take from ICFP paper?
+- 1a. Related work (more serious than ICFP)
+- 1b. what's new here?
+  - The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
+    - Start with naive recursive-descent parsing, a la [Ringe <citation>].  We parameterize the parser on a "splitting oracle", which describes how to recurse. <section citation>  As far as we can tell, the idea of factoring the algorithmic complexity like this is new. <section citation>
+    - We use fiat to incrementally build efficient parsers by refinement. <section citation>
+  - The idea of reusing the parsing algorithm to prove its own completeness, by parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge. <section citation>
+- 2. Explanation of CFGs, recursive descent parsing, making it terminating, idea of splitting oracles
+  - Take from ICFP paper
+  - 2a. Brute force splitter
+    - Note that, for soundness and completeness, there is a trivial splitter: it returns a list of all numbers between 0 and the length of the string.  Because the parser terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting "oracle" is enough to fill the hole.  Thus, we can largely separate concerns about correctness and concerns about efficiency.  In sections BLAH BLAH BLAH, we focus only on correctness, we set up the framework we use to achieve efficiency in section BLAH, and we demonstrate the use of the framework in sections BLAH BLAH BLAH.
+- 3. soundness and completeness
+  - Take from ICFP paper; explain how soundness can be done without parser extensionality, at the cost of algorithmic complexity elsewhere.
+- 4. dependently typed parser, parsing parse trees for completeness
+  - Take from ICFP paper
+- 5. explanation of fiat framework for refining splitters
+  - Goals
+    - Already described parsing, already have goals (build efficient parser) (refresh memory on this, and justify), now describe the tools
+    - Describe why these are the pieces we need
+    - Describe Fiat
+    - Describe Splitter Refinement
+    - Describe Basic Optimizations
+  - [Rehash parsing, rehash goals, intro rest of paper]
+    - At a Glance
+      - We have now finished describing the general parsing algorithm, as well as its correctness proofs; we have an algorithm, parametrized on an "oracle" that describes how to split the string for each rule, that decides whether or not a given structure can be imposed on any block of unstructured text.  For the remainder of this paper, we will focus on how to implement the splitting oracle.  Correctness is not enough, in general; algorithms also need to be fast to use.  We thus focus primarily on efficiency when designing splitting algorithms.
+      - The goals of this work, as mentioned in section [INTRO], are to present a framework for constructing proven-correct parsers incrementally, and argue for its eventual feasability.  To this end, we build on the previous work of Fiat [CITE], to allow us to build programs incrementally while maintaining correctness guarantees.  This section will describe Fiat, and how it is used in this project.  The following sections will focus more on the details of the splitting algorithms, and less on the details of Fiat.
+  - [Justification of tools] What counts as efficient?
+    - To guide our implementations, we characterize efficient splitters informally, as follows.  Although our eventual concrete efficiency target is to be competitive with extant open source JavaScript parsers, when designing algorithms, we aim at the asymptotic efficiency target of linearity in the length of the string.  In practice, the dominating concern is that doubling the length of the string should only double the duration of the parse, and not quadruple it (or more!).  [CITATION NEEDED]  To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is O(length of string * (product over all nonterminals of the number of possible rules for that nonterminal)). Here is an example of hitting the worst-case scenario: [EXAMPLE HERE]
+      - <justification>
+    - To avoid hitting this worst-case scenario, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be O(length of string); backtracking will never happen.  This is future work.
+  - [Describe Fiat]
+    - Efficiency targets in hand, we move on to incremental construction.  The key idea is that parsing rules tend to fall into clumps that are similar between grammars.  For example, many grammars use delimiters (such as whitespace, commas, or binary operation symbols) as splitting points, but only between well-balanced brackets (such as double quotes, parentheses, or comment markers).  We can take advantage of these similarities by baking the relevant algorithms into basic building blocks, which can then be reused across different grammars.  To allow this reuse, we construct the splitters incrementally, allowing us to deal with different rules in different ways.
+    - The Fiat framework [citation] is the scaffolding of our splitter implementations.  As a framework, the goal of Fiat is to enable library-writers to construct algorithmic building blocks packaged with correctness guarantees, in such a way that users can easily and mostly-automatically make use of these building blocks when they apply.
+    - The Fiat Mindset
+      - The correctness guarantees of Fiat are based on specifications in the form of Gallina propositions.  For example, the specification of a valid has_parse method is that [has_parse str = true <-> there exists a parse tree of str].  Fiat allows incremental construction of algorithms by providing a language for seamlessly mixing specifications and code.  The language is a light-weight monadic syntax with one extra operator: a non-deterministic choice operator.  [DIAGRAM OF SYNTAX]  An algorithm starts out as a nondeterministic choice of a value satisfying the specification.  Coding then proceeds by refinement.  [DIAGRAM DEFINITION OF REFINEMENT]
+      - In our use case, we express the specification of the splitter as a nondeterministic choice of a list of split locations, such that any splitting location that results in a valid parse tree is contained in the list.  We then refine this into a choice of a splitting location for each rule actually in the grammar (checking for equality with the given rule), and then can refine (implement) the splitter for each rule separately.   For example, if we are looking to split the string at the location of the first '+' character, we might first pick the list of "valid locations to split at", and then refine that into a computation that picks the location of the first '+', and returns the singleton list containing that, and then replace the remaining bit of nondeterminism with a computation of the location of the first '+'.
+      - The key to making Fiat work is that the refinement rules package their correctness properties, so users don't have to worry about correctness when programming by refinement.  We use Coq's setoid rewriting machinery to automatically glue together the various correctness proofs when refining only a part of a program.
+    - We now describe the refinements that we do within this framework, to implement efficient splitters.
+  - [Basic opt] First optimization: indexed representation of strings
+    - One optimization that is always possible is to represent the current string being parsed in this recursive call as a pair of indices into the original string.  This allows us to optimize the code doing string manipulation, as it will no longer need to copy strings around, only do index arithmetic.
+  - [Basic opt] Intro to next sections
+    - In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this paper.  We begin by tying up the (ab)* grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and "+", and then expressions with numbers, "+" and parentheses.
+    - For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the (ab)* grammar looks like this: <INSERT GOAL>.  To get to this goal, we write this code: <COQ CODE HERE, with comments describing what each line does>  We thus have to describe how to split a string for the rules <RULES HERE>, and provide proofs that these splitting strategies are complete.  We begin the next section with this splitting strategy.
+- 6. fixed length nonterminals, parsing (ab)*; parsing #s; parsing #, ()
+  - Goals
+    - Explore the framework
+    - Demonstrate that we can implement the "obvious" rules to handle a large swath of CFG rules
+  - At a Glance
+    - There are some strategies that are obvious enough that it's easy for the computer to decide whether or not it's good to apply them.  For example, if a rule starts with a terminal, then we should split off one character, because terminals are always single characters.  These rules are enough to parse some simple grammars, such as the regular expression grammar (ab)*; the grammar accepting numbers; and the grammar accepting parenthesized numbers.  [GIVE GRAMMARS HERE]  In this section, we explain how we parse these grammars.
+  - The splitting strategy: if all strings parsed by a given item are the same length, then we can always split the string when faced with that nonterminal.
+    - Walk through an example of parsing "abab" as "(ab)*", describing the splitting at each point.
+    - Another example: "((123))"
+    - For (ab)*, the item "a", and the item "b" only parse strings of length 1.  Thus when asked for the split for "a", then "b(ab)*", we can split after one character, and similarly after "b". 
+    - For numbers with parentheses (of which numbers are a subgrammar), digits always have length 1, so we can split after the first character.
+  - Implementation as a refinement rule:
+    - Describe the obligation Fiat presents us with for the splitter for (#) [CODE HERE]
+    - Describe how each rule is handled
+    - For the relevant rules, we can compute the length at compile time.  Here is the algorithm. <Coq code here>
+    - To actually make use of this, we must satisfy the correctness criterion.  This is what refinement means.  We relate the length to the parse trees by a few correctness criteria.
+      - Note that we need to use only well-founded recursion.
+    - We provide a decision procedure for the validity of this rule.
+  - In practice, we don't actually need to rewrite it; because it's never suboptimal to apply this rule (returning a single split location is just about the best we can do (TODO: handle invalid parses and backtracking better)), so we do it automatically, baking it into the initial goal, along with the indexed representation change (explain)
+- 7. disjoint items, parsing #, +
+  - Goals
+    - More exploration
+    - Demonstrate a slightly less obvious strategy that handles even more rules
+  - [Intro]
+  - The splitting strategy: if the set of all characters in one item are disjoint from the set of possible first characters of the next item, then we can split at either the first character not in the first set, or at the first character that is in the second set.
+    - For example, if the nonterminal "number" accepts {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, and the nonterminal "binop" accepts {+, -}, then we can either look for the first non-digit and split there, or we can look for the first + or -, and split there.
+  - Write down the grammars we want to handle.
+  - We compute the sets reflectively.  Here is the algorithm.  Again, note the well-founded recursion.  <Coq code here>
+  - We relate the computation to the parse trees by a few correctness criteria, similar to above.
+    - Describe the structures and lemmas that go into it.
+  - This rule is not applied automatically, because we have this choice about what sets to look for.  In the future, we might pick whichever set is smaller, and do that (but perhaps we think one is more likely than the other?)  Instead we use setoid_rewrite, with [reflexivity] to solve the side-conditions.
+  - Example: Parse "1+2+3"
+- 8. table of next binary operation at the current level, parsing #, +, ()
+  - Goals:
+    - Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable
+    - Demo the main interesting splitting strategy
+      - Explain how it can be used
+      - Explain the ideas behind the table
+      - Explain the way it's implemented
+  - [nontrivial] Example grammars we want to handle: #, +, (); S-expressions
+  - [nontrivial] Explain commonalities (balance, binops)
+  - [idea] Lookup tables, in O(length)
+    - The only new rule is when we have pexpr followed by +.
+    - The key insight here is that, to know where to split, we need to know where the next "+" at the current level of parenthetization is.
+    - Building the table
+      - explain rule, keep list of binops at all levels
+    - Proving the table correct
+      - explain correctness criterion
+      - Relation of paren-balanced-hiding on a string to properties of grammar.
+  - [explain implementation]
+  - [impl detail] Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
+  - Example: parsing "(1+2)+3"
+    - The generated table is
+      "5, 1, 0, -, -, 0 .
+        , 4, 3, 2, 1
+      "
+- (Optional: Showing that parser has "reasonable" performance on grammars with non-brute-force splitter (by using arrays and native strings))
+- (Really Optional: building parse trees, not just recognizers)
+- 9. Future work
+  - Grammars and efficiency: The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations. <lookup list of JS implementations>  We plan to profile our parser against these on <lookup test suite>
+    - Description of anticipated challenges, based on the JavaScript grammar <lookup JS grammar>
+  - Generating Parse Trees
+    - We plan to eventually generate parse trees, and error messages, rather than just booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser.
+  - Validating extraction
+    - By adapting <Clement's work>, our parsers will be able to be compiled to verified bedrock/assembly, within Coq
+  - Esoterica
+    - Take from ICFP
 
 
