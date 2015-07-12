@@ -5,5 +5,32 @@
     \begin{itemize} \item  We plan to eventually generate parse trees, and error messages, rather than just booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser. \end{itemize}
   \item  Validating extraction
     \begin{itemize} \item  By adapting <Clement's work>, our parsers will be able to be compiled to verified bedrock/assembly, within Coq \end{itemize}
-  \item  Esoterica
-    \begin{itemize} \item  Take from ICFP \end{itemize} \end{itemize}
+    \end{itemize}
+\section{Future work with dependent types}
+  Recall from \autoref{ch:dep-types} that dependent types have allowed us to refine our parsing algorithm to prove its own soundness and completeness.
+  
+  However, we still have some work left to do to clean up the implementation of the dependently typed version of the parser.
+  
+  \paragraph{Formal extensionality/parametricity proof}
+    To completely finish the formal proof of completeness, as described in this paper, we need to prove the parser extensionality axiom from \autoref{sec:parser-extensionality-theorem}.  We need to prove that the parser does not make any decisions based on any arguments to its interface other than \fname{split}, internalizing the obvious parametricity proof.  (Alternatively, as mentioned above, we could hope to use an extension of Coq with internalized parametricity~\cite{InColor}.)
+
+  \paragraph{Even more self-reference}
+    We might also consider reusing the same generic parser to generate the extensionality proofs, by instantiating the type families for success and failure with families of propositions saying that all instantiations of the parser, when called with the same parsing problem, always return values that are equivalent when converted to Booleans.  A more specialized approach could show just that \fname{has\_parse} agrees with \fname{parse} on successes and with \fname{has\_no\_parse} on failures:
+    \begin{align*}
+      &\fname{T$_{\fname{success}}$}~\hole~\hole~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
+      & \quad \defeq \fname{has\_parse}~\farg{nt}~\farg{s} = \true \wedge \fname{parse}~\farg{nt}~\farg{s} \neq \None \\
+      & \fname{T$_{\fname{failure}}$}~\hole~\hole~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
+      & \quad\defeq \fname{has\_parse}~\farg{nt}~\farg{s} = \false\wedge \fname{has\_no\_parse}\neq \inl{\unittt}
+    \end{align*}
+
+%  \paragraph{More splitters} % that are not \texorpdfstring{$\mathcal{O}(n!)$}{O(n!)}}
+%    In order to synthesize efficient parsers, we plan to construct other splitters that reduce the complexity of the algorithm to well-known bounds for various common classes of grammars.
+
+  \paragraph{Synthesizing dependent types automatically?}
+    Although finding sufficiently general (dependent) type signatures was a Herculean task before we finished the completeness proof and discovered the idea of using parallel parse traces, it was mostly straightforward once we had proofs of soundness and completeness of the simply typed parser in hand; most of the issues we faced involving having to figure out how to thread additional hypotheses, which showed up primarily at the very end of the proof, through the entire parsing process.  Subsequently instantiating the types was also mostly straightforward, with most of our time and effort being spent writing transformations between nearly identical types that had slightly different hypotheses, e.g., converting a \indname{Foo} involving strings shorter than $s_1$ into another analogous \indname{Foo}, but allowing strings shorter than $s_2$, where $s_1$ is not longer than $s_2$.  Our experience raises the question of whether it might be possible to automatically infer dependently typed generalizations of an algorithm, which subsume already-completed proofs about it, and perhaps allow additional proofs to be written more easily.
+
+  \paragraph{Further generalization}
+    Finally, we believe our parser could be generalized even further; the algorithm we have implemented is essentially an algorithm for inhabiting arbitrary inductive type families, subject to some well-foundedness, enumerability, and finiteness restrictions on the arguments to the type family.  The interface we described is, conceptually, a composition of this inhabitation algorithm with recursion and inversion principles for the type family we are inhabiting (\indname{ParseTreeOf} in this paper).  Our techniques for refining this algorithm so that it could prove itself sound and complete should therefore generalize to this viewpoint.
+  
+%\section{Concluding remarks}
+%      Though there remain many useful extensions to investigate, we believe our approach to parsing highlights some of the benefits and pitfalls of dependently typed programming.  Dependent types allow more code reuse---but require more type annotations and more thought about type signatures---and, in our experience, make it easier to think about proofs, and perhaps easier to maintain them altogether.
