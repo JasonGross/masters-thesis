@@ -17,12 +17,12 @@
   Our final parser derivation relies on a relational parametricity property for polymorphic functions in Coq's type theory Gallina.  With Coq as it is today, we need to prove this property manually for each eligible function, even though we can prove metatheoretically that it holds for them all.  Bernardy and Guilhem~\cite{InColor} have shown how to extend type theories with support for materializing ``free theorem'' parametricity facts internally, and we might be able to simplify our implementation using such a feature.
   \todo{Flesh this out}
 
-\section{What's New} \label{sec:new}
+\section{What's New} \label{sec:new} \label{sec:goals}
   \todo{Fill out what's new}
   
   The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
   
-  Start with naive recursive-descent parsing, a la {}[Ringe <citation>].  We parameterize the parser on a "splitting oracle", which describes how to recurse. <section citation>  As far as we can tell, the idea of factoring the algorithmic complexity like this is new. <section citation> 
+  Start with naive recursive-descent parsing.  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse. <section citation>  As far as we can tell, the idea of factoring the algorithmic complexity like this is new. <section citation> 
   
   We use fiat to incrementally build efficient parsers by refinement. <section citation>
   

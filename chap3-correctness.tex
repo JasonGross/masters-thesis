@@ -40,4 +40,4 @@
       & \typeto \indname{ParseTreeOf}~\farg{nt}~\farg{s} + (\indname{ParseTreeOf}~\farg{nt}~\farg{s} \typeto \False)
     \end{align*}
 
-    That is, given a nonterminal and a string, $\fname{parse}$ either returns a valid parse tree, or returns a \emph{proof} that the existence of any parse tree is \emph{contradictory} (i.e., implies $\False$, the empty type).  Our implementation follows this dependently typed style.  Our main goal in the project was to arrive at a $\fname{parse}$ function of just this type, generic in an arbitrary choice of context-free grammar, implemented and proven correct in an elegant way.
+    That is, given a nonterminal and a string, $\fname{parse}$ either returns a valid parse tree, or returns a \emph{proof} that the existence of any parse tree is \emph{contradictory} (i.e., implies $\False$, the empty type).  Our implementation follows this dependently typed style.  Our main initial goal in the project was to arrive at a $\fname{parse}$ function of just this type, generic in an arbitrary choice of context-free grammar, implemented and proven correct in an elegant way.

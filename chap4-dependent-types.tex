@@ -58,11 +58,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
 \begin{align*}
   \fname{T$_{\fname{success}}$},~~\fname{T$_{\fname{failure}}$} & \oftypesep \String \typeto \typelist{\Nonterminal} \typeto \ParseQuery \typeto \Type \\
   %\\
-  \fname{split} & \oftypesep \String \typeto \typelist{\Nonterminal} \typeto \ParseQuery \typeto \typelist{\typeprod{\String}{\String}} \\
-  \fname{split\_sound} & \oftypesep \forall~~\farg{s$_0$}~~\farg{unseen}~~\farg{query}~~\farg{s$_1$}~~\farg{s$_2$},~~(\farg{s$_1$}, \farg{s$_2$}) \in \fname{split}~~\farg{s$_0$}~~\farg{unseen}~~\farg{query} %\\
-  %& \phantom{{}\oftypesep \forall~~\farg{s$_0$}~~\farg{unseen}~~\farg{query}~~\farg{s$_1$}~~\farg{s$_2$},}~~~~
-  \typeto \strcat{\farg{s$_1$}}{\farg{s$_2$}} = \fname{string\_part}~~\farg{query} \\
-  \\
+  \fname{split} & \oftypesep \String \typeto \typelist{\Nonterminal} \typeto \ParseQuery \typeto \typelist{\nat} \\ \\
   \fname{terminal\_success} & \oftypesep (\oftype{\farg{ch}}{\Terminal})
    \typeto \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~ \left(\parsetreetype{\terminal{\farg{ch}}}{\str{\farg{ch}}}\right) \\
   \fname{terminal\_failure} & \oftypesep (\oftype{\farg{ch}}{\Terminal})
@@ -241,7 +237,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     & \fname{parse$'$}~~(\parsetreetype{\epsilon}{\str{}}) \defeq \inl{~\fname{nil\_success}} \\
     & \fname{parse$'$}~~(\parsetreetype{\epsilon}{\hole}) \defeq \inrp{\fname{nil\_failure}~\text{\Lightning{}}} \\
     & \fname{parse$'$}~~(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}}) \defeq \\
-    & \qquad\caseof{\fname{any\_parse}~~\farg{it}~~\farg{its}~~\left(\fname{split}~~(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}})\right)} \\
+    & \qquad\caseof{\fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\left(\fname{split}~~(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}})\right)} \\
     & \qquad\acase{\inl{\farg{ret}}}{\inl{\farg{ret}}} \\
     & \qquad\acase{\inr{\farg{ret}}}{\inrp{\fname{cons\_failure}~~\hole~~\farg{ret}}} \\
     & \fname{parse$'$}~~(\parsetreetype{\farg{nt}}{\farg{s}}) \defeq \\
@@ -257,11 +253,11 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     & \qquad\cifindent\cifindent\celse\inrp{\fname{production\_failure$_=$}~~\hole~~\hole} \\
     & \qquad\cifindent\celse\inrp{\fname{production\_failure$_{\not\in}$}~~\hole~~\hole} \\
     \\
-    & \fname{any\_parse}~~\farg{it}~~\farg{its}~~\nil \defeq \inrp{\afun{\oftype{\hole}{(\hole\in\nil)}}{\text{\Lightning}}} \\
-    & \fname{any\_parse}~~\farg{it}~~\farg{its}~~\left(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{xs}}\right) \defeq \\
-    & \qquad\caseof{\fname{parse$'$}~~(\parsetreetype{\farg{it}}{\farg{s$_1$}})
-        \textbf{,}~~\fname{parse$'$}~~(\parsetreetype{\farg{its}}{\farg{s$_2$}})
-        \textbf{,}~~\fname{any\_parse}~~\farg{it}~~\farg{its}~~\farg{xs}} \\
+    & \fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\nil \defeq \inrp{\afun{\oftype{\hole}{(\hole\in\nil)}}{\text{\Lightning}}} \\
+    & \fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\left(\cons{\farg{x}}{\farg{xs}}\right) \defeq \\
+    & \qquad\caseof{\fname{parse$'$}~~(\parsetreetype{\farg{it}}{\fname{take}\ensuremath{{}_{\farg{x}}}~~\farg{s}})
+        \textbf{,}~~\fname{parse$'$}~~(\parsetreetype{\farg{its}}{\fname{drop}\ensuremath{{}_{\farg{x}}}~~\farg{s}})
+        \textbf{,}~~\fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\farg{xs}} \\
     & \qquad\acase{\inl{\farg{ret$_1$}}
         \textbf{,}~~\inl{\farg{ret$_2$}}
         \textbf{,}~~\aswidthof{\hole}{\inl{\farg{ret$'$}}}}
@@ -276,8 +272,8 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
         {\inr{\hole}}
   \end{align*}
   where the hole on the last line constructs a proof of
-  $$\forall~(\farg{s$'_1$}, \farg{s$'_2$}) \in \left(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{xs}}\right),~~\typesum{\fname{T$_{\fname{failure}}$}~~\hole~~\hole~~(\parsetreetype{\farg{it}}{\farg{s$'_1$}})}{\fname{T$_{\fname{failure}}$}~~\hole~~\hole~~(\parsetreetype{\farg{its}}{\farg{s$'_2$}})}$$
-  by using \farg{ret$'$} directly when $(\farg{s$'_1$}, \farg{s$'_2$})\in \farg{xs}$, and using whichever one of \farg{ret$_1$} and \farg{ret$_2$} is on the right when $(\farg{s$'_1$}, \farg{s$'_2$}) = (\farg{s$_1$}, \farg{s$_2$})$.  While straightforward, the use of sum types makes it painfully verbose without actually adding any insight; we prefer to elide the actual term.
+  $$\forall~\farg{x$'$} \in \left(\cons{\farg{x}}{\farg{xs}}\right),~~\typesum{\fname{T$_{\fname{failure}}$}~~\hole~~\hole~~(\parsetreetype{\farg{it}}{\fname{take}_{\farg{x$'$}}~~\farg{s}})}{\fname{T$_{\fname{failure}}$}~~\hole~~\hole~~(\parsetreetype{\farg{its}}{\fname{drop}_{\farg{x$'$}}~~\farg{s}})}$$
+  by using \farg{ret$'$} directly when $\farg{x$'$}\in \farg{xs}$, and using whichever one of \farg{ret$_1$} and \farg{ret$_2$} is on the right when $\farg{x$'$} = \farg{x}$.  While straightforward, the use of sum types makes it painfully verbose without actually adding any insight; we prefer to elide the actual term.
   %% \begin{align*}
   %%   & \qquad\acase{\inr{\farg{ret$_1$}}
   %%     \textbf{,}~~\aswidthof{\hole}{\inr{\farg{ret$_2$}}}

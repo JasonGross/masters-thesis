@@ -78,6 +78,7 @@
 \newcommand{\unittt}{\texttt{()}}
 \newcommand{\String}{\texttt{String}}
 \newcommand{\Bool}{\texttt{Bool}}
+\newcommand{\nat}{\ensuremath{\mathbb{N}}}
 \newcommand{\textnbsp}{\ifmmode\else~\fi}
 \newcommand{\typeprodsep}{\ensuremath{\times}}
 \newcommand{\typeprod}[2]{#1\textnbsp\typeprodsep\textnbsp#2}
@@ -131,6 +132,7 @@
 \newcommand{\cifindent}[1][]{\aswidthof{#1}{\kw{then}}~~~}
 \newcommand{\cthen}{\cifindent[\kw{then}]}
 \newcommand{\celse}{\cifindent[\kw{else}]}
+\newcommand{\cancomputeto}[2]{#1~~\ensuremath{\rightsquigarrow}~~#2}
 
 {\catcode`\_=12 \gdef\textunderscore{_}}
 \def\_{\textunderscore}
