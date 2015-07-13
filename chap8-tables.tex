@@ -1,6 +1,51 @@
 \chapter{Parsing well-parenthesized expressions}
 \section{At a Glance}
-  We finally get to a grammar that requires a non-trivial splitting strategy.  In this section,   
+  We finally get to a grammar that requires a non-trivial splitting strategy.  In this section, we describe how to parse strings for a grammar that accepts arithmetical expressions involving numbers, pluses, and well-balanced parentheses.  More generally, this strategy handles any binary operation with guarded brackets.
+  
+\section{Grammars we can parse}
+  Consider the following two grammars, with \nt{digit} denoting the nonterminal that accepts any single decimal digit.
+  
+  Parenthesized addition:
+  \begin{center}
+    \AxiomC{$s$ $\in$ \nt{digit}}
+    \RightLabel{\scriptsize(\nt{number$_1$)}
+    \UnaryInfC{$s$ $\in$ \nt{number}}
+  \DisplayProof\qquad
+    \AxiomC{$s_0$ $\in$ \nt{digit}}
+    \AxiomC{$s_1$ $\in$ \nt{number}}
+    \RightLabel{\scriptsize(\nt{number$_*$)}
+    \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \nt{number}}
+  \DisplayProof
+  \end{center}
+  \begin{center}
+    \AxiomC{$s_0$ $\in$ \terminal{(}}
+    \AxiomC{$s_1$ $\in$ \nt{expr}}
+    \AxiomC{$s_2$ $\in$ \terminal{)}}
+    \RightLabel{\scriptsize(\nt{pexpr})}
+    \UnaryInfC{$s$ $\in$ \nt{pexpr}}
+  \DisplayProof
+  \end{center}
+  \begin{center}
+    \AxiomC{$s$ $\in$ \nt{number}}
+    \RightLabel{\scriptsize(\nt{expr-number)}
+    \UnaryInfC{$s$ $\in$ \nt{expr}}
+  \DisplayProof\qquad
+    \AxiomC{$s_0$ $\in$ \nt{pexpr}}
+    \AxiomC{$s_1$ $\in$ \nt{+expr}}
+    \RightLabel{\scriptsize(\nt{expr-pxpr)}
+    \BinaryInfC{$s$ $\in$ \nt{expr}}
+  \end{center}
+  \begin{center}
+    \AxiomC{$s$ $\in$ $\epsilon$}
+    \RightLabel{\scriptsize($\epsilon$-\nt{+expr})}
+    \UnaryInfC{$s$ $\in$ \nt{+expr}}
+  \DisplayProof\qquad
+    \AxiomC{$s_0$ $\in$ \terminal{+}}
+    \AxiomC{$s_1$ $\in$ \nt{expr}}
+    \RightLabel{\scriptsize(\nt{+expr})}
+    \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \nt{+expr}}
+  \DisplayProof
+  \end{center}HERE
   \begin{itemize} \item  Goals:
     \begin{itemize} \item  Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable 
     \item  Demo the main interesting splitting strategy 
