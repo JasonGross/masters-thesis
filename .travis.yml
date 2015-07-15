@@ -20,6 +20,7 @@ env:
 
 
 #install:
+ - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/xcolor.zip && unzip xcolor.zip && mv xcolor/*.{dtx,ins} ./ && latex xcolor.ins
 # - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/comment/comment.sty
 # - ./etc/ci/wget_retry.sh http://www.ctan.org/tex-archive/macros/latex/contrib/misc/nextpage.sty
 # - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/fonts/stmaryrd.zip && unzip stmaryrd && mv stmaryrd/*.{mf,dtx} ./ && latex stmaryrd.dtx
