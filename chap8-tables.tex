@@ -8,12 +8,12 @@
   Parenthesized addition:
   \begin{center}
     \AxiomC{$s$ $\in$ \nt{digit}}
-    \RightLabel{\scriptsize(\nt{number$_1$)}
+    \RightLabel{\scriptsize(\nt{number$_1$})}
     \UnaryInfC{$s$ $\in$ \nt{number}}
   \DisplayProof\qquad
     \AxiomC{$s_0$ $\in$ \nt{digit}}
     \AxiomC{$s_1$ $\in$ \nt{number}}
-    \RightLabel{\scriptsize(\nt{number$_*$)}
+    \RightLabel{\scriptsize(\nt{number$_*$})}
     \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \nt{number}}
   \DisplayProof
   \end{center}
@@ -22,17 +22,17 @@
     \AxiomC{$s_1$ $\in$ \nt{expr}}
     \AxiomC{$s_2$ $\in$ \terminal{)}}
     \RightLabel{\scriptsize(\nt{pexpr})}
-    \UnaryInfC{$s$ $\in$ \nt{pexpr}}
+    \TrinaryInfC{$s$ $\in$ \nt{pexpr}}
   \DisplayProof
   \end{center}
   \begin{center}
     \AxiomC{$s$ $\in$ \nt{number}}
-    \RightLabel{\scriptsize(\nt{expr-number)}
+    \RightLabel{\scriptsize(\nt{expr-number})}
     \UnaryInfC{$s$ $\in$ \nt{expr}}
   \DisplayProof\qquad
     \AxiomC{$s_0$ $\in$ \nt{pexpr}}
     \AxiomC{$s_1$ $\in$ \nt{+expr}}
-    \RightLabel{\scriptsize(\nt{expr-pxpr)}
+    \RightLabel{\scriptsize(\nt{expr-pxpr})}
     \BinaryInfC{$s$ $\in$ \nt{expr}}
   \end{center}
   \begin{center}
