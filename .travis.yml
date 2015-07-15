@@ -22,6 +22,7 @@ env:
 install:
  - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/xcolor.zip && unzip xcolor.zip && mv xcolor/*.{dtx,ins} ./ && latex xcolor.ins
  - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/bussproofs/bussproofs.sty
+ - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/float.zip && unzip float.zip && mv float/*.{dtx,ins} ./ && latex float.ins
 # - ./etc/ci/wget_retry.sh http://www.ctan.org/tex-archive/macros/latex/contrib/misc/nextpage.sty
 # - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/fonts/stmaryrd.zip && unzip stmaryrd && mv stmaryrd/*.{mf,dtx} ./ && latex stmaryrd.dtx
 # - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/wallpaper/wallpaper.sty
