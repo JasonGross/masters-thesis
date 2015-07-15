@@ -163,3 +163,12 @@ README.text
 *.main
 *.atfi
 /articles/
+
+# download-packages target
+*.drv
+*.dtx
+*.ins
+mathtools.sty
+mhsetup.sty
+mathtools.zip
+mathtools/
