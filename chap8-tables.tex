@@ -1,4 +1,11 @@
 \chapter{Parsing well-parenthesized expressions}
+% \begin{itemize} \item  Goals:
+%    \begin{itemize} \item  Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable 
+%    \item  Demo the main interesting splitting strategy 
+%      \begin{itemize} \item  Explain how it can be used 
+%      \item  Explain the ideas behind the table 
+%      \item  Explain the way it's implemented \end{itemize} \end{itemize}
+%  
 \section{At a Glance}
   We finally get to a grammar that requires a non-trivial splitting strategy.  In this section, we describe how to parse strings for a grammar that accepts arithmetical expressions involving numbers, pluses, and well-balanced parentheses.  More generally, this strategy handles any binary operation with guarded brackets.
   
@@ -82,30 +89,24 @@
   \end{align*}
   
 \section{The Splitting Strategy}
-  \section{The Main Idea}
+  \subsection{The Main Idea}
     The only rule not already handled is the rule that says that a \nt{pexpr}~\nt{+expr} is an \nt{expr}.  The key insight here is that, to know where to split, we need to know where the next \terminal{+} at the current level of parenthetization is.  If we can compute an appropriate lookup table in time linear in the length of the string, then our splitter overall with be linear.
     
-  \section{Building the Lookup Table}
+  \subsection{Building the Lookup Table}
+    We build the table by reading the string from right to left, storing for each character the location of the next \terminal{+} at the current level of parenthetization.  To compute this location we keep a list of the location of next \terminal{+} at every level of parenthetization.  For example, for the string ``((1+2)+3)+4'', we have the following lists at each point in the string:
+    \todo{Insert computation here}
+      \begin{itemize} \item  The generated table is  \\
+          "5, 1, 0, -, -, 0 .
+            , 4, 3, 2, 1
+          "
+    \end{itemize}
     
-  \begin{itemize}
-\item           \begin{itemize} \item  explain rule, keep list of binops at all levels \end{itemize} 
-        \item  Proving the table correct 
-          \begin{itemize} \item  explain correctness criterion 
-          \item  Relation of paren-balanced-hiding on a string to properties of grammar. \end{itemize} \end{itemize}
+  \subsection{The Code}
+    \todo{Insert Haskell-like code here}
+ 
+    Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
+  \subsection{The Correctness Proof}
+    To use this as a refinement rule, we need to prove it complete.  To do this, we prove \todo{explain correctness criterion and insert relation of paren-balanced-hiding on a string to properties of grammar.}
 
-  \begin{itemize} \item  Goals:
-    \begin{itemize} \item  Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable 
-    \item  Demo the main interesting splitting strategy 
-      \begin{itemize} \item  Explain how it can be used 
-      \item  Explain the ideas behind the table 
-      \item  Explain the way it's implemented \end{itemize} \end{itemize}
-  
-  \item  {}[idea] 
-  \item  {}[explain implementation]
-  \item  {}[impl detail] Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
-  \item  Example: parsing "(1+2)+3"
-    \begin{itemize} \item  The generated table is  \\
-      "5, 1, 0, -, -, 0 .
-        , 4, 3, 2, 1
-      "
-\end{itemize} \end{itemize}
+ 
+
