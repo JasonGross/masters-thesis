@@ -6,14 +6,21 @@
   Consider the following two grammars, with \nt{digit} denoting the nonterminal that accepts any single decimal digit.
   
   Parenthesized addition:
+  \todoask{Should I write these as inference rules, or as standard CFG presentations?}
   \begin{center}
-    \AxiomC{$s$ $\in$ \nt{digit}}
-    \RightLabel{\scriptsize(\nt{number$_1$})}
-    \UnaryInfC{$s$ $\in$ \nt{number}}
+    \AxiomC{$s$ $\in$ $\epsilon$}
+    \RightLabel{\scriptsize(\nt{number?-$\epsilon$})}
+    \UnaryInfC{$s$ $\in$ \nt{number?}}
   \DisplayProof\qquad
+    \AxiomC{$s$ $\in$ \nt{number}}
+    \RightLabel{\scriptsize(\nt{number?})}
+    \UnaryInfC{$s$ $\in$ \nt{number?}}
+  \DisplayProof\qquad
+  \end{center}
+  \begin{center}
     \AxiomC{$s_0$ $\in$ \nt{digit}}
-    \AxiomC{$s_1$ $\in$ \nt{number}}
-    \RightLabel{\scriptsize(\nt{number$_*$})}
+    \AxiomC{$s_1$ $\in$ \nt{number?}}
+    \RightLabel{\scriptsize(\nt{number})}
     \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \nt{number}}
   \DisplayProof
   \end{center}
@@ -34,6 +41,7 @@
     \AxiomC{$s_1$ $\in$ \nt{+expr}}
     \RightLabel{\scriptsize(\nt{expr-pxpr})}
     \BinaryInfC{$s$ $\in$ \nt{expr}}
+  \DisplayProof
   \end{center}
   \begin{center}
     \AxiomC{$s$ $\in$ $\epsilon$}
@@ -45,23 +53,54 @@
     \RightLabel{\scriptsize(\nt{+expr})}
     \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \nt{+expr}}
   \DisplayProof
-  \end{center}HERE
+  \end{center}
+  
+  \todo{Pick one of these}
+  
+  Or, in the standard presentation:
+  \begin{align*}
+    \nt{expr} & \Coloneqq \nt{number}~|~\nt{pexpr}~\nt{+expr} \\
+    \nt{+expr} & \Coloneqq \epsilon~|~\terminal{+}~\nt{expr} \\
+    \nt{pexpr} & \Coloneqq \terminal{(}~\nt{expr}~\terminal{)} \\
+    \nt{number} & \Coloneqq \nt{digit}~\nt{number?} \\
+    \nt{number?} & \Coloneqq \epsilon~|~\nt{number} \\
+    \nt{digit} & \Coloneqq \terminal{0}~|~\terminal{1}~|~\terminal{2}~|~\terminal{3}~|~\terminal{4}~|~\terminal{5}~|~\terminal{6}~|~\terminal{7}~|~\terminal{8}~|~\terminal{9}
+  \end{align*}
+  
+  We have carefully constructed this grammar so that the first character of the string suffices to uniquely determine which rule of any given nonterminal to apply.
+  
+  S-expressions are a notation for nested space-separated lists.  By replacing \nt{digit} with a nonterminal that accepts any symbol in a given set, which must not contain either of the brackets, nor whitespace, and replacing \terminal{+} with a space character \terminal{\ }, we get a grammar for S-expressions:
+  \begin{align*}
+    \nt{expr} & \Coloneqq \nt{atom}~|~\nt{pexpr}~\nt{sexpr} \\
+    \nt{sexpr} & \Coloneqq \epsilon~|~\nt{whitespace}~\nt{expr} \\
+    \nt{pexpr} & \Coloneqq \terminal{(}~\nt{expr}~\terminal{)} \\
+    \nt{atom} & \Coloneqq \nt{symbol}~\nt{atom?} \\
+    \nt{atom?} & \Coloneqq \epsilon~|~\nt{atom} \\
+    \nt{whitespace} & \Coloneqq \nt{whitespace-char}~\nt{whitespace?} \\
+    \nt{whitespace?} & \Coloneqq \epsilon~|~\nt{whitespace} \\
+    \nt{whitespace-char} & \Coloneqq \terminal{\ }~|~\terminal{\textbackslash n}~|~\terminal{\textbackslash t}~|~\terminal{\textbackslash r}
+  \end{align*}
+  
+\section{The Splitting Strategy}
+  \section{The Main Idea}
+    The only rule not already handled is the rule that says that a \nt{pexpr}~\nt{+expr} is an \nt{expr}.  The key insight here is that, to know where to split, we need to know where the next \terminal{+} at the current level of parenthetization is.  If we can compute an appropriate lookup table in time linear in the length of the string, then our splitter overall with be linear.
+    
+  \section{Building the Lookup Table}
+    
+  
+          \begin{itemize} \item  explain rule, keep list of binops at all levels \end{itemize} 
+        \item  Proving the table correct 
+          \begin{itemize} \item  explain correctness criterion 
+          \item  Relation of paren-balanced-hiding on a string to properties of grammar. \end{itemize} \end{itemize}
+
   \begin{itemize} \item  Goals:
     \begin{itemize} \item  Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable 
     \item  Demo the main interesting splitting strategy 
       \begin{itemize} \item  Explain how it can be used 
       \item  Explain the ideas behind the table 
       \item  Explain the way it's implemented \end{itemize} \end{itemize}
-  \item  {}[nontrivial] Example grammars we want to handle: \#, +, (); S-expressions
-  \item  {}[nontrivial] Explain commonalities (balance, binops)
-  \item  {}[idea] Lookup tables, in O(length)
-    \begin{itemize} \item  The only new rule is when we have pexpr followed by +. 
-    \item  The key insight here is that, to know where to split, we need to know where the next "+" at the current level of parenthetization is. 
-    \item  Building the table 
-      \begin{itemize} \item  explain rule, keep list of binops at all levels \end{itemize} 
-    \item  Proving the table correct 
-      \begin{itemize} \item  explain correctness criterion 
-      \item  Relation of paren-balanced-hiding on a string to properties of grammar. \end{itemize} \end{itemize}
+  
+  \item  {}[idea] 
   \item  {}[explain implementation]
   \item  {}[impl detail] Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
   \item  Example: parsing "(1+2)+3"
