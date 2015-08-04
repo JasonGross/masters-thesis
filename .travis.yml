@@ -12,8 +12,8 @@ addons:
     - grep
 
 env:
-# global:
-#   - secure: "ehec8FC6y923UXtB2fMULF/xkQJkwWwzD6xFxyz0lc80IqR8Rmxh16nLKGxI9jD11qjbYSzp1yPVadXyBoSheop5aZPxeXixL49y26ikIRkyuQQdHyjsM34etoPmCKw2vVXvD+JAwjTa6qYpihSOdDXltog8ZNHF6Wp28ZaWW8g="
+ global:
+   - secure: "f8v4KvmNz0nsSwH+HwDK9lvu25GllBrvwC0rU+1DAzayJM0vcCj8/wSDAjqUcGUH2b9/fU6P2vIJ9zp9gSitgnN5tojaYdWn65OQ9H0CfZlFybpqpFBypZYvI+pFf7IPueUAnTVKdSYMn0R034Dw9CJ8APReI8fTlqMNCtgpvXI="
 
  matrix:
    - UPDATE_NIGHTLIES="yes"
