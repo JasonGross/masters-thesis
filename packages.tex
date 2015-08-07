@@ -65,7 +65,11 @@
 \newcommand{\aswidthof}[2]{\rlap{#1}\hphantom{#2}}
 
 \newcommand{\kw}[1]{{\fontfamily{pcr}\selectfont\textbf{#1}}}
-\newcommand{\str}[1]{\texttt{"\textcolor{DarkGreen}{#1}"}}
+\newcommand{\tactic}[1]{\texttt{#1}}
+\newcommand{\strcolored}[1]{\texttt{\textcolor{DarkGreen}{#1}}}
+\newcommand{\stropen}{\texttt{"}}
+\newcommand{\strclose}{\texttt{"}}
+\newcommand{\str}[1]{\stropen\strcolored{#1}\strclose}
 \newcommand{\regex}[1]{\texttt{#1}}
 \newcommand{\nt}[1]{\texttt{#1}}
 \newcommand{\terminal}[1]{\texttt{\textquotesingle\textcolor{DarkGreen}{#1}\textquotesingle}}
@@ -139,5 +143,6 @@
 {\catcode`\_=12 \gdef\textunderscore{_}}
 \def\_{\textunderscore}
 
+\usepackage[all]{xy}
 % highlight overfull hboxes
 %\overfullrule=5pt

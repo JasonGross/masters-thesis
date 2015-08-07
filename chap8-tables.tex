@@ -1,3 +1,5 @@
+\newcommand{\nullentry}{\texttt{\ensuremath{\emptyset}}}
+
 \chapter{Parsing well-parenthesized expressions}
 % \begin{itemize} \item  Goals:
 %    \begin{itemize} \item  Hope to show that nontrivial splitting strategies are reasonably expressible, and reusable 
@@ -13,62 +15,10 @@
   Consider the following two grammars, with \nt{digit} denoting the nonterminal that accepts any single decimal digit.
   
   Parenthesized addition:
-  \todoask{Should I write these as inference rules, or as standard CFG presentations?}
-  \begin{center}
-    \AxiomC{$s$ $\in$ $\epsilon$}
-    \RightLabel{\scriptsize(\nt{number?-$\epsilon$})}
-    \UnaryInfC{$s$ $\in$ \nt{number?}}
-  \DisplayProof\qquad
-    \AxiomC{$s$ $\in$ \nt{number}}
-    \RightLabel{\scriptsize(\nt{number?})}
-    \UnaryInfC{$s$ $\in$ \nt{number?}}
-  \DisplayProof\qquad
-  \end{center}
-  \begin{center}
-    \AxiomC{$s_0$ $\in$ \nt{digit}}
-    \AxiomC{$s_1$ $\in$ \nt{number?}}
-    \RightLabel{\scriptsize(\nt{number})}
-    \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \nt{number}}
-  \DisplayProof
-  \end{center}
-  \begin{center}
-    \AxiomC{$s_0$ $\in$ \terminal{(}}
-    \AxiomC{$s_1$ $\in$ \nt{expr}}
-    \AxiomC{$s_2$ $\in$ \terminal{)}}
-    \RightLabel{\scriptsize(\nt{pexpr})}
-    \TrinaryInfC{$s$ $\in$ \nt{pexpr}}
-  \DisplayProof
-  \end{center}
-  \begin{center}
-    \AxiomC{$s$ $\in$ \nt{number}}
-    \RightLabel{\scriptsize(\nt{expr-number})}
-    \UnaryInfC{$s$ $\in$ \nt{expr}}
-  \DisplayProof\qquad
-    \AxiomC{$s_0$ $\in$ \nt{pexpr}}
-    \AxiomC{$s_1$ $\in$ \nt{+expr}}
-    \RightLabel{\scriptsize(\nt{expr-pxpr})}
-    \BinaryInfC{$s$ $\in$ \nt{expr}}
-  \DisplayProof
-  \end{center}
-  \begin{center}
-    \AxiomC{$s$ $\in$ $\epsilon$}
-    \RightLabel{\scriptsize($\epsilon$-\nt{+expr})}
-    \UnaryInfC{$s$ $\in$ \nt{+expr}}
-  \DisplayProof\qquad
-    \AxiomC{$s_0$ $\in$ \terminal{+}}
-    \AxiomC{$s_1$ $\in$ \nt{expr}}
-    \RightLabel{\scriptsize(\nt{+expr})}
-    \BinaryInfC{\strcat{$s_0$}{$s_1$} $\in$ \nt{+expr}}
-  \DisplayProof
-  \end{center}
-  
-  \todo{Pick one of these}
-  
-  Or, in the standard presentation:
   \begin{align*}
-    \nt{expr} & \Coloneqq \nt{number}~|~\nt{pexpr}~\nt{+expr} \\
+    \nt{expr} & \Coloneqq \nt{pexpr}~\nt{+expr} \\
     \nt{+expr} & \Coloneqq \epsilon~|~\terminal{+}~\nt{expr} \\
-    \nt{pexpr} & \Coloneqq \terminal{(}~\nt{expr}~\terminal{)} \\
+    \nt{pexpr} & \Coloneqq \nt{number}~|~\terminal{(}~\nt{expr}~\terminal{)} \\
     \nt{number} & \Coloneqq \nt{digit}~\nt{number?} \\
     \nt{number?} & \Coloneqq \epsilon~|~\nt{number} \\
     \nt{digit} & \Coloneqq \terminal{0}~|~\terminal{1}~|~\terminal{2}~|~\terminal{3}~|~\terminal{4}~|~\terminal{5}~|~\terminal{6}~|~\terminal{7}~|~\terminal{8}~|~\terminal{9}
@@ -78,9 +28,9 @@
   
   S-expressions are a notation for nested space-separated lists.  By replacing \nt{digit} with a nonterminal that accepts any symbol in a given set, which must not contain either of the brackets, nor whitespace, and replacing \terminal{+} with a space character \terminal{\ }, we get a grammar for S-expressions:
   \begin{align*}
-    \nt{expr} & \Coloneqq \nt{atom}~|~\nt{pexpr}~\nt{sexpr} \\
+    \nt{expr} & \Coloneqq \nt{pexpr}~\nt{sexpr} \\
     \nt{sexpr} & \Coloneqq \epsilon~|~\nt{whitespace}~\nt{expr} \\
-    \nt{pexpr} & \Coloneqq \terminal{(}~\nt{expr}~\terminal{)} \\
+    \nt{pexpr} & \Coloneqq \nt{atom}~|~\terminal{(}~\nt{expr}~\terminal{)} \\
     \nt{atom} & \Coloneqq \nt{symbol}~\nt{atom?} \\
     \nt{atom?} & \Coloneqq \epsilon~|~\nt{atom} \\
     \nt{whitespace} & \Coloneqq \nt{whitespace-char}~\nt{whitespace?} \\
@@ -93,7 +43,56 @@
     The only rule not already handled is the rule that says that a \nt{pexpr}~\nt{+expr} is an \nt{expr}.  The key insight here is that, to know where to split, we need to know where the next \terminal{+} at the current level of parenthesization is.  If we can compute an appropriate lookup table in time linear in the length of the string, then our splitter overall with be linear.
     
   \subsection{Building the Lookup Table}
-    We build the table by reading the string from right to left, storing for each character the location of the next \terminal{+} at the current level of parenthesization.  To compute this location we keep a list of the location of next \terminal{+} at every level of parenthesization.  For example, for the string ``((1+2)+3)+4'', we have the following lists at each point in the string:
+    We build the table by reading the string from right to left, storing for each character the location of the next \terminal{+} at the current level of parenthesization.  To compute this location we keep a list of the location of next \terminal{+} at every level of parenthesization.
+    
+    \todoask{Should this example be set off with a \texttt{\textbackslash subsubsection} or a bold \textbf{Example.} or something?}
+    Let's start with a very simple example, before moving to a more interesting one.  To parse \str{4+5}, we are primarily interested in the case where we are parsing something that is a number, or parenthesized on the left, followed by a \terminal{+}, followed by any expression.  For this item, we want to split the string right before the \terminal{+}, and say that the \str{4} can be parsed as a number (or parenthesized expression), and that the \str{+5} can be parsed as a \terminal{+} followed by an expression.
+    
+    To do this, we build a table that keeps track of the location of the next \terminal{+}, starting from the right of the string.  We will end up with the table:
+    \begin{center}
+    \tt
+    \begin{tabular}{lccccc}
+    \textrm{Table Entries: }&&1&0&\nullentry \\
+    \textrm{String: } &\stropen&\strcolored{4}&\strcolored{+}&\strcolored{5}&\strclose
+    \end{tabular}
+    \end{center}
+    At the \terminal{5}, there is no next \terminal{+}, and we are not parenthesized at all, so we record this as \nullentry.  At the \terminal{+}, we record that there is a \terminal{+} at the current level of parenthesization, with \texttt{0}.  Then, since the \terminal{4} is not a \terminal{+}, we increment the previous number, and store \texttt{1}.  This is the correct location to split the string: we parse 1 character as a \nt{number}, and the rest as \nt{+expr}.
+    
+    Now let's try a more complicated example: \str{(1+2)+3}.  We want to split this string into \str{(1+2)} and \str{+3}.  The above strategy is insufficient to do this; we need to keep track of the next \terminal{+} at all levels of parenthesization at each point.  We will end up with the following table, where the bottom-most element is the current level, and the ones above that are higher levels.  We use lines to indicate chains of numbers at the same level of parenthesization.    
+    \[
+    \xymatrix@C=0.5pc@R=0pc{
+    &&&\texttt{4}\ar@{-}[r] &\texttt{3}\ar@{-}[r] &\texttt{2}\ar@{-}[r] &\texttt{1}\ar@{-}[ddr]\\
+    \text{Table Entries:} \\
+    &&\texttt{5}\ar@{-}[uur]&\texttt{1}\ar@{-}[r] &\texttt{0}\ar@{-}[r] &\nullentry\ar@{-}[r] &\nullentry&\texttt{0}\ar@{-}[r] &\nullentry\\
+    \aswidthof{\text{String:}}{\text{Table Entries:}} & \stropen & \strcolored{(} & \strcolored{1} & \strcolored{+} & \strcolored{2} & \strcolored{)} & \strcolored{+} & \strcolored{3} & \strclose
+    }
+    \]    
+    We again start from the right.  Since there are no \terminal{+}s that we have seen, we store the singleton list \valuelist{\nullentry}, indicating that we know about only the current level of parenthesization, and that there is no \terminal{+} to the right.  At the \terminal{+} before the \str{3}, we store the singleton list \valuelist{0}, indicating that the current character is a \terminal{+}, and we only know about one level of parenthesization.  At the \terminal{)}, we increment the counter for \terminal{+}, but we also now know about a new level of parenthesization.  So we store the two element list \valuelist{\nullentry, 1}.  At the \terminal{3}, we increment all numbers, storing \valuelist{\nullentry, 2}.  At the \terminal{+} before the \str{2}, we store \texttt{0} at the current level, and increment higher levels, storing \valuelist{0, 3}.  At the \terminal{1}, we simply increment all numbers, storing \valuelist{1, 4}.  Finally, at the \terminal{(}, we pop a level of parenthesization, and increment the remaining numbers, storing \valuelist{5}.  This is correct; we have 5 characters in the first string, and when we go to split \str{1+2} into \str{1} and \str{+2}, we have the list \valuelist{1, 4}, and the first string does indeed contain 1 character.
+    
+    As an optimization, we can drop all but the first element of each list once we're done computing, and, in fact, can do this as we construct the table.  However, for correctness, it is easier to reason about a list located at each location.
+    
+    
+  \subsection{Table Correctness}
+    What is the correctness condition on this table?  The correctness condition Fiat gives us is that the splits we compute must be the only ones that give rise to valid parses.  This is hard to reason about directly, so we use an intermediate correctness condition: for any cell of the table \todoask{IS MEANING OF CELL OBVIOUS?}, if it is empty (is \nullentry, or does not exist at all), then there must not be a well-parenthesized fragment of the string starting at that point and ending with a \terminal{+}, which closes the appropriate number of parentheses for this level of parenthesization. \todo{FIXME, THIS PREVIOUS SENTENCE SEEMS LIKE A CONFUSING EXPLANATION} \todoask{Any suggestions?} If the cell points to a given location, then that location must contain a \terminal{+}, and the fragment of the string starting at the current location and going up to but not including the \terminal{+}, must not contain any \terminal{+}s which are ``exposed''.  \todoask{THIS ALSO SEEMS CONFUSING.  Ideas?  Should I put code/math first?}
+    
+    More formally, we can define a notation of paren-balanced and paren-balanced-hiding-\terminal{+}.  Say that a string is paren-balanced at level $n$ if it closes exactly $n$ more parentheses than it opens, and there is no point at which it has closed more than n more parentheses than it has opened.  So the string \str{1+2)} is paren-balanced at level 1 (because it closes 1 more parenthesis than it opens), and the string \str{1+2)+(3} is not paren balanced at any level (though the string \str{1+2)+(3)} is paren-balanced at level 1).  A string is paren-balanced-hiding-\terminal{+} at level $n$ if it is paren-balanced at level $n$, and, at any point at which there is a \terminal{+}, at most $n-1$ more parentheses have been closed than opened.  So \str{(1+2)} is paren-balanced-hiding-\terminal{+} at level 0, and \str{(1+2))} is paren-balanced-hiding-\terminal{+} at level 1, and \str{(1+2)+3} is not paren-balanced-hiding-\terminal{+} at any level, though it is paren-balanced at level 0.  \todoask{THIS IS VERBOSE.  MAYBE I SHOULD START WITH CODE?}
+    
+    Then, the formal correctness condition is that if a cell at parenthesis level $n$ points to a location $\ell$, then the string from the cell up to but not including $\ell$ must be paren-balanced-hiding-\terminal{+} at level $n$, and the character at location $\ell$ must be a \terminal{+}.  If the cell is empty, then the string up to but not including any subsequent \terminal{+} must not be paren-balanced at level $n$.
+    
+    The table computed by the algorithm given above satisfies this correctness condition, and this correctness condition implies that the splitting locations given by the table are the only ones that produce valid parse trees; there is a unique table satisfying this correctness condition (because it picks out the \emph{first} \terminal{+} at the relevant level), and any split location which is not appropriately paren-balanced/paren-balanced-hiding results in no parse tree.  \todoask{THIS SEEMS REPETITIVE?}
+    
+    Although proving and formalizing this rule took some doing, once it was formalized, using it for any particular grammar is a one-liner with \tactic{setoid\textunderscore rewrite}:
+\begin{verbatim}
+  setoid_rewrite refine_binop_table; [ presimpl_after_refine_binop_table | reflexivity.. ].
+\end{verbatim}
+    \todoask{How much explanation does this code deserve?  Should it be in here at all?}
+    
+    In order to make it this easy, we had to formalize a correctness condition on the grammar: any use of the \terminal{+} character must be hidden by parentheses when on the left of the \nt{pexpr}\nt{+expr} rule, and \nt{pexpr} must only generate well-parenthesized strings.  By defining a function that computes this as a boolean we can use \tactic{reflexivity} to prove that any particular grammar is valid, when it is.
+    
+    
+    
+    
+    For example, for the string ``((1+2)+3)+4'', we have the following lists at each point in the string:
     \todo{Insert computation here}
       \begin{itemize} \item  The generated table is  \\
           "5, 1, 0, -, -, 0 .
