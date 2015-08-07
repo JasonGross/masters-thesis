@@ -23,6 +23,7 @@ install:
  - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/xcolor.zip && unzip xcolor.zip && mv xcolor/*.{dtx,ins} ./ && latex xcolor.ins
  - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/bussproofs/bussproofs.sty
  - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/latex/contrib/mathtools.zip && unzip mathtools.zip && (cd mathtools && for i in *.dtx; do (mv $i ../ && cd .. && tex $i); done)
+ - ./etc/ci/wget_retry.sh http://mirrors.ctan.org/macros/generic/diagrams/xypic.zip && unzip xypic.zip && (find xypic -name "*.sty" | xargs mv -t ./)
 
 script: make
 
