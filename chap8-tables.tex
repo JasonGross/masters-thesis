@@ -90,10 +90,10 @@
   
 \section{The Splitting Strategy}
   \subsection{The Main Idea}
-    The only rule not already handled is the rule that says that a \nt{pexpr}~\nt{+expr} is an \nt{expr}.  The key insight here is that, to know where to split, we need to know where the next \terminal{+} at the current level of parenthetization is.  If we can compute an appropriate lookup table in time linear in the length of the string, then our splitter overall with be linear.
+    The only rule not already handled is the rule that says that a \nt{pexpr}~\nt{+expr} is an \nt{expr}.  The key insight here is that, to know where to split, we need to know where the next \terminal{+} at the current level of parenthesization is.  If we can compute an appropriate lookup table in time linear in the length of the string, then our splitter overall with be linear.
     
   \subsection{Building the Lookup Table}
-    We build the table by reading the string from right to left, storing for each character the location of the next \terminal{+} at the current level of parenthetization.  To compute this location we keep a list of the location of next \terminal{+} at every level of parenthetization.  For example, for the string ``((1+2)+3)+4'', we have the following lists at each point in the string:
+    We build the table by reading the string from right to left, storing for each character the location of the next \terminal{+} at the current level of parenthesization.  To compute this location we keep a list of the location of next \terminal{+} at every level of parenthesization.  For example, for the string ``((1+2)+3)+4'', we have the following lists at each point in the string:
     \todo{Insert computation here}
       \begin{itemize} \item  The generated table is  \\
           "5, 1, 0, -, -, 0 .
@@ -231,6 +231,8 @@ End IndexedImpl.
       := bin_op_data_of_maybe
            (hd None (map Some possible_valid_open_closes)).
 
+
+
 \end{verbatim}
 
 \begin{verbatim}
@@ -296,5 +298,64 @@ End IndexedImpl.
            start_level.
 
     Definition paren_balanced_hiding (str : String) := paren_balanced_hiding' str 0.
+
+\end{verbatim}
+
+\begin{verbatim}
+  Definition cell_of_next_bin_ops_spec'' (level : nat) (cell : option nat) (str : String) offset idx
+    := (cell = Some idx
+        -> index_points_to_binop offset idx str
+           /\ paren_balanced_hiding' (take idx (drop offset str)) level)
+       /\ (cell = None
+           -> paren_balanced' (take idx (drop offset str)) level
+           -> index_not_points_to_binop offset idx str).
+
+  Definition list_of_next_bin_ops_spec'' (level : nat) (table : list (option nat)) (str : String) offset idx
+    := cell_of_next_bin_ops_spec'' level (nth offset table None) str offset idx.
+
+  Definition list_of_next_bin_ops_spec' (level : nat) (table : list (option nat)) (str : String)
+    := forall offset idx, list_of_next_bin_ops_spec'' level table str offset idx.
+
+  Definition list_of_next_bin_ops_spec
+    := list_of_next_bin_ops_spec' 0.
+
+
+
+  (** We build a version of paren-balanced-hiding to compute each cell
+      of the table. *)
+  (**
+<<
+pb' ch n "" = (n == 0)
+pb' ch n (ch :: s) = n > 0 && pb' ch n s
+pb' ch n ('(' :: s) = pb' ch (n + 1) s
+pb' ch n (')' :: s) = n > 0 && pb' ch (n - 1) s
+pb' ch n (_ :: s) = pb' ch n s
+
+pb = pb' '+' 0
+>>
+*)
+
+
+  Definition compute_next_bin_op'_step
+    := (fun ch next level
+        => if is_bin_op ch
+           then if Compare_dec.gt_dec level 0
+                then option_map S (next level)
+                else Some 0
+           else if is_open ch
+                then option_map S (next (S level))
+                else if is_close ch
+                     then if Compare_dec.gt_dec level 0
+                          then option_map S (next (pred level))
+                          else None
+                     else option_map S (next level)).
+
+  Definition compute_next_bin_op' (str : String) (level : nat)
+  : option nat
+    := fold
+         compute_next_bin_op'_step
+         (fun _ => None)
+         str
+         level.
 
 \end{verbatim}
