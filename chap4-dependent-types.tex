@@ -453,7 +453,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     \end{align*}
     where \fname{bool\_of\_sum} is, for any types $A$ and $B$, the function of type \typesum{\ensuremath{A}}{\ensuremath{B}}~\typeto~\Bool\space obtained by sending everything in the left component to \true, and everything in the right component to \false.
 
-  \subsection{Putting it all together}
+  \subsection{Putting It All Together}
     Now we have parsers returning the following types:
     \begin{align*}
       \fname{has\_parse} & \oftypesep \Nonterminal\typeto\String\typeto\Bool \\
@@ -482,14 +482,14 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
 \section{Missteps, Insights, and Dependently Typed Lessons} \label{sec:lessons}
   We will now take a step back from the parser itself, and briefly talk about the process of coding it.  We encountered a few pitfalls that we think highlight some key aspects of dependently typed programming, and our successes suggest benefits to be reaped from using dependent types.
 
-  \subsection{The trouble of choosing the right types}
+  \subsection{The Trouble of Choosing the Right Types}
     Although we began by attempting to write the type-signature of our parser, we found that trying to write down the correct interface, without any code to implement it, was essentially intractable.  Giving your functions dependent types requires performing a nimble balancing act between being uselessly general on the one hand, and too overly specific on the other, all without falling from the highropes of well-typedness onto the unforgiving floor of type errors.
 
     We have found what we believe to be the worst sin the typechecker will let you get away with: having different levels of generality in different parts of your code base, which are supposed to interface with each other without a thoroughly vetted abstraction barrier between them.  Like setting your highropes at different tensions, every trip across the interface will be costly, and if the abstraction levels get too far away, recovering your balance will require Herculean effort.
 
     We eventually gave up on writing a dependently typed interface from the start, and decided instead to implement a simply typed Boolean recognizer, together with proofs of soundness and completeness.  Once we had in hand these proofs, and the data types required to carry them out, we found that it was mostly straightforward to write down the interface and refine our parser to inhabit its newly generalized type.
 
-  \subsection{Misordered splitters} \label{sec:misordered-splitters}
+  \subsection{Misordered Splitters} \label{sec:misordered-splitters}
     One of our goals in this presentation was to hide most of the abstraction-level mismatch that ended up in our actual implementation, often through clever use of notation overloading.  One of the most significant mismatches we managed to overcome was the way to represent the set of productions.  In this paper, we left the type as an abstract mathematical set, allowing us to forgo concerns about ordering, quantification, and occasionally well-typedness.
 
     In our Coq implementation, we fixed the type of productions to be a list very early on, and paid the price when we implemented our parse-tree parser.  As mentioned in the execution of the example in \autoref{sec:example-min-execution}, we wanted to restrict our attention to certain productions, and rule out the other ones using dependent types.  This should be possible if we parameterize over not just a splitter, but a production-selector, and only require that our string type be well-typed for productions given by the production-selector.  However, the implementation that we currently have requires a well-typed string type for all productions; furthermore, it does not allow the order in which productions are considered to depend on the augmented string data.  We paid for this with the extra 300 lines of code we had to write to interleave two different splitters, so that we could handle the cases that we dismissed above as being ill-typed and therefore not necessary to consider.  That is, because our types were not formulated in a way that actually made these cases ill-typed, we had to deal with them, much to our displeasure.

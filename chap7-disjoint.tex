@@ -12,60 +12,60 @@
   \item  This rule is not applied automatically, because we have this choice about what sets to look for.  In the future, we might pick whichever set is smaller, and do that (but perhaps we think one is more likely than the other?)  Instead we use \verb|setoid_rewrite|, with {}[reflexivity] to solve the side-conditions.
   \item  Example: Parse "1+2+3" \end{itemize}
   
-\begin{verbatim}
-Section IndexedImpl.
-Typeclasses Opaque If_Then_Else.
-  Lemma ComputationalSplitter'
-  : FullySharpened (string_spec plus_expr_grammar).
-  Proof.
-    start honing parser using indexed representation.
-
-    hone method "splits".
-    {
-      simplify parser splitter.
-      setoid_rewrite refine_disjoint_search_for; [ | reflexivity.. ].
-      simpl.
-      finish honing parser method.
-    }
-
-    FullySharpenEachMethodWithoutDelegation.
-    extract delegate-free implementation.
-    simpl; higher_order_reflexivityT.
-  Defined.
-
-  Lemma ComputationalSplitter
-  : FullySharpened (string_spec plus_expr_grammar).
-  Proof.
-    let impl := (eval simpl in (projT1 ComputationalSplitter')) in
-    refine (existT _ impl _).
-    abstract (exact (projT2 ComputationalSplitter')).
-  Defined.
-
-End IndexedImpl.
-  
-  
-Lemma refine_disjoint_search_for {G : grammar Ascii.ascii} {str nt its}
-      (Hvalid : grammar_rvalid G)
-      (H_disjoint : disjoint ascii_beq
-                             (possible_terminals_of G nt)
-                             (possible_first_terminals_of_production G its))
-: refine {splits : list nat
-         | split_list_is_complete
-             G str
-             (NonTerminal nt)
-             its splits}
-         (ret [find_first_char_such_that str (fun ch => list_bin ascii_beq ch (possible_first_terminals_of_production G its))]).
-
-Lemma refine_disjoint_search_for_not {G : grammar Ascii.ascii} {str nt its}
-      (Hvalid : grammar_rvalid G)
-      (H_disjoint : disjoint ascii_beq
-                             (possible_terminals_of G nt)
-                             (possible_first_terminals_of_production G its))
-: refine {splits : list nat
-         | split_list_is_complete
-             G str
-             (NonTerminal nt)
-             its splits}
-         (ret [find_first_char_such_that str (fun ch => negb (list_bin ascii_beq ch (possible_terminals_of G nt)))]).
-
-\end{verbatim}
+%\begin{verbatim}
+%Section IndexedImpl.
+%Typeclasses Opaque If_Then_Else.
+%  Lemma ComputationalSplitter'
+%  : FullySharpened (string_spec plus_expr_grammar).
+%  Proof.
+%    start honing parser using indexed representation.
+%
+%    hone method "splits".
+%    {
+%      simplify parser splitter.
+%      setoid_rewrite refine_disjoint_search_for; [ | reflexivity.. ].
+%      simpl.
+%      finish honing parser method.
+%    }
+%
+%    FullySharpenEachMethodWithoutDelegation.
+%    extract delegate-free implementation.
+%    simpl; higher_order_reflexivityT.
+%  Defined.
+%
+%  Lemma ComputationalSplitter
+%  : FullySharpened (string_spec plus_expr_grammar).
+%  Proof.
+%    let impl := (eval simpl in (projT1 ComputationalSplitter')) in
+%    refine (existT _ impl _).
+%    abstract (exact (projT2 ComputationalSplitter')).
+%  Defined.
+%
+%End IndexedImpl.
+%  
+%  
+%Lemma refine_disjoint_search_for {G : grammar Ascii.ascii} {str nt its}
+%      (Hvalid : grammar_rvalid G)
+%      (H_disjoint : disjoint ascii_beq
+%                             (possible_terminals_of G nt)
+%                             (possible_first_terminals_of_production G its))
+%: refine {splits : list nat
+%         | split_list_is_complete
+%             G str
+%             (NonTerminal nt)
+%             its splits}
+%         (ret [find_first_char_such_that str (fun ch => list_bin ascii_beq ch (possible_first_terminals_of_production G its))]).
+%
+%Lemma refine_disjoint_search_for_not {G : grammar Ascii.ascii} {str nt its}
+%      (Hvalid : grammar_rvalid G)
+%      (H_disjoint : disjoint ascii_beq
+%                             (possible_terminals_of G nt)
+%                             (possible_first_terminals_of_production G its))
+%: refine {splits : list nat
+%         | split_list_is_complete
+%             G str
+%             (NonTerminal nt)
+%             its splits}
+%         (ret [find_first_char_such_that str (fun ch => negb (list_bin ascii_beq ch (possible_terminals_of G nt)))]).
+%
+%\end{verbatim}

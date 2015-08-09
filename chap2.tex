@@ -4,15 +4,33 @@
 %% You can process specific files by typing their names in at the 
 %% \files=
 %% prompt when you run the file main.tex through LaTeX.
-\chapter{Related Work and Other Approaches to Parsing}
+\chapter{Related Work and Other Approaches to Parsing} \label{sec:related}
 
-  Stepping back a bit, we describe how our approach to parsing fits in 
+  Stepping back a bit, we describe how our approach to parsing relates to existing work.
+  
+  \todo{Fill in content}
+  \todoask{Am I missing any branches?}
+  \begin{itemize}
+    \item Say something about recursive descent parsing seeming obvious and trivial only after writing out the types inductively?
+    \item Say something about LR parsers and processor/memory constraints?
+    \item Parser combinators
+      \begin{itemize}
+        \item parse by consuming characters from the string.
+        \item Allow incremental parsing
+        \item Can be extended to return lists of possible parses
+        \item Ridge describes a way to wrap parser combinators to guarantee termination and ensure completeness; the algorithm we presented above uses essentially the same strategy.  He also proves correctness.
+      \end{itemize}
+    \item Parsing with derivatives
+      \begin{itemize}
+        \item a kind-of conceptual dual to standard parser-combinators; rather than mutating the string as we go along, we mutate the language
+        \item With parser combinators, we drop bits of the string handled by each rule as we go along.  With derivatives, we drop bits of each rule (or entire rules) as we go down the string.
+        \item \todo{Look into whether its been verified}
+      \end{itemize}
+    \item Look into what \cite{PEG}s and \cite{GLL}s are.
+    \item Approaches to verifying parsers: correct-by-construction, induction.  Other way?  \todo{Read paper}
+  \end{itemize}
 
-  We begin with an overview of the general theory and setting of parsing, with an eye towards verified parsers.  
-
-\todo{Very basic Background on parsers, grammars}
-
-\section{Related Work} \label{sec:related}
+  \todo{Rewrite the rest of this part so it's not just Adam's words}
   The field of parsing is one of the most venerable in computer-science.  Still with us are a variety of parsing approaches born in times of much more severe constraints on memory and processor speed, including various flavors of LR parsers, which apply only to strict subsets of the context-free grammars, to guarantee ability to predict which production applies based on finite look-ahead into a string.  However, despite rumors to the contrary, the field of parsing is far from dead.  In the twentieth century, the functional-programming world experimented with a variety of approaches to \emph{parser combinators}~\cite{pcomb}, where parsers are higher-order functions built from a small set of typed combinators.  In the twenty-first century alone, a number of new parsing approaches have been proposed or popularized, including parsing expression grammars (PEGs)~\cite{PEG}, derivative-based parsing~\cite{Derivs}, and GLL parsers~\cite{GLL}.
 
   However, our approach is essentially the same, algorithmically, as the one that Ridge demonstrated with a verified parser-combinator system~\cite{Ridge}, taking naive recursive-descent parsing and adding a layer to prune duplicative calls to the parser.  His proof was carried out in HOL4, necessarily without using dependent types.  Our new work may be interesting for the aesthetic appeal of our unusual application of dependent types to get the parser to generate some of its own soundness proof.  Ridge's parser also has worst-case $O(n^5)$ running time in the input-string length.  In the context of our verified implementation, we plan to explore a variety of optimizations based on clever, grammar-specific choices of string-splitter functions, which should have a substantial impact on the run-time cost of parsing some relevant grammars, and which we conjecture will not require any changes to the development presented in this paper.
@@ -20,15 +38,13 @@
   A few other past projects have verified parsers with proof assistants, applying to derivative-based parsing~\cite{DerivsCoq} and SLR~\cite{SLR} and LR(1)~\cite{LR1} parsers.  Several projects have used proof assistants to apply verified parsers within larger programming-language tools.  RockSalt~\cite{RockSalt} does run-time memory-safety enforcement for x86 binaries, relying on a verified machine-code parser that applies derivative-based parsing for regular expressions.  The verified Jitawa~\cite{Jitawa} and CakeML~\cite{CakeML} language implementations include verified parsers, handling Lisp and ML languages, respectively.
 
   Our final parser derivation relies on a relational parametricity property for polymorphic functions in Coq's type theory Gallina.  With Coq as it is today, we need to prove this property manually for each eligible function, even though we can prove metatheoretically that it holds for them all.  Bernardy and Guilhem~\cite{InColor} have shown how to extend type theories with support for materializing ``free theorem'' parametricity facts internally, and we might be able to simplify our implementation using such a feature.
-  \todo{Flesh this out}
+  \todo{Flesh this out, rewrite it so it's not all Adam's words, read the papers}
 
-\section{What's New} \label{sec:new} \label{sec:goals}
-  \todo{Fill out what's new}
-  
+\section{What's New and What's Old} \label{sec:new} \label{sec:goals}
   The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
   
-  Start with naive recursive-descent parsing.  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse. <section citation>  As far as we can tell, the idea of factoring the algorithmic complexity like this is new. <section citation> 
+  We begin with naive recursive-descent parsing.\todo{Citation?}  \todo{Say something about viewing recursive-descent as an instance of general inhabitation-decision not being anywhere in the literature?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse. \todo{section citation}  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
   
-  We use fiat to incrementally build efficient parsers by refinement. <section citation>
+  We use Fiat to incrementally build efficient parsers by refinement. \todo{section citation}
   
-  The idea of reusing the parsing algorithm to prove its own completeness, by parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge. <section citation>
+  Additionally, we take a digression in \autoref{ch:dep-types} to describe how our parser can be used to prove its own completeness; the idea of reusing the parsing algorithm to generate proofs, parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge.

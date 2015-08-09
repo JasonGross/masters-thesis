@@ -1,6 +1,6 @@
-\chapter{Parsing Context Free Grammars}
+\chapter{Parsing Context-Free Grammars}
 
-  We begin with an overview of the general setting, and a description of our approach to parsing.
+  We begin with an overview of the general setting and a description of our approach to parsing.
 
 \section{Parsing}
   The job of a parser is to decompose a flat list of characters, called a \emph{string}, into a structured tree, called a \emph{parse tree}, on which further operations can be performed.  As a simple example, we can parse \str{ab} as an instance of the regular expression \regex{(ab)$^*$}, giving this parse tree, where we write $\cdot$ for string concatenation.
@@ -29,7 +29,7 @@
 
   Proving completeness---that our parser succeeds whenever there is a valid parse tree---is conceptually straightforward: trace the algorithm, showing that if the parser returns \false\space at a given point, then assuming a corresponding parse tree exists yields a contradiction.  The one wrinkle in this approach is that the algorithm, the logic program, is not guaranteed to terminate.
 
-  \subsection{Infinite regress} \label{sec:loopy-grammar-example}
+  \subsection{Infinite Regress} \label{sec:loopy-grammar-example}
     Since we have programmed our parser in Coq, our program must be terminating by construction.  However, naive recursive-descent parsers do not always terminate!
 
     To see how such parsers can diverge, consider the following example.  When defining the grammar \regex{(ab)$^*$}, perhaps we give the following production rules:
@@ -92,7 +92,7 @@
 
     If \fname{split} returns $(\str{}, \str{ab})$ as the first item in its list when given \str{ab}, then the code given above will diverge in the way demonstrated above with the infinite derivation tree.
 
-  \subsection{Aborting early} \label{sec:solve-nontermination}
+  \subsection{Aborting Early} \label{sec:solve-nontermination}
 
     To work around this wrinkle, we keep track of what nonterminals we have not yet tried to parse the current string as, and we abort early if we see a repeat.  Note that this strategy only works for grammars with finite sets of nonterminals, in line with most formalizations of context-free grammars.  For our example grammar, since there is only one nonterminal, we only need to keep track of the current string.  We refactor the above code to introduce a new parameter \farg{prev\_s}, recording the previous string we were parsing.  We use $\farg{s} < \farg{prev\_s}$ to denote the test that \farg{s} is strictly shorter than \farg{prev\_s}. \label{sec:valid-param-parser}
     \begin{align*}
@@ -120,7 +120,7 @@
 \section{Standard Formal Definitions} \label{sec:standard-definitions}
   Before proceeding, we pause to standardize on terminology and notation for context-free grammars and parsers.  In service of clarity for some of our later explanations, we formalize grammars via natural-deduction inference rules, a slightly nonstandard choice.
 
-  \subsection{Context Free Grammar}
+  \subsection{Context-Free Grammar}
     A \emph{context-free grammar} consists of \emph{items}, which may be either \emph{terminals} (characters) or \emph{nonterminals}; plus a set of \emph{productions}, each mapping a nonterminal to a sequence of items.
 
     \subsubsection{Example: \texorpdfstring{\regex{(ab)$^*$}}{(ab)*}}
