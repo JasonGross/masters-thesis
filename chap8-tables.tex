@@ -80,7 +80,38 @@
     Then, the formal correctness condition is that if a cell at parenthesis level $n$ points to a location $\ell$, then the string from the cell up to but not including $\ell$ must be paren-balanced-hiding-\terminal{+} at level $n$, and the character at location $\ell$ must be a \terminal{+}.  If the cell is empty, then the string up to but not including any subsequent \terminal{+} must not be paren-balanced at level $n$.
     
     The table computed by the algorithm given above satisfies this correctness condition, and this correctness condition implies that the splitting locations given by the table are the only ones that produce valid parse trees; there is a unique table satisfying this correctness condition (because it picks out the \emph{first} \terminal{+} at the relevant level), and any split location which is not appropriately paren-balanced/paren-balanced-hiding results in no parse tree.  \todoask{THIS SEEMS REPETITIVE?}
+  
+  \subsection{Diving into Refinement Code}
+    \todo{Check the following assumptions: that the reader has seen:
+    \begin{itemize}
+    \item what Fiat goals look like
+    \item what the initial representation change to the indexed representation looks like
+    \item the general structure of remaining splitter goals
+    \end{itemize}
+    }
     
+    \todo{Remove me.  GOALS: rule is non-trivial, but use should be trivial.  pieces to making it trivial: no representation change, automatic discovery of binary operation and brackets, reflective side-conditions}
+    
+    Although the rule itself is non-trivial, our goal is to make using this rule as trivial as possible; we now explain how this refinement rule requires only one line of code to use.
+    
+    There are three components to making a rule that can be used with a one-liner: not requiring a change of representation; reflective computation of the side-conditions, allowing them all to be discharged with \tacREFLEXIVITY; and automatic discovery of any arguments to the rule.  We cover each of these separately.
+    
+    \subsubsection{Doing Without a New Representation}
+      Recall from \todo{secref} that the first step in any parser/splitter \todo{decide on which one to use} is to use an indexed representation of strings, where splitting a string only involves updating the indices into the original string, as well as taking care of all of the straightforward grammar rules.  Naively, we'd need to store a fresh table every time we split the string.
+      
+      How do we get around computing a new table on splits?  We pull the same trick here that we pulled on strings; we refer only to the table that is built from the initial string, and describe the correctness condition on the table in terms of arbitrary substrings of that string.
+      
+      Fiat presents us with a goal involving a statement of the form ``non-deterministically pick a list of splitting locations that is complete for the substring of \farg{str} starting at \farg{n} and ending at \farg{m}, for the rule \nt{pexpr}\nt{+expr}.''  In code form, this is:
+\begin{verbatim}
+{splits : list nat
+| split_list_is_complete
+    G
+    (substring n m str)
+    (NonTerminal nt)
+    (Terminal ch :: its)
+    splits}
+\end{verbatim}
+  
     Although proving and formalizing this rule took some doing, once it was formalized, using it for any particular grammar is a one-liner with \tactic{setoid\textunderscore rewrite}:
 \begin{verbatim}
   setoid_rewrite refine_binop_table; [ presimpl_after_refine_binop_table | reflexivity.. ].

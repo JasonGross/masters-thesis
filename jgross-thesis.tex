@@ -42,8 +42,19 @@
 \def\all{all}
 \ifx\files\all \typeout{Including all files.} \else \typeout{Including only \files.} \includeonly{\files} \fi
 
+\newlength{\initialparskip}
+\newlength{\initialparindent}
+\newlength{\initialtopsep}
+\newlength{\initialpartopsep}
+\setlength{\initialparskip}{\parskip}%
+\setlength{\initialparindent}{\parindent}%
+\setlength{\initialtopsep}{\topsep}%
+\setlength{\initialpartopsep}{\partopsep}%
+
 \setlength{\parskip}{\baselineskip}%
 \setlength{\parindent}{0pt}%
+\setlength{\topsep}{0pt}
+\setlength{\partopsep}{0pt}
 
 \begin{document}
 

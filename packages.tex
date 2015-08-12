@@ -12,6 +12,7 @@
 %\usepackage{microtype}
 \usepackage{textcomp}
 \usepackage{attachfile2}
+\usepackage{etoolbox}
 %\usepackage{embedfile}
 %\usepackage{hypgotoe}
 \floatstyle{boxed}
@@ -66,6 +67,8 @@
 
 \newcommand{\kw}[1]{{\fontfamily{pcr}\selectfont\textbf{#1}}}
 \newcommand{\tactic}[1]{\texttt{#1}}
+\newcommand{\finishingtactic}[1]{\tactic{#1}}
+\newcommand{\tacREFLEXIVITY}{\finishingtactic{reflexivity}}
 \newcommand{\strcolored}[1]{\texttt{\textcolor{DarkGreen}{#1}}}
 \newcommand{\stropen}{\texttt{"}}
 \newcommand{\strclose}{\texttt{"}}
