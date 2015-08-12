@@ -45,7 +45,7 @@ update-thesis::
 	echo "\\thesisdate{`date +'%B %-d, %Y'`}" > new-date.tex
 	$(MAKE) thesis
 
-download-packages: mathtools.sty mhsetup.sty
+download-packages: mathtools.sty mhsetup.sty etoolbox.sty
 
 mathtools.zip xcolor.zip oberdiek.zip cmap.zip hyperref.zip float.zip listings.zip microtype.zip::
 	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$@")
@@ -129,6 +129,11 @@ pdftex.def::
 
 setspace.sty bussproofs.sty url.sty::
 	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$@")
+
+etoolbox.sty::
+	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$@")
+	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$(patsubst %.sty,%.def,$@)")
+	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$(patsubst %.sty,%.tex,$@)")
 
 mathtools.dtx mhsetup.dtx : % : mathtools/%
 	cp -f $< $@

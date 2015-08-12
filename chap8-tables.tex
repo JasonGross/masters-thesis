@@ -92,7 +92,12 @@
     
     \todo{Remove me.  GOALS: rule is non-trivial, but use should be trivial.  pieces to making it trivial: no representation change, automatic discovery of binary operation and brackets, reflective side-conditions}
     
-    Although the rule itself is non-trivial, our goal is to make using this rule as trivial as possible; we now explain how this refinement rule requires only one line of code to use.
+    Although the rule itself is non-trivial, our goal is to make using this rule as trivial as possible; we now explain how this refinement rule requires only one line of code to use (modulo long tactic names):
+\begin{verbatim}
+  setoid_rewrite refine_binop_table;
+  [ presimpl_after_refine_binop_table | reflexivity.. ].
+\end{verbatim}
+    \todoask{How much explanation at this point?  Mention that \tactic{presimpl\ldots} only unfolds things?}
     
     There are three components to making a rule that can be used with a one-liner: not requiring a change of representation; reflective computation of the side-conditions, allowing them all to be discharged with \tacREFLEXIVITY; and automatic discovery of any arguments to the rule.  We cover each of these separately.
     
@@ -111,48 +116,69 @@
     (Terminal ch :: its)
     splits}
 \end{verbatim}
-  
-    Although proving and formalizing this rule took some doing, once it was formalized, using it for any particular grammar is a one-liner with \tactic{setoid\textunderscore rewrite}:
+    \todoask{How much should I say about this code?  For example, the current Coq code doesn't line up perfectly with the explanation; the code only handles the case where the rule is ``a nonterminal, followed by a terminal, followed by other things'', not the form presented above, where the nonterminal is hidden by one layer of indirection (to prevent backtracking).}
+    
+    The final refinement rule, which we use with \tactic{setoid\_rewrite}, says that this is refined by a lookup into a suitably defined \farg{table}:
+\todo{Standardize notation for goals, or drop code}
 \begin{verbatim}
-  setoid_rewrite refine_binop_table; [ presimpl_after_refine_binop_table | reflexivity.. ].
+refine {splits : list nat
+       | split_list_is_complete
+           G
+           (substring n m str)
+           (NonTerminal nt)
+           (Terminal ch :: its)
+           splits}
+       (ret [match List.nth n table None with
+               | Some idx => idx
+               | None => dummy_value
+             end])
 \end{verbatim}
-    \todoask{How much explanation does this code deserve?  Should it be in here at all?}
+
+    By phrasing the rule in terms of \fname{substring}~\farg{n}~\farg{m}~\farg{str}, rather than in terms of an arbitrary string, the computation of the table is the same in every call to the splitter.  All that remains is to lift the computation outside of the recursive call to the parsing function during the extraction phase, which we plan to do soon. \todo{Section reference future work.  Add bit to future work.}
     
-    In order to make it this easy, we had to formalize a correctness condition on the grammar: any use of the \terminal{+} character must be hidden by parentheses when on the left of the \nt{pexpr}\nt{+expr} rule, and \nt{pexpr} must only generate well-parenthesized strings.  By defining a function that computes this as a boolean we can use \tactic{reflexivity} to prove that any particular grammar is valid, when it is.
+    Before moving on to the other components of making usage of this rule require only one line of code, we note that we make use of the essential property that removing characters from the end of the string doesn't add new locations where splitting could yield a valid parse; if a given location is the first \terminal{+} at the current level of parenthesization, this does not change when we remove characters from the end of the string.  \todoask{Should there be more content here?}
     
-    We check whether or not a grammar is valid with the following function, which is folded over all of the alternatives for a rule:
+  \subsubsection{Discharging the Side-Conditions Trivially}
+    To prove the correctness condition on the table, we need to know some things about the grammar that we are handling.  In particular, we need to know that if we are trying to parse a string as a rule analogous to \nt{pexpr}, then there can be no exposed \terminal{+} characters, and, furthermore, that every such parseable string has well-balanced parentheses.  To allow discharging the side conditions trivially, we define a function that computes whether or not this is the case for a given nonterminal in a given grammar.  We then prove that, whenever this function returns \true, valid tables yield complete lists of splitting locations.
+    
+    To make things simple, we approximate which grammars are valid; we require that every open parenthesis be closed in the same rule (rather than deeply nested in further nonterminals).  In Haskell-like pseudocode, the function we use to check validity of a grammar can be written as:
 \begin{verbatim}
-pb' ch n [] = (n == 0)
-pb' ch n (NonTerminal nt :: s) = pb' ch 0 (Lookup nt) &&  pb' ch n s
-pb' ch n ('(' :: s) = pb' ch (n + 1) s
-pb' ch n (')' :: s) = n > 0 && pb' ch (n - 1) s
-pb' ch n (_ :: s) = pb' ch n s
+grammar-and-nonterminal-is-valid : Grammar -> NonTerminal -> Bool
+grammar-and-nonterminal-is-valid G nt
+  = fold (&&) paren-balanced-hiding G (G.(Lookup) nt)
 
-paren-balanced = pb' '+' 0
+pb' : Grammar -> Char -> Nat -> [Item] -> Bool
+pb' G n []         = (n == 0)
+pb' G n (NonTerminal nt :: s)
+  = fold (&&) (pb' G 0) (G.(Lookup) nt) && pb' G n s
+pb' G n ('(' :: s) = pb' G (n + 1) s
+pb' G n (')' :: s) = n > 0 && pb' G (n - 1) s
+pb' G n (_ :: s)   = pb' G n s
 
-pbh' ch n [] = (n == 0)
-pbh' ch n (NonTerminal nt :: s) = pbh' ch n (Lookup nt) && pb' ch n s
-pbh' ch n (ch :: s) = n > 0 && pbh' ch n s
-pbh' ch n ('(' :: s) = pbh' ch (n + 1) s
-pbh' ch n (')' :: s) = n > 0 && pbh' ch (n - 1) s
-pbh' ch n (_ :: s) = pbh' ch n s
+paren-balanced G = pb' G 0
 
-paren-balanced-hiding = pbh' '+' 0
-\end{verbatim}
+pbh' : Grammar -> Char -> Nat -> [Item] -> Bool
+pbh' G n []         = (n == 0)
+pbh' G n (NonTerminal nt :: s)
+  = fold (pbh' G 0) (G.(Lookup) nt) && pb' G n s
+pbh' G n ('+' :: s) = n > 0 && pbh' G n s
+pbh' G n ('(' :: s) = pbh' G (n + 1) s
+pbh' G n (')' :: s) = n > 0 && pbh' G (n - 1) s
+pbh' G n (_ :: s)   = pbh' G n s
+
+paren-balanced-hiding G = pbh' G 0
+\end{verbatim}    
+    \todoask{Does this code need more explanation?}
     
+    There is one subtlety here, that was swept under the rug in the above code: this computation might not terminate!  We could deal with this by memoizing this computation in much the same way that we memoized the parser to deal with potentially infinite parse trees.  Rather than dealing with the subtleties of figuring out what to do when we hit repeated nonterminals, we perform the computation in two steps.  First, we trace the algorithm above, building up a list of which nonterminals need to be paren-balanced, and which ones need to be paren-balanced-hiding.  Second, we fold the computation over these lists, replacing the recursive calls for nonterminals with list membership tests. \todoask{Does this need code?}
     
-%    For example, for the string ``((1+2)+3)+4'', we have the following lists at each point in the string:
-%    \todo{Insert computation here}
-%      \begin{itemize} \item  The generated table is  \\
-%          "5, 1, 0, -, -, 0 .
-%            , 4, 3, 2, 1
-%          "
-%    \end{itemize}
-%    
-  \subsection{The Code}
-    \todo{Insert Haskell-like code here}
- 
-    Optimization: Compute based on original string, lookup based on indices, don't need to compute substrings.
+  \subsubsection{Automatic Discovery of Arguments}
+    Throughout this chapter, we've been focusing on the arithmetic expression example.  However, the exact same rule can handle S-expressions, with just a bit of generalization.  There are two things to be computed: the binary operation, and the parenthesis characters.\footnote{Currently, our code requires the binary operation to be exposed as a terminal in the rule we are handling.  We plan on generalizing this to the grammars described in this chapter shortly.}
+    
+    We require that the first character of any string parsed by the nonterminal analogous to \nt{+expr} be uniquely determined; that character will be the binary operator; we can reuse the code from \autoref{ch:disjoint} to compute this character and ensure that it is unique.
+    
+    To find the parenthesis characters, we first compute a list of candidate character pairs: for each rule associated to the nonterminal analogous to \nt{pexpr}, we consider the pair of the first character and the last character (assuming both are terminals) to be a candidate pair.\footnote{Again, generalizing this to characters hidden by nested nonterminals should be straightforward.}  We then filter the list for characters which yield the conclusion that this rule is applicable to the grammar, according to the algorithm of the previous subsubsection.  We then require, as a side-condition, that the length of this list be positive.
+    
 %  \subsection{The Correctness Proof}
 %    To use this as a refinement rule, we need to prove it complete.  To do this, we prove \todo{explain correctness criterion and insert relation of paren-balanced-hiding on a string to properties of grammar.}
 

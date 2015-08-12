@@ -43,6 +43,7 @@
 \ifx\files\all \typeout{Including all files.} \else \typeout{Including only \files.} \includeonly{\files} \fi
 
 \newlength{\initialparskip}
+\newlength{\newparskip}
 \newlength{\initialparindent}
 \newlength{\initialtopsep}
 \newlength{\initialpartopsep}
@@ -51,10 +52,24 @@
 \setlength{\initialtopsep}{\topsep}%
 \setlength{\initialpartopsep}{\partopsep}%
 
-\setlength{\parskip}{\baselineskip}%
+\setlength{\newparskip}{\baselineskip}
+\setlength{\parskip}{\newparskip}%
 \setlength{\parindent}{0pt}%
 \setlength{\topsep}{0pt}
 \setlength{\partopsep}{0pt}
+
+\newcommand{\unparskip}{\vspace{\dimexpr\initialparskip-\parskip\relax}}
+\newcommand{\preunparskip}{\setlength{\parskip}{\initialparskip}}
+\newcommand{\postunparskip}{\setlength{\parskip}{\newparskip}\unparskip}
+
+%\let\preunparskip\unparskip
+%\let\postunparskip\unparskip
+
+\makeatletter
+\apptocmd{\@ssect}{\postunparskip}{}{}
+\apptocmd{\@sect}{\postunparskip}{}{}
+\pretocmd{\@startsection}{\preunparskip}{}{}
+\makeatother
 
 \begin{document}
 
