@@ -153,8 +153,7 @@ H := ?88 : hiddenT
 | ParserInterface.split_list_is_complete
     plus_expr_grammar
     (string_of_indexed r_n)
-    (NonTerminal "pexpr")
-    [Terminal "+"; NonTerminal "expr"]
+    (NonTerminal "pexpr") [Terminal "+"; NonTerminal "expr"]
     splits}
 \end{verbatim}
      It says that we have to find a refinement of non-deterministically picking a complete list of splits for the rule ``a \nt{pexpr}, followed by a \terminal{+}, followed by a \nt{expr}.''

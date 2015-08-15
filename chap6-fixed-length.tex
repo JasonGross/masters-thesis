@@ -1,11 +1,11 @@
 \chapter{Fixed Length Items, Parsing (ab)*; Parsing \#s; Parsing \#, ()}
   In this chapter, we explore the Fiat framework with a few example grammars, which we describe how to parse.  Because these rules are so straightforward, they can be handled automatically, in the very first step of the derivation; we will explain how this works, too.
-  
+
   Recall the grammar for the regular expression \regex{(ab)$^*$}:
   \begin{align*}
     \nt{(ab)$^*$} & \Coloneqq \nt{$\epsilon$}~|~\terminal{a}~\terminal{b}~\nt{(ab)$^*$}
   \end{align*}
-  
+
   In addition to parsing this grammar, we will also be able to parse the grammar for non-negative parenthesized integers:
   \begin{align*}
     \nt{pexpr} & \Coloneqq \terminal{(}~\nt{pexpr}~\terminal{)}~|~\nt{number} \\
@@ -13,41 +13,54 @@
     \nt{number?} & \Coloneqq \epsilon~|~\nt{number} \\
     \nt{digit} & \Coloneqq \terminal{0}~|~\terminal{1}~|~\terminal{2}~|~\terminal{3}~|~\terminal{4}~|~\terminal{5}~|~\terminal{6}~|~\terminal{7}~|~\terminal{8}~|~\terminal{9}
   \end{align*}
-    
+
   \section{Parsing (ab)*: At Most One Nonterminal}
     The simpler of these grammars is the one for \regex{(ab)$^*$}.  The idea is that if any rule has at most one nonterminal, then there is only one possible split: we assign one character to each terminal, and the remaining characters to the single nonterminal.
-    
+
     For any given rule, we can compute straightforwardly whether or not this is the case; Haskell-like pseudocode for doing so is:
 \begin{verbatim}
-has-at-most-one-nonterminal : [Item] -> Bool
-has-at-most-one-nonterminal [] = true
-has-at-most-one-nonterminal (Terminal _)::xs = has-at-most-one-nonterminal xs
-has-at-most-one-nonterminal (NonTerminal _)::xs = has-only-terminals xs
+has-at-most-one-nt : [Item] -> Bool
+has-at-most-one-nt [] = true
+has-at-most-one-nt (Terminal _)::xs = has-at-most-one-nt xs
+has-at-most-one-nt (NonTerminal _)::xs = has-only-terminals xs
 
 has-only-terminals : [Item] -> Bool
 has-only-terminals [] = true
 has-only-terminals (Terminal _)::xs = has-only-terminals xs
 has-only-terminals (NonTerminal _)::xs = false
 \end{verbatim}
-  \begin{itemize} \item  Goals
-    \begin{itemize} \item  Explore the framework 
-    \item  Demonstrate that we can implement the "obvious" rules to handle a large swath of CFG rules \end{itemize}
-  \item  At a Glance
-    \begin{itemize} \item  There are some strategies that are obvious enough that it's easy for the computer to decide whether or not it's good to apply them.  For example, if a rule starts with a terminal, then we should split off one character, because terminals are always single characters.  These rules are enough to parse some simple grammars, such as the regular expression grammar (ab)*; the grammar accepting numbers; and the grammar accepting parenthesized numbers.  {}[GIVE GRAMMARS HERE]  In this section, we explain how we parse these grammars. \end{itemize}
-  \item  The splitting strategy: if all strings parsed by a given item are the same length, then we can always split the string when faced with that nonterminal.
-    \begin{itemize} \item  Walk through an example of parsing "abab" as "(ab)*", describing the splitting at each point. 
-    \item  Another example: "((123))" 
-    \item  For (ab)*, the item "a", and the item "b" only parse strings of length 1.  Thus when asked for the split for "a", then "b(ab)*", we can split after one character, and similarly after "b".  
-    \item  For numbers with parentheses (of which numbers are a subgrammar), digits always have length 1, so we can split after the first character. \end{itemize}
-  \item  Implementation as a refinement rule:
-    \begin{itemize} \item  Describe the obligation Fiat presents us with for the splitter for (\#) {}[CODE HERE] 
-    \item  Describe how each rule is handled 
-    \item  For the relevant rules, we can compute the length at compile time.  Here is the algorithm. <Coq code here> 
-    \item  To actually make use of this, we must satisfy the correctness criterion.  This is what refinement means.  We relate the length to the parse trees by a few correctness criteria. 
-      \begin{itemize} \item  Note that we need to use only well-founded recursion. \end{itemize} 
-    \item  We provide a decision procedure for the validity of this rule. \end{itemize}
-  \item  In practice, we don't actually need to rewrite it; because it's never suboptimal to apply this rule (returning a single split location is just about the best we can do (TODO: handle invalid parses and backtracking better)), so we do it automatically, baking it into the initial goal, along with the indexed representation change (explain) \end{itemize}
-%  
+
+  The code for determining the split location is even easier: if the first item of the rule is a terminal, then split at character 1; if the first item of the rule is a nonterminal, and there are $n$ remaining items in the rule, then split $n$ characters before the end of the string.
+
+  \section{Parsing Parenthesized Numbers: Fixed Lengths}
+    The grammar for parenthsized numbers has only one rule with multiple nonterminals: the rule for \nt{number}~$\Coloneqq$~\nt{digit}~\nt{number?}.  The strategy here is also simple: because \nt{digit} only accepts strings of length exactly 1, we always want to split after the first character.
+
+    The following pseudocode computes the determines whether or not all strings parsed by a given item are a fixed length, and, if so, what that length is:
+\begin{verbatim}
+fixed-length-of : [String] -> [Item] -> Maybe Int
+fixed-length-of valid_nonterminals [] = just 0
+fixed-length-of valid_nonterminals (Terminal _::xs)
+  = case fixed-length-of valid_nonterminals xs of
+      | just k -> just (1 + k)
+      | nothing -> nothing
+fixed-length-of valid_nonterminals (NonTerminal nt::xs)
+  if nt `in` valid_nonterminals
+  then let lengths = map (fixed-length-of (remove nt valid_nonterminals)) (Lookup nt)
+       in if all of the elements of lengths are equal to L for some L
+          then case L, fixed-length-of valid_nonterminals xs of
+                | just L', just k -> just (L' + k)
+                | _, _ -> nothing
+          else nothing
+  else nothing
+\end{verbatim}
+
+    We have proven that for any nonterminal for which this method returns \texttt{just }$k$, the only valid split of the any string for this rule is at location $k$.  This is the correctness obligation that Fiat demands of us to be able to use this rule.
+
+  \section{Putting It Together}
+     Both of these rules are simple and complete for the rules they handle; if a rule has at most one nonterminal, or if the first element of a rule has a fixed length, then we can't do any better than these rules.  Therefore, we incorperate them into the initial invocation of \verb|start honing parser using indexed representation|.  To do this, we express the splitter by folding \verb|if| statements over all of the rules of the grammar that are reachable from valid nonterminals.  The \verb|if| statements check equality of the rule against the one we were given, and, if they match, looks to see if either of these strategies applies.  If either does, than we return the appropriate singleton value.  If neither applies, then we leave over a non-determinisitic pick of a list containing all possible valid splits.
+
+
+%
 %\begin{verbatim}
 %Lemma ComputationalSplitter'
 %: FullySharpened (string_spec ab_star_grammar).
@@ -68,7 +81,7 @@ has-only-terminals (NonTerminal _)::xs = false
 %
 %\begin{verbatim}
 %3 subgoals, subgoal 1 (ID 17)
-%  
+%
 %  ============================
 %   Sharpened
 %     (ADTRep (string * (nat * nat))
@@ -87,19 +100,19 @@ has-only-terminals (NonTerminal _)::xs = false
 %        Def Method "drop" (s : rep, n : nat) : () :=
 %          ret (fst s, (n + fst (snd s), NatFacts.minusr (snd (snd s)) n), ()) ,
 %        Def Method "splits" (s : rep, p : (item Ascii.ascii *
-%                                           production Ascii.ascii)) : 
+%                                           production Ascii.ascii)) :
 %        (list nat) :=
 %          dummy <- {_ : list nat | True};
 %          ls <- If [Terminal "a"%char; Terminal "b"%char;
-%                   NonTerminal "(ab)*"] =p fst p :: snd p Then 
+%                   NonTerminal "(ab)*"] =p fst p :: snd p Then
 %                ret [1]
 %                Else (If [Terminal "b"%char; NonTerminal "(ab)*"] =p
 %                         fst p :: snd p Then ret [1]
 %                      Else (If [NonTerminal "(ab)*"] =p fst p :: snd p
-%                            Then ret [ilength s] Else 
+%                            Then ret [ilength s] Else
 %                            ret dummy));
 %          ret (s, ls) ,
-%        Def Method "rules" (s : rep, p : (productions Ascii.ascii)) : 
+%        Def Method "rules" (s : rep, p : (productions Ascii.ascii)) :
 %        (list nat) :=
 %          dummy <- {_ : list nat | True};
 %          ls <- If ContextFreeGrammarEquality.productions_beq
@@ -110,9 +123,9 @@ has-only-terminals (NonTerminal _)::xs = false
 %                Then option_rect
 %                       (fun _ : option Ascii.ascii => Comp (list nat))
 %                       (fun ch : Ascii.ascii =>
-%                        If Equality.ascii_beq "a"%char ch Then 
+%                        If Equality.ascii_beq "a"%char ch Then
 %                        ret [1] Else ret dummy) (ret [0])
-%                       (get 0 (string_of_indexed s)) Else 
+%                       (get 0 (string_of_indexed s)) Else
 %                ret dummy;
 %          ret (s, ls)  })%ADT
 %
@@ -133,7 +146,7 @@ has-only-terminals (NonTerminal _)::xs = false
 %\begin{verbatim}
 %(* hone method "splits". *)
 %4 subgoals, subgoal 1 (ID 60)
-%  
+%
 %  r_n : string * (nat * nat)
 %  n : item Ascii.ascii * production Ascii.ascii
 %  H := ?50 : hiddenT
@@ -145,7 +158,7 @@ has-only-terminals (NonTerminal _)::xs = false
 %            Else (If [Terminal "b"%char; NonTerminal "(ab)*"] =p
 %                     fst n :: snd n Then ret [1]
 %                  Else (If [NonTerminal "(ab)*"] =p fst n :: snd n
-%                        Then ret [ilength r_n] Else 
+%                        Then ret [ilength r_n] Else
 %                        ret dummy));
 %      ret (r_n, ls)) (H r_n n)
 %
@@ -153,7 +166,7 @@ has-only-terminals (NonTerminal _)::xs = false
 %
 %1 focused subgoals (unfocused: 3)
 %, subgoal 1 (ID 362)
-%  
+%
 %  r_n : string * (nat * nat)
 %  n : item Ascii.ascii * production Ascii.ascii
 %  H := ?50 : hiddenT
@@ -165,7 +178,7 @@ has-only-terminals (NonTerminal _)::xs = false
 %             fst n :: snd n)
 %            || ([Terminal "b"%char; NonTerminal "(ab)*"] =p fst n :: snd n)
 %         Then 1
-%         Else (If [NonTerminal "(ab)*"] =p fst n :: snd n Then 
+%         Else (If [NonTerminal "(ab)*"] =p fst n :: snd n Then
 %               ilength r_n Else 0)])) (H r_n n)
 %\end{verbatim}
 %

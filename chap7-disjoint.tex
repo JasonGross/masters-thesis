@@ -1,17 +1,54 @@
-\chapter{disjoint items, parsing \#, +} \label{ch:disjoint}
-  \begin{itemize} \item  Goals
-    \begin{itemize} \item  More exploration 
-    \item  Demonstrate a slightly less obvious strategy that handles even more rules \end{itemize}
-  \item  {}[Intro]
-  \item  The splitting strategy: if the set of all characters in one item are disjoint from the set of possible first characters of the next item, then we can split at either the first character not in the first set, or at the first character that is in the second set.
-    \begin{itemize} \item  For example, if the nonterminal "number" accepts {0, 1, 2, 3, 4, 5, 6, 7, 8, 9}, and the nonterminal "binop" accepts {+, -}, then we can either look for the first non-digit and split there, or we can look for the first + or -, and split there. \end{itemize}
-  \item  Write down the grammars we want to handle.
-  \item  We compute the sets reflectively.  Here is the algorithm.  Again, note the well-founded recursion.  <Coq code here>
-  \item  We relate the computation to the parse trees by a few correctness criteria, similar to above.
-    \begin{itemize} \item  Describe the structures and lemmas that go into it. \end{itemize}
-  \item  This rule is not applied automatically, because we have this choice about what sets to look for.  In the future, we might pick whichever set is smaller, and do that (but perhaps we think one is more likely than the other?)  Instead we use \verb|setoid_rewrite|, with {}[reflexivity] to solve the side-conditions.
-  \item  Example: Parse "1+2+3" \end{itemize}
+\chapter{Disjoint Items, Parsing \#, +} \label{ch:disjoint}
+
+  Consider now the following grammar for arithmetic expressions involving \terminal{+} and numbers:
+  \begin{align*}
+    \nt{expr} & \Coloneqq \nt{number}~\nt{+expr?} \\
+    \nt{+expr?} & \Coloneqq \nt{$\epsilon$}~|~\terminal{+}~\nt{expr} \\
+    \nt{number} & \Coloneqq \nt{digit}~\nt{number?} \\
+    \nt{number?} & \Coloneqq \epsilon~|~\nt{number} \\
+    \nt{digit} & \Coloneqq \terminal{0}~|~\terminal{1}~|~\terminal{2}~|~\terminal{3}~|~\terminal{4}~|~\terminal{5}~|~\terminal{6}~|~\terminal{7}~|~\terminal{8}~|~\terminal{9}
+  \end{align*}
   
+  The only rule not handled by the strategies of the previous chapter is the rule \nt{expr}~$\Coloneqq$~\nt{number}~\nt{+expr?}.  We can handle this rule by noticing that the set of characters in the strings accepted by \nt{number} is disjoint from the set of possible first characters of the strings accepted by \nt{+expr?}.  Namely, all characters in strings accepted by \nt{number} are digits, while the first character of a string accepted by \nt{+expr?} can only be \terminal{+}.
+  
+  The following code computes the set of possible characters of a rule:
+\begin{verbatim}
+possible-terminals : [String] -> [Item] -> [Char]
+possible-terminals _ [] = []
+possible-terminals valid_nonterminals (Terminal ch :: xs)
+  = [ch] `union` possible-terminals valid_nonterminals xs
+possible-terminals valid_nonterminals (NonTerminal nt :: xs)
+  = if nt `in` valid_nonterminals
+    then fold
+           union
+           (possible-terminals valid_nonterminals xs)
+           (map (possible-terminals (remove nt valid_nonterminals)) (Lookup nt))
+    else possible-terminals valid_nonterminals xs
+\end{verbatim}
+    In the case where the nonterminal is not in the list of valid nonterminals, we assume that we have already seen that nonterminal higher up the chain of recursion (which we will have, if it is valid according to the initial list), and thus don't have to recompute its possible terminals.
+
+  The following code computes the set of possible first characters of a rule:
+\begin{verbatim}
+possible-first-terminals : [String] -> [Item] -> [Char]
+possible-first-terminals _ [] = []
+possible-first-terminals valid_nonterminals (Terminal ch :: xs)
+  = [ch]
+possible-first-terminals valid_nonterminals (NonTerminal nt :: xs)
+  = (if nt `in` valid_nonterminals
+     then fold
+            union
+            []
+            (map (possible-first-terminals (remove nt valid_nonterminals))
+                 (Lookup nt))
+     else [])
+    `union`
+    (if has_parse nt ""
+     then possible-first-terminals valid_nonterminals xs
+     else [])
+\end{verbatim}
+   We can decide \verb|has_parse| at refinement-time with the brute-force parser, which tries every split; when the string we're parsing is empty, $\mathcal O(\text{length}!)$ is not that long.  The idea is that we recursively look at the first element of each production; if it is a terminal, then that is the only possible first terminal of that production.  If it's a nonterminal, then we have to fold the recursive call over the alternatives.  Additionally, if the nonterminal might end up parsing the empty string, then we have to also move on to the next item in the production, and see what its first characters might be.
+   
+   By computing whether or not these two lists are disjoint, we can decide whether or not this rule applies.  When it applies, we can either look for the first character not in the first list (in this example, the list of digits), or we can look for the first character which is in the second list (in this case, the \terminal{+}).  Since there are two alternatives, we leave it up to the user to decide which one to use.
 %\begin{verbatim}
 %Section IndexedImpl.
 %Typeclasses Opaque If_Then_Else.
