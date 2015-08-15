@@ -108,37 +108,37 @@ H := ?88 : hiddenT
    (ls <- If ([NonTerminal "pexpr"] =p fst n :: snd n)
              || (([NonTerminal "expr"] =p fst n :: snd n)
              || ([NonTerminal "number"] =p fst n :: snd n)
-             || (([Terminal ")"%char] =p fst n :: snd n)
-             || ([Terminal "0"%char] =p fst n :: snd n)
-             || ([Terminal "1"%char] =p fst n :: snd n)
-             || ([Terminal "2"%char] =p fst n :: snd n)
-             || ([Terminal "3"%char] =p fst n :: snd n)
-             || ([Terminal "4"%char] =p fst n :: snd n)
-             || ([Terminal "5"%char] =p fst n :: snd n)
-             || ([Terminal "6"%char] =p fst n :: snd n)
-             || ([Terminal "7"%char] =p fst n :: snd n)
-             || ([Terminal "8"%char] =p fst n :: snd n)
-             || ([Terminal "9"%char] =p fst n :: snd n)
+             || (([Terminal ")"] =p fst n :: snd n)
+             || ([Terminal "0"] =p fst n :: snd n)
+             || ([Terminal "1"] =p fst n :: snd n)
+             || ([Terminal "2"] =p fst n :: snd n)
+             || ([Terminal "3"] =p fst n :: snd n)
+             || ([Terminal "4"] =p fst n :: snd n)
+             || ([Terminal "5"] =p fst n :: snd n)
+             || ([Terminal "6"] =p fst n :: snd n)
+             || ([Terminal "7"] =p fst n :: snd n)
+             || ([Terminal "8"] =p fst n :: snd n)
+             || ([Terminal "9"] =p fst n :: snd n)
              || ([NonTerminal "digit"] =p fst n :: snd n)))
           Then ret [ilength r_n]
-          Else (If [NonTerminal "pexpr"; Terminal "+"%char;
+          Else (If [NonTerminal "pexpr"; Terminal "+";
                    NonTerminal "expr"] =p fst n :: snd n
           Then {splits : list nat
                | ParserInterface.split_list_is_complete
                  plus_expr_grammar
                  (string_of_indexed r_n)
                  (NonTerminal "pexpr")
-                 [Terminal "+"%char; NonTerminal "expr"]
+                 [Terminal "+"; NonTerminal "expr"]
                  splits}
           Else
-            ret [If ([Terminal "+"%char; NonTerminal "expr"]
+            ret [If ([Terminal "+"; NonTerminal "expr"]
                         =p fst n :: snd n)
-                    || ([Terminal "("%char; NonTerminal "expr"; Terminal ")"%char]
+                    || ([Terminal "("; NonTerminal "expr"; Terminal ")"]
                         =p fst n :: snd n)
                     || ([NonTerminal "digit"; NonTerminal "number"]
                         =p fst n :: snd n)
                  Then 1
-                 Else (If [NonTerminal "expr"; Terminal ")"%char]
+                 Else (If [NonTerminal "expr"; Terminal ")"]
                              =p fst n :: snd n 
                  Then  pred (ilength r_n)
                  Else (If [NonTerminal "number"]
@@ -154,7 +154,7 @@ H := ?88 : hiddenT
     plus_expr_grammar
     (string_of_indexed r_n)
     (NonTerminal "pexpr")
-    [Terminal "+"%char; NonTerminal "expr"]
+    [Terminal "+"; NonTerminal "expr"]
     splits}
 \end{verbatim}
      It says that we have to find a refinement of non-deterministically picking a complete list of splits for the rule ``a \nt{pexpr}, followed by a \terminal{+}, followed by a \nt{expr}.''
