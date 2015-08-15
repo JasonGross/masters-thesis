@@ -95,4 +95,81 @@
   \subsection{Upcoming Optimizations}
     In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this paper.  We begin by tying up the \regex{(ab)*} grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and \terminal{+}, and then expressions with numbers, \terminal{+} and parentheses. 
     
-    For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the \regex{(ab)*} grammar looks like this: \todo{<INSERT GOAL>}.  To get to this goal, we write this code: \todo{<COQ CODE HERE, with comments describing what each line does>}  We thus have to describe how to split a string for the rules \todo{<RULES HERE>}, and provide proofs that these splitting strategies are complete.  We begin the next section with this splitting strategy.
+    For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the grammar that parses arithmetic expressions involving plusses and parentheses, after taking care of the trivial obligations that we describe in the next chapter, looks like this:
+\begin{verbatim}
+1 focused subgoals (unfocused: 3)
+, subgoal 1 (ID 3491)
+  
+r_n : string * (nat * nat)
+n : item ascii * production ascii
+H := ?88 : hiddenT
+============================
+ refine
+   (ls <- If ([NonTerminal "pexpr"] =p fst n :: snd n)
+             || (([NonTerminal "expr"] =p fst n :: snd n)
+             || ([NonTerminal "number"] =p fst n :: snd n)
+             || (([Terminal ")"%char] =p fst n :: snd n)
+             || ([Terminal "0"%char] =p fst n :: snd n)
+             || ([Terminal "1"%char] =p fst n :: snd n)
+             || ([Terminal "2"%char] =p fst n :: snd n)
+             || ([Terminal "3"%char] =p fst n :: snd n)
+             || ([Terminal "4"%char] =p fst n :: snd n)
+             || ([Terminal "5"%char] =p fst n :: snd n)
+             || ([Terminal "6"%char] =p fst n :: snd n)
+             || ([Terminal "7"%char] =p fst n :: snd n)
+             || ([Terminal "8"%char] =p fst n :: snd n)
+             || ([Terminal "9"%char] =p fst n :: snd n)
+             || ([NonTerminal "digit"] =p fst n :: snd n)))
+          Then ret [ilength r_n]
+          Else (If [NonTerminal "pexpr"; Terminal "+"%char;
+                   NonTerminal "expr"] =p fst n :: snd n
+          Then {splits : list nat
+               | ParserInterface.split_list_is_complete
+                 plus_expr_grammar
+                 (string_of_indexed r_n)
+                 (NonTerminal "pexpr")
+                 [Terminal "+"%char; NonTerminal "expr"]
+                 splits}
+          Else
+            ret [If ([Terminal "+"%char; NonTerminal "expr"]
+                        =p fst n :: snd n)
+                    || ([Terminal "("%char; NonTerminal "expr"; Terminal ")"%char]
+                        =p fst n :: snd n)
+                    || ([NonTerminal "digit"; NonTerminal "number"]
+                        =p fst n :: snd n)
+                 Then 1
+                 Else (If [NonTerminal "expr"; Terminal ")"%char]
+                             =p fst n :: snd n 
+                 Then  pred (ilength r_n)
+                 Else (If [NonTerminal "number"]
+                             =p fst n :: snd n 
+                 Then ilength r_n
+                 Else 0))]);
+  ret (r_n, ls)) (H r_n n)
+\end{verbatim}
+     The important part of this goal is:
+\begin{verbatim}
+{splits : list nat
+| ParserInterface.split_list_is_complete
+    plus_expr_grammar
+    (string_of_indexed r_n)
+    (NonTerminal "pexpr")
+    [Terminal "+"%char; NonTerminal "expr"]
+    splits}
+\end{verbatim}
+     It says that we have to find a refinement of non-deterministically picking a complete list of splits for the rule ``a \nt{pexpr}, followed by a \terminal{+}, followed by a \nt{expr}.''
+     
+     To get to this goal, we write this code:
+\begin{verbatim}
+Lemma ComputationalSplitter'
+: FullySharpened (string_spec plus_paren_expr_grammar).
+Proof.
+  start honing parser using indexed representation.
+
+  hone method "splits".
+  {
+    simplify parser splitter.
+\end{verbatim}
+      The first line of the proof takes care of the trivial rules, and \verb|hone method "splits"| says that we want to refine the splitter.  The tactic \verb|simplify parser splitter| performs a number of straightforward and simple optimizations, such as combining nested \verb|if| statements which return the same value.
+      
+      We begin the next section by describing the strategies for the ``trivial'' rules.
