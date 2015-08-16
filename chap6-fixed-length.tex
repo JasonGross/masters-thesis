@@ -36,6 +36,7 @@ has-only-terminals (NonTerminal _)::xs = false
     The grammar for parenthsized numbers has only one rule with multiple nonterminals: the rule for \nt{number}~$\Coloneqq$~\nt{digit}~\nt{number?}.  The strategy here is also simple: because \nt{digit} only accepts strings of length exactly 1, we always want to split after the first character.
 
     The following pseudocode computes the determines whether or not all strings parsed by a given item are a fixed length, and, if so, what that length is:
+    \todo{Colorize code; use macros to ensure it matches the conventions of the rest of the document}
 \begin{verbatim}
 fixed-length-of : [String] -> [Item] -> Maybe Int
 fixed-length-of valid_nonterminals [] = just 0
@@ -57,7 +58,47 @@ fixed-length-of valid_nonterminals (NonTerminal nt::xs)
     We have proven that for any nonterminal for which this method returns \texttt{just }$k$, the only valid split of the any string for this rule is at location $k$.  This is the correctness obligation that Fiat demands of us to be able to use this rule.
 
   \section{Putting It Together}
-     Both of these rules are simple and complete for the rules they handle; if a rule has at most one nonterminal, or if the first element of a rule has a fixed length, then we can't do any better than these rules.  Therefore, we incorperate them into the initial invocation of \verb|start honing parser using indexed representation|.  To do this, we express the splitter by folding \verb|if| statements over all of the rules of the grammar that are reachable from valid nonterminals.  The \verb|if| statements check equality of the rule against the one we were given, and, if they match, looks to see if either of these strategies applies.  If either does, than we return the appropriate singleton value.  If neither applies, then we leave over a non-determinisitic pick of a list containing all possible valid splits.
+     Both of these rules are simple and complete for the rules they handle; if a rule has at most one nonterminal, or if the first element of a rule has a fixed length, then we can't do any better than these rules.  Therefore, we incorperate them into the initial invocation of \verb|start honing parser using indexed representation|.  To do this, we express the splitter by folding \verb|if| statements over all of the rules of the grammar that are reachable from valid nonterminals.  The \verb|if| statements check equality of the rule against the one we were given, and, if they match, looks to see if either of these strategies applies.  If either does, than we return the appropriate singleton value.  If neither applies, then we leave over a non-determinisitic pick of a list containing all possible valid splits.  The results of applying this procedure without treating any rules specially was shown in \autoref{sec:if-folding}.  The results of applying this procedure, including the rules of this chapter, was shown in \autoref{sec:after-if-folding-num-+-paren}.
+     
+     \todoask{Is it worth including more code?  I don't actually write out the refinement rules in the code I use, since I never need to setoid\_rewrite with them; it's all baked into the initial first-step refinement rule.  The general code for defining the computation, in case it's worth including is:}
+\begin{verbatim}
+Definition expanded_fallback_list'
+           (P : String -> item Ascii.ascii -> production Ascii.ascii -> item Ascii.ascii -> production Ascii.ascii -> list nat -> Prop)
+           (s : T)
+           (it : item Ascii.ascii) (its : production Ascii.ascii)
+           (dummy : list nat)
+: Comp (T * list nat)
+  := (ls <- (forall_reachable_productions
+               G
+               (fun p else_case
+                => If production_beq ascii_beq p (it::its)
+                   Then (match p return Comp (list nat) with
+                           | nil => ret dummy
+                           | _::nil => ret [ilength s]
+                           | (Terminal _):: _ :: _ => ret [1]
+                           | (NonTerminal nt):: p'
+                             => If has_only_terminals p'
+                                Then
+                                  ret [(ilength s - Datatypes.length p')%natr]
+                                Else
+                                (option_rect
+                                   (fun _ => Comp (list nat))
+                                   (fun (n : nat) => ret [n])
+                                   { splits : list nat
+                                   | P
+                                       (string_of_indexed s)
+                                       (NonTerminal nt)
+                                       p'
+                                       it
+                                       its
+                                       splits }%comp
+                                   (length_of_any G nt))
+                         end)
+                   Else else_case)
+               (ret dummy));
+      ret (s, ls))%comp.
+
+\end{verbatim}
 
 
 %

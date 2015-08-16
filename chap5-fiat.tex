@@ -100,7 +100,7 @@
 &\phantom{|~}\to~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~\farg{it}~\farg{its}~\farg{splits}~\}
 \end{align*}
     
-    We then refine this into a choice of a splitting location for each rule actually in the grammar (checking for equality with the given rule), and then can refine (implement) the splitter for each rule separately.  For example, for the grammar \regex{(ab)$^*$}, defined to have a single nonterminal \nt{(ab)$^*$} which can either be empty, or be mapped to \terminal{a}~\terminal{b}~\nt{(ab)$^*$}, we would refine this to the computation:
+    We then refine this into a choice of a splitting location for each rule actually in the grammar (checking for equality with the given rule), and then can refine (implement) the splitter for each rule separately.  For example, for the grammar \regex{(ab)$^*$}, defined to have a single nonterminal \nt{(ab)$^*$} which can either be empty, or be mapped to \terminal{a}~\terminal{b}~\nt{(ab)$^*$}, we would refine this to the computation:\label{sec:if-folding}
 \newcommand{\ndcompfor}[3][]{%
 #1\{~\farg{splits}~:~\indname{list}~{\mathbb{N}} \\
 &#1 |~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~#2~#3~\farg{splits}~\}
@@ -159,7 +159,7 @@ into
     In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this paper.  We begin by tying up the \regex{(ab)*} grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and \terminal{+}, and then expressions with numbers, \terminal{+} and parentheses. 
     
     \todo{The following is mostly redundant with what was said above; remove most of it.}  \todoask{Is there any part here worth keeping, that isn't taken care of by the above.}
-    For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the grammar that parses arithmetic expressions involving plusses and parentheses, after taking care of the trivial obligations that we describe in the next chapter, looks like this:
+    For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the grammar that parses arithmetic expressions involving plusses and parentheses, after taking care of the trivial obligations that we describe in the next chapter, looks like this:\label{sec:after-if-folding-num-+-paren}
 \begin{verbatim}
 1 focused subgoals (unfocused: 3)
 , subgoal 1 (ID 3491)
