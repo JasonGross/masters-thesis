@@ -45,9 +45,9 @@ update-thesis::
 	echo "\\thesisdate{`date +'%B %-d, %Y'`}" > new-date.tex
 	$(MAKE) thesis
 
-download-packages: mathtools.sty mhsetup.sty etoolbox.sty
+download-packages: mathtools.sty mhsetup.sty etoolbox.sty biblatex.sty
 
-mathtools.zip xcolor.zip oberdiek.zip cmap.zip hyperref.zip float.zip listings.zip microtype.zip::
+biblatex.zip mathtools.zip xcolor.zip oberdiek.zip cmap.zip hyperref.zip float.zip listings.zip microtype.zip::
 	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$@")
 
 graphics.zip tools.zip::
@@ -80,6 +80,9 @@ oberdiek/%: oberdiek.zip
 float/%: float.zip
 	$(UNZIP) $<
 
+biblatex/%: biblatex.zip
+	$(UNZIP) $<
+
 hyperref/%: hyperref.zip
 	$(UNZIP) $<
 
@@ -100,6 +103,9 @@ microtype/%: microtype.zip
 
 amsfonts/source/amssymb.def: amsfonts.zip
 	$(UNZIP) $<
+
+biblatex.sty: biblatex/latex/biblatex.sty
+	find biblatex -name "*.sty" -o -name "*.bbx" -o -name "*.bst" -o -name "*.cbx" -o -name "*.cfg" -o -name "*.csf" -o -name "*.def" -o -name "*.lbx" | xargs cp -f -t ./
 
 amssymb.def: amsfonts/source/amssymb.def
 	cp -f amsfonts/source/*.{dtx,ins,tex,def,mf} amsfonts/afm/*.afm amsfonts/map/*.map amsfonts/pfb/*.{pfm,pfb} amsfonts/tfm/*.tfm ./
