@@ -74,7 +74,7 @@
       &\{ \farg{x}~|~\farg{P}(\farg{x}) \}&&\text{Nondeterministically choose a value of \farg{x} satisfying \farg{P}.} \\
       &&&\qquad\text{If none exists, the program is considered to not terminate.}
     \end{align*}
-    An algorithm starts out as a nondeterministic choice of a value satisfying the specification.  Coding then proceeds by refinement.  Formally, we say that a computation \farg{c$'$} \emph{refines} a computation \farg{c}, written \farg{c$'$}$\subseteq$\farg{c}, if every value that \farg{c$'$} can compute to, \farg{c} can also compute to.  We freely generate the relation ``the computation \farg{c} can compute to the value \farg{v}'', written \cancomputeto{\farg{c}}{\farg{v}}, by the rules:
+    An algorithm starts out as a nondeterministic choice of a value satisfying the specification.  Coding then proceeds by refinement.  Formally, we say that a computation \farg{c$'$} \emph{refines} a computation \farg{c}, written \farg{c$'$} $\subseteq$ \farg{c}, if every value that \farg{c$'$} can compute to, \farg{c} can also compute to.  We freely generate the relation ``the computation \farg{c} can compute to the value \farg{v}'', written \cancomputeto{\farg{c}}{\farg{v}}, by the rules:
     \begin{align*}
       \cancomputeto{\constructorname{ret}~~\farg{v}&}{\farg{v}} \\
       \cancomputeto{\{\farg{x}~|~\farg{P}(\farg{x})\}&}{\farg{v}}\quad\text{iff \farg{x} satisfies \farg{P}} \\
@@ -82,10 +82,73 @@
       \cancomputeto{(\farg{x} \leftarrow \farg{c};~~\farg{c$'$}(\farg{x}))&}{\farg{v}}\quad\text{iff there is a \farg{v$'$} such that \cancomputeto{\farg{c}}{\farg{v$'$}} and \cancomputeto{\farg{c$'$}(\farg{v$'$})}{\farg{v}}}
     \end{align*}
     
-    In our use case, we express the specification of the splitter as a nondeterministic choice of a list of split locations, such that any splitting location that results in a valid parse tree is contained in the list.  We then refine this into a choice of a splitting location for each rule actually in the grammar (checking for equality with the given rule), and then can refine (implement) the splitter for each rule separately.   For example, if we are looking to split the string at the location of the first \terminal{+} character, we might first pick the list of ``valid locations to split at'', and then refine that into a computation that picks the location of the first \terminal{+}, and returns the singleton list containing that, and then replace the remaining bit of nondeterminism with a computation of the location of the first \terminal{+}. 
+    In our use case, we express the specification of the splitter as a nondeterministic choice of a list of split locations, such that any splitting location that results in a valid parse tree is contained in the list.  More formally, we can define the proposition
+\begin{align*}
+  &\fname{split\_list\_is\_complete} ~:~\indname{Grammar}~\to~\indname{String}~\to~\typelist{\indname{Item}}~\to~\typelist{\mathbb{N}}~\to~\Prop \\
+  &\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~\nil~\farg{splits}~=~\False \\
+  &\fname{split\_list\_is\_complete} ~\farg{G}~\farg{str}~(\cons{\farg{it}}{\farg{its}}) ~\farg{splits} \\
+  &\qquad=~\forall~\farg{n},~\farg{n}<\fname{length}~\farg{str} \\
+  &\qquad\qquad\qquad\to~(\fname{has\_parse}~\farg{it}~(\fname{take}~\farg{n}~\farg{str})~\wedge~\fname{has\_parse}~\farg{its}~(\fname{drop}~\farg{n}~\farg{str})) \\
+  &\qquad\qquad\qquad\to~\farg{n}\in\farg{splits}
+\end{align*}
+    where we overload \fname{has\_parse} to apply to items and productions alike.  In practice, we pass the first item, and the rest of the items, as separate arguments, so that we don't have to deal with the empty list case.
     
-    The key to making Fiat work is that the refinement rules package their correctness properties, so users don't have to worry about correctness when programming by refinement.  We use Coq's setoid rewriting machinery to automatically glue together the various correctness proofs when refining only a part of a program.
+    Let \fname{production\_is\_reachable}~\farg{G}~\farg{p} to be the proposition that \farg{p} could show up during parsing, i.e., that \farg{p} is a tail of a rule associated to some valid nonterminal in the grammar; we define this by folding over the list of valid nonterminals.  The specification of the splitter, as a nondeterministic computation, for a given grammar \farg{G}, a given string \farg{str}, and a given rule \cons{\farg{it}}{\farg{its}}, is then:
+\begin{align*}
+& \{~\farg{splits}~:~\indname{list}~{\mathbb{N}} \\
+& |~\fname{production\_is\_reachable}~\farg{G}~(\cons{\farg{it}}{\farg{its}})\\
+&\phantom{|~}\to~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~\farg{it}~\farg{its}~\farg{splits}~\}
+\end{align*}
     
+    We then refine this into a choice of a splitting location for each rule actually in the grammar (checking for equality with the given rule), and then can refine (implement) the splitter for each rule separately.  For example, for the grammar \regex{(ab)$^*$}, defined to have a single nonterminal \nt{(ab)$^*$} which can either be empty, or be mapped to \terminal{a}~\terminal{b}~\nt{(ab)$^*$}, we would refine this to the computation:
+\newcommand{\ndcompfor}[3][]{%
+#1\{~\farg{splits}~:~\indname{list}~{\mathbb{N}} \\
+&#1 |~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~#2~#3~\farg{splits}~\}
+}
+\begin{align*}
+& \fname{If}~\valuelist{\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\nt{(ab)\ensuremath{^*}}}{\nil} \\
+& \fname{Else~If}~\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{b}}{\valuelist{\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else~If}~\valuelist{\terminal{a},~\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{a}}{\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else} \\
+&\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\} \\
+\end{align*}
+       where $=_p$ refers to a boolean equality test for productions.  Note that in the final case, we permit any list to be picked, because whenever the production we are handling is reachable, it will never be used.
+    
+       We can now refine each of these cases separately, using \tactic{setoid\_rewrite}.  
+       The key to doing this, to making Fiat work, is that the refinement rules package their correctness properties, so users don't have to worry about correctness when programming by refinement.  We use Coq's setoid rewriting machinery to automatically glue together the various correctness proofs when refining only a part of a program.
+           
+      For example, we might have a lemma \fname{singleton} which says that returning the length of the string is a valid refinement for any rule that has only one nonterminal; it's type, for a particular grammar \farg{G}, a particular string \farg{str}, and a particular nonterminal \farg{nt}, would be
+\begin{align*}
+& \fname{singleton}~\farg{G}~\farg{str}~\farg{nt} \\
+& \qquad:~(\fname{ret}~\valuelist{\fname{length}~\farg{str}}) \\
+&\qquad~\subseteq\\
+&\ndcompfor[\phantom{:~}\qquad]{\nt{\farg{nt}}}{\nil}
+\end{align*}
+    Then \texttt{\tactic{setoid\_rewrite}~(\fname{singleton}~\termhole~\termhole~\nt{(ab)$^*$})} would refine 
+\begin{align*}
+& \fname{If}~\valuelist{\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\nt{(ab)\ensuremath{^*}}}{\nil} \\
+& \fname{Else~If}~\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{b}}{\valuelist{\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else~If}~\valuelist{\terminal{a},~\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{a}}{\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else} \\
+&\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\} \\
+\end{align*}
+into
+\begin{align*}
+& \fname{If}~\valuelist{\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\qquad\fname{ret}~\valuelist{\fname{length}~\farg{str}}\\
+& \fname{Else~If}~\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{b}}{\valuelist{\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else~If}~\valuelist{\terminal{a},~\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{a}}{\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else} \\
+&\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\} \\
+\end{align*}
     We now describe the refinements that we do within this framework, to implement efficient splitters.
     
 \section{Optimizations}
@@ -95,6 +158,7 @@
   \subsection{Upcoming Optimizations}
     In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this paper.  We begin by tying up the \regex{(ab)*} grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and \terminal{+}, and then expressions with numbers, \terminal{+} and parentheses. 
     
+    \todo{The following is mostly redundant with what was said above; remove most of it.}  \todoask{Is there any part here worth keeping, that isn't taken care of by the above.}
     For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the grammar that parses arithmetic expressions involving plusses and parentheses, after taking care of the trivial obligations that we describe in the next chapter, looks like this:
 \begin{verbatim}
 1 focused subgoals (unfocused: 3)

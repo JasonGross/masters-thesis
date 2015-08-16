@@ -23,6 +23,9 @@
 \renewcommand{\subsectionautorefname}{Subsection}
 \renewcommand{\subsubsectionautorefname}{Subsubsection}
 
+{\catcode`\_=12 \gdef\textunderscore{_}}
+\def\_{\textunderscore}
+
 % from http://tex.stackexchange.com/a/218441/2066
 \makeatletter
 \newcommand{\dashover}[2][\mathop]{#1{\mathpalette\df@over{{\dashfill}{#2}}}}
@@ -100,6 +103,7 @@
 \newcommand{\nil}{\texttt{[]}}
 \newcommand{\cons}[2]{#1::#2}
 \newcommand{\hole}{\texttt{\_}}
+\newcommand{\termhole}{\texttt{\_}}
 \newcommand{\defeq}{\coloneqq}
 \newcommand{\testeq}{=}
 \newcommand{\booland}{\mathrel{\texttt{\&\&}}}
@@ -112,6 +116,7 @@
 \newcommand{\typeto}{\ensuremath{\to}}
 \newcommand{\indname}[1]{\texttt{#1}}
 \newcommand{\Type}{\kw{Type}}
+\newcommand{\Prop}{\kw{Prop}}
 \newcommand{\constructorname}[1]{\texttt{#1}}
 \newcommand{\Nonterminal}{\indname{Nonterminal}}
 \newcommand{\Terminal}{\texttt{Char}}
@@ -142,9 +147,6 @@
 \newcommand{\cthen}{\cifindent[\kw{then}]}
 \newcommand{\celse}{\cifindent[\kw{else}]}
 \newcommand{\cancomputeto}[2]{#1~~\ensuremath{\rightsquigarrow}~~#2}
-
-{\catcode`\_=12 \gdef\textunderscore{_}}
-\def\_{\textunderscore}
 
 \usepackage[all]{xy}
 % highlight overfull hboxes
