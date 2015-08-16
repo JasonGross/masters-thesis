@@ -90,8 +90,10 @@
 &\fname{has\_parse}~\mathcal{L}~(\cons{\farg{ch}}{\farg{str}})~=~\fname{has\_parse}~(\fname{D\ensuremath{_{\farg{ch}}}}~\mathcal L)~\farg{str} \\
 \end{align*}
       
+      To ensure termination and good performance, \citeauthor*{Derivs} define the derivative operation on the structure of the grammar, rather than defining combinators that turn a grammar into a language, and furthermore take advantage of laziness and memoization.  After adding code to prune the resulting language of useless content, they argue that the cost of parsing with derivatives is $\mathcal O(n|G|)$ on average, where $n$ is the length of the input string and $|G|$ is the size of the grammar.
       
-      \Citeauthor*{Derivs} take advantage of laziness and memoization to ensure that 
+    \subsubsection{Formal Verification}
+      \Citeauthor{DerivsCoq} formally verify, in Coq, finite automata for parsing the fragment of derivative-based parsing which applies to regular expressions.~\cite{DerivsCoq}  This fragment dates back to Brzozowski's original presentation of derivatives.~\cite{BrzozowskiDerivs}\todoask{Should I define ``finite automata?}
       
   
   \todo{Fill in content}
@@ -130,8 +132,8 @@
 \section{What's New and What's Old} \label{sec:new} \label{sec:goals}
   The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
   
-  We begin with naive recursive-descent parsing.\todo{Citation?}  \todo{Say something about viewing recursive-descent as an instance of general inhabitation-decision not being anywhere in the literature?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse. \todo{section citation}  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
+  We begin with naive recursive-descent parsing.\todo{Citation?}  \todo{Say something about viewing recursive-descent as an instance of general inhabitation-decision not being anywhere in the literature?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse (\autoref{sec:splitting-oracle}).  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
   
-  We use Fiat to incrementally build efficient parsers by refinement. \todo{section citation}
+  We use Fiat to incrementally build efficient parsers by refinement; we describe Fiat starting in \autocite{ch:fiat}.
   
   Additionally, we take a digression in \autoref{ch:dep-types} to describe how our parser can be used to prove its own completeness; the idea of reusing the parsing algorithm to generate proofs, parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge.
