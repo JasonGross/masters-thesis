@@ -28,7 +28,7 @@
   Proving completeness---that our parser succeeds whenever there is a valid parse tree---is conceptually straightforward: trace the algorithm, showing that if the parser returns \false\space at a given point, then assuming a corresponding parse tree exists yields a contradiction.  The one wrinkle in this approach is that the algorithm, the logic program, is not guaranteed to terminate.
 
   \subsection{Infinite Regress} \label{sec:loopy-grammar-example}
-    Since we have programmed our parser in Coq (see \autoref{sec:coq}),\todo{Add intro about Coq} \todoask{Where should the intro about Coq go?} our program must be terminating by construction.  However, naive recursive-descent parsers do not always terminate!
+    Since we have programmed our parser in Coq (see \autoref{sec:coq}),\todo{Add intro about Coq} \todoask{Where should the intro about Coq go?}, our program must be terminating by construction.  However, naive recursive-descent parsers do not always terminate!
 
     To see how such parsers can diverge, consider the following example.  When defining the grammar \regex{(ab)$^*$}, perhaps we give the following production rules:
 
