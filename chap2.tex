@@ -35,10 +35,10 @@
 &\fname{terminal}~\aswidthof{\termhole}{\farg{ch}}~\str{}~=~\nil
 \end{align*}
       We now define combinators for sequencing and alternatives:
-\newcommand{\alternatives}{\fname{>{}>{}>}}
+\newcommand{\sequencing}{\fname{>{}>{}>}}
 \begin{align*}
-&(\alternatives)~:~\fname{parser}~\to~\fname{parser}~\to~\fname{parser}\\
-&(\farg{p\ensuremath{_0}}~\alternatives~\farg{p\ensuremath{_1}})~\farg{str}~=~\fname{flat\_map}~\farg{p\ensuremath{_1}}~(\farg{p\ensuremath{_0}}~\farg{str}) \\ \\
+&(\sequencing)~:~\fname{parser}~\to~\fname{parser}~\to~\fname{parser}\\
+&(\farg{p\ensuremath{_0}}~\sequencing~\farg{p\ensuremath{_1}})~\farg{str}~=~\fname{flat\_map}~\farg{p\ensuremath{_1}}~(\farg{p\ensuremath{_0}}~\farg{str}) \\ \\
 &(\fname{|||})~:~\fname{parser}~\to~\fname{parser}~\to~\fname{parser}\\
 &(\farg{p\ensuremath{_0}}~\fname{|||}~\farg{p\ensuremath{_1}})~\farg{str}~=~\farg{p\ensuremath{_0}}~\farg{str}~\fname{++}~\farg{p\ensuremath{_1}}~\farg{str}
 \end{align*}
@@ -49,7 +49,7 @@
       We can now easily define a parser for the grammar \regex{(ab)$^*$}:
 \begin{align*}
 &\fname{parse-\regex{(ab)\ensuremath{^*}}}~:~\fname{parser} \\
-&\fname{parse-\regex{(ab)\ensuremath{^*}}}~=~(\fname{terminal}~\terminal{a}~\alternatives~\fname{terminal}~\terminal{b}~\alternatives~\fname{parse-\regex{(ab)\ensuremath{^*}}})~~\fname{|||}~~\epsilon
+&\fname{parse-\regex{(ab)\ensuremath{^*}}}~=~(\fname{terminal}~\terminal{a}~\sequencing~\fname{terminal}~\terminal{b}~\sequencing~\fname{parse-\regex{(ab)\ensuremath{^*}}})~~\fname{|||}~~\epsilon
 \end{align*}
       Note that, by putting $\epsilon$ last, we ensure that this parser returns the list in order of longest parse (shortest postfix) to shortest parse (longest postfix).
       
@@ -58,6 +58,40 @@
       
       The algorithm we presented in \autoref{sec:solve-nontermination} is essentially the same as the algorithm Ridge presents in~\cite{Ridge} to deal with this problem.  By wrapping the calls to the parsers, in each combinator, with a function that prunes duplicative calls, Ridge provides a way to ensure that parsers terminate.  Also included in \cite{Ridge} are proofs in HOL4 that such wrapped parsers are both sound (and therefore terminating) and complete.  Furthermore, Ridge's parser has worst-case $O(n^5)$ running time in the input-string length.
 
+  \subsection{Parsing with Derivatives}
+    \Citeauthor{Derivs} describe an elegant method for recursive descent parsing in~\cite{Derivs}, based on Brzozowski's derivatives~\cite{BrzozowskiDerivs}, which might be considered a conceptual dual to standard combinator parser.  Rather than returning a list of possible string remnants, constructed by recursing down the structure of the grammar, we can iterate down the characters of a string, computing an updated language, or grammar, at each point.
+    
+    The \emph{language} defined by a grammar is a the set of strings accepted by that grammar.  Here we describe the mathematical ideas behind parsing with derivatives.  \citeauthor*{Derivs} take a slightly different approach to ensure termination; where we will describe the mathematical operations on languages, they define these operations on a structural representation of the language, akin to an inductive definition of the grammar.
+    
+    Much as we defined a parser combinators for the elementary operations of a grammar ($\epsilon$, terminals, sequencing, and alternatives), we can define similar combinators for defining a (lazy, or coinductive) language for a grammar.  Defining the type \fname{language} to be a set (or just a coinductive list) of strings, we have:
+\begin{align*}
+& \epsilon~:~\fname{language} \\
+& \epsilon~=~\{\str{}\} \\ \\
+& \fname{terminal}~:~\indname{Char}~\to~\fname{language} \\
+& \fname{terminal}~\farg{ch}~=~\{\farg{ch}\} \\ \\
+& (\fname{\sequencing})~:~\fname{language}~\to~\fname{language}~\to~\fname{language} \\
+& \mathcal{L}_0~\fname{\sequencing}~\mathcal{L}_1~=~\{~\strcat{\farg{s\ensuremath{_0}}}{\farg{s\ensuremath{_1}}}~|~\farg{s\ensuremath{_0}}\in\mathcal L_0\text{ and }\farg{s\ensuremath{_1}}\in\mathcal{L}_1 \} \\ \\
+& (\fname{|||})~:~\fname{language}~\to~\fname{language}~\to~\fname{language} \\
+& \mathcal{L}_0~\fname{|||}~\mathcal{L}_1~=~\mathcal L_0\cup\mathcal L_1
+\end{align*}
+
+    The essential operations for computing derivatives are \emph{filtering} and \emph{chopping}.  To \emph{filter} a language $\mathcal L$ by a character $c$ is to take the subset of strings in $\mathcal L$ which start with $c$.  To chop a language $\mathcal L$ is to remove the first character from every string.  The derivative $D_c(\mathcal L)$ with respect to $c$ of a language $\mathcal L$ is then the language $\mathcal L$, filtered by $c$ and chopped:
+\begin{align*}
+&\fname{D}_{\farg{c}}~:~\fname{language}~\to~\fname{language} \\
+&\fname{D}_{\farg{c}}~\emptyset~=~\emptyset \\
+&\fname{D}_{\farg{c}}~(\cons{(\cons{\farg{ch}}{\farg{str}})}{\mathcal L})~=~\cons{\farg{str}}{(\fname{D}_{\farg{c}}~\mathcal{L})} \\
+&\fname{D}_{\farg{c}}~(\cons{\termhole}{\mathcal L})~=~\fname{D}_{\farg{c}}~\mathcal{L}
+\end{align*}
+
+      We can then define a \fname{has\_parse} proposition by taking successive derivatives:
+\begin{align*}
+&\fname{has\_parse}~:~\coqtype{language}~\to~\coqtype{String}~\to~\Prop \\
+&\fname{has\_parse}~\mathcal{L}~\str{}~=~\str{}\in\mathcal{L} \\
+&\fname{has\_parse}~\mathcal{L}~(\cons{\farg{ch}}{\farg{str}})~=~\fname{has\_parse}~(\fname{D\ensuremath{_{\farg{ch}}}}~\mathcal L)~\farg{str} \\
+\end{align*}
+      
+      
+      \Citeauthor*{Derivs} take advantage of laziness and memoization to ensure that 
       
   
   \todo{Fill in content}
