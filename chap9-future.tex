@@ -17,9 +17,9 @@
   \paragraph{Even more self-reference}
     We might also consider reusing the same generic parser to generate the extensionality proofs, by instantiating the type families for success and failure with families of propositions saying that all instantiations of the parser, when called with the same parsing problem, always return values that are equivalent when converted to Booleans.  A more specialized approach could show just that \fname{has\_parse} agrees with \fname{parse} on successes and with \fname{has\_no\_parse} on failures:
     \begin{align*}
-      &\fname{T$_{\fname{success}}$}~\hole~\hole~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
+      &\fname{T$_{\fname{success}}$}~\termhole~\termhole~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
       & \quad \defeq \fname{has\_parse}~\farg{nt}~\farg{s} = \true \wedge \fname{parse}~\farg{nt}~\farg{s} \neq \None \\
-      & \fname{T$_{\fname{failure}}$}~\hole~\hole~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
+      & \fname{T$_{\fname{failure}}$}~\termhole~\termhole~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
       & \quad\defeq \fname{has\_parse}~\farg{nt}~\farg{s} = \false\wedge \fname{has\_no\_parse}\neq \inl{\unittt}
     \end{align*}
 

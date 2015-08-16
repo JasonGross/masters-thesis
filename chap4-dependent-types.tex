@@ -2,7 +2,7 @@
 \section{Proving Completeness: Conceptual Approach} \label{sec:conceptual-completeness} \label{sec:min:conceptual-intro}
   Recall from \autoref{sec:solve-nontermination} that the essential difficulty with proving completeness is dealing with the cases where our parser aborts early; we must show that doing so does not eliminate good parse trees.
 
-  The key is to define an intermediate type, that of ``minimal parse trees.''  A ``minimal'' parse tree is simply a parse tree in which the same (string, nonterminal) pair does not appear more than once in any path of the tree.  Defining this type allows us to split the completeness problem in two; we can show separately that every parse tree gives rise to a minimal parse tree, and that having a minimal parse tree in hand implies that our parser succeeds (returns \true\space or \Some{\hole}).
+  The key is to define an intermediate type, that of ``minimal parse trees.''  A ``minimal'' parse tree is simply a parse tree in which the same (string, nonterminal) pair does not appear more than once in any path of the tree.  Defining this type allows us to split the completeness problem in two; we can show separately that every parse tree gives rise to a minimal parse tree, and that having a minimal parse tree in hand implies that our parser succeeds (returns \true\space or \Some{\termhole}).
 
   Our dependently typed parsing algorithm subsumes the soundness theorem, the minimization of parse trees, and the proof that having a minimal parse tree implies that our parser succeeds.  We write one parametrically polymorphic parsing function that supports all three modes, plus the several different sorts of parsers (recognizers, generating parse trees, running semantic actions).  That level of genericity requires us to be flexible in which type represents ``strings,'' or inputs to parsers.  We introduce a parameter that is often just the normal \String{} type, but which needs to be instantiated as the type of \emph{parse trees themselves} to get a proof of parse tree minimizability.  That is, we ``parse'' parse trees to minimize them, reusing the same logic that works for the normal parsing problem.
 
@@ -137,53 +137,53 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
   To instantiate the parser as a Boolean recognizer, we instantiate everything trivially; we use the fact that $\typesum{\Unit}{\Unit}\cong\Bool$.  Just to show how trivial everything is, here is a precise instantiation of the parser, still parameterized over the initial list of nonterminals and the splitter, where $\Unit$ is the one constructor of the one-element type~$\Unit$:
   {\allowdisplaybreaks
   \begin{align*}
-    & \fname{T$_{\fname{success}}$}~\hole~\hole~\hole \defeq \Unit \\
-    & \fname{T$_{\fname{failure}}$}~\hole~\hole~\hole \defeq \Unit \\
+    & \fname{T$_{\fname{success}}$}~\termhole~\termhole~\termhole \defeq \Unit \\
+    & \fname{T$_{\fname{failure}}$}~\termhole~\termhole~\termhole \defeq \Unit \\
     \\
-    & \fname{terminal\_success}~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{terminal\_failure}~\hole~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{nil\_success}~\hole~\hole \defeq \unittt \\
-    & \fname{nil\_failure}~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{cons\_success}~\hole~\hole~\hole~\hole~\hole~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{cons\_failure}~\hole~\hole~\hole~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{production\_success$_<$}~\hole~\hole~\hole~\hole~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{production\_success$_=$}~\hole~\hole~\hole~\hole~\hole~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{production\_failure$_<$}~\hole~\hole~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{production\_failure$_=$}~\hole~\hole~\hole~\hole~\hole~\hole \defeq \unittt \\
-    & \fname{production\_failure$_{\not\in}$}~\hole~\hole~\hole~\hole~\hole~\hole \defeq \unittt
+    & \fname{terminal\_success}~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{terminal\_failure}~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{nil\_success}~\termhole~\termhole \defeq \unittt \\
+    & \fname{nil\_failure}~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{cons\_success}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{cons\_failure}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{production\_success$_<$}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{production\_success$_=$}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{production\_failure$_<$}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{production\_failure$_=$}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
+    & \fname{production\_failure$_{\not\in}$}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt
   \end{align*}}
 
   To instantiate our parser so that it returns \typeoption{\!\!\indname{ParseTree}} (rather, the dependently typed flavor, \indname{ParseTreeOf}), we take advantage of the isomorphism $\typesum{T}{\Unit} \cong \typeoption{T}$.  We show only the \fname{success} instantiations, as the \fname{failure} ones are identical with the Boolean recognizer.  For readability of the code, we write schematic natural-deduction proof trees inline.
 
   \begin{align*}
-    & \fname{T$_{\fname{success}}$}~~\hole~~\hole~~\left(\parsetreetype{\farg{X}}{\farg{s}}\right) \defeq \parsetreetype{\farg{X}}{\farg{s}} \\
+    & \fname{T$_{\fname{success}}$}~~\termhole~~\termhole~~\left(\parsetreetype{\farg{X}}{\farg{s}}\right) \defeq \parsetreetype{\farg{X}}{\farg{s}} \\
     \\
-    & \fname{terminal\_success}~~\hole~~\hole~~\farg{ch} \defeq (\terminal{\farg{ch}}) \\
-    & \fname{nil\_success}~~\hole~~\hole \defeq \overline{\str{}\in\epsilon} \\
-    & \fname{cons\_success}~~\hole~~\hole~~\farg{it}~~\farg{its}~~\farg{s$_1$}~~\farg{s$_2$}~~\hole~~\farg{d$_1$}~~\farg{d$_2$} \defeq \frac{\frac{\farg{d$_1$}}{\farg{s$_1$} \in \farg{it}}\qquad \frac{\farg{d$_2$}}{\farg{s$_2$} \in \farg{its}}}{\strcat{\farg{s$_1$}}{\farg{s$_2$}} \in \cons{\farg{it}}{\farg{its}}} \\
-    & \fname{production\_success$_<$}~~\hole~~\hole~~\farg{it}~~\farg{nt}~~\farg{s}~~\hole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}} \\
-    & \fname{production\_success$_=$}~~\hole~~\hole~~\farg{it}~~\farg{nt}~~\farg{s}~~\hole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}} \\
+    & \fname{terminal\_success}~~\termhole~~\termhole~~\farg{ch} \defeq (\terminal{\farg{ch}}) \\
+    & \fname{nil\_success}~~\termhole~~\termhole \defeq \overline{\str{}\in\epsilon} \\
+    & \fname{cons\_success}~~\termhole~~\termhole~~\farg{it}~~\farg{its}~~\farg{s$_1$}~~\farg{s$_2$}~~\termhole~~\farg{d$_1$}~~\farg{d$_2$} \defeq \frac{\frac{\farg{d$_1$}}{\farg{s$_1$} \in \farg{it}}\qquad \frac{\farg{d$_2$}}{\farg{s$_2$} \in \farg{its}}}{\strcat{\farg{s$_1$}}{\farg{s$_2$}} \in \cons{\farg{it}}{\farg{its}}} \\
+    & \fname{production\_success$_<$}~~\termhole~~\termhole~~\farg{it}~~\farg{nt}~~\farg{s}~~\termhole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}} \\
+    & \fname{production\_success$_=$}~~\termhole~~\termhole~~\farg{it}~~\farg{nt}~~\farg{s}~~\termhole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}} \\
   \end{align*}
 
   What remains is to instantiate the parser in such a way that proving completeness is trivial.  The simpler of our two tasks is to show that when the parser fails, no minimal parse tree exists.  Hence we instantiate the types as follows, where $\False$ is the empty type (equivalently, the false proposition).
 
   \begin{align*}
-    & \fname{T$_{\fname{success}}$}~~\hole~~\hole~~\hole \defeq \Unit \\
+    & \fname{T$_{\fname{success}}$}~~\termhole~~\termhole~~\termhole \defeq \Unit \\
     & \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{X}}{\farg{s}}\right) \defeq \left(\minparsetreetype{\farg{s$_0$}}{\farg{unseen}}{\farg{X}}{\farg{s}}\right) \typeto \False
   \end{align*}
   Using \Lightning{} to denote deriving a contradiction, we can unenlighteningly instantiate the arguments as
   \begin{align*}
-    & \fname{terminal\_success}~~\hole~~\hole~~\hole \defeq \unittt \\
-    & \fname{terminal\_failure}~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \text{\Lightning} \\
-    & \fname{nil\_success}~~\hole~~\hole \defeq \unittt \\
-    & \fname{nil\_failure}~~\hole~~\hole~~\hole~~\hole \defeq \text{\Lightning} \\
-    & \fname{cons\_success}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \unittt \\
-    & \fname{cons\_failure}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \text{\Lightning} \\
-    & \fname{production\_success$_<$}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \unittt \\
-    & \fname{production\_success$_=$}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \unittt \\
-    & \fname{production\_failure$_<$}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \text{\Lightning} \\
-    & \fname{production\_failure$_=$}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \text{\Lightning} \\
-    & \fname{production\_failure$_{\not\in}$}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole \defeq \text{\Lightning}
+    & \fname{terminal\_success}~~\termhole~~\termhole~~\termhole \defeq \unittt \\
+    & \fname{terminal\_failure}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \text{\Lightning} \\
+    & \fname{nil\_success}~~\termhole~~\termhole \defeq \unittt \\
+    & \fname{nil\_failure}~~\termhole~~\termhole~~\termhole~~\termhole \defeq \text{\Lightning} \\
+    & \fname{cons\_success}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \unittt \\
+    & \fname{cons\_failure}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \text{\Lightning} \\
+    & \fname{production\_success$_<$}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \unittt \\
+    & \fname{production\_success$_=$}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \unittt \\
+    & \fname{production\_failure$_<$}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \text{\Lightning} \\
+    & \fname{production\_failure$_=$}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \text{\Lightning} \\
+    & \fname{production\_failure$_{\not\in}$}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \text{\Lightning}
   \end{align*}
   A careful inspection of the proofy arguments to each \fname{failure} case will reveal that there is enough evidence to derive the appropriate contradiction.  For example, the $\farg{s}\neq\str{}$ hypothesis of \fname{nil\_failure} contradicts the equalities implied by the type signature of \fname{min\_parse$_{\nil}$}, and the use of \nil\space contradicts the equality implied by the use of \cons{\farg{it}}{\farg{its}} in the type signature of \fname{min\_parse$_{\nil}$}.  Similarly, the $\farg{s}\neq\str{\farg{ch}}$ hypothesis of \fname{terminal\_failure} contradicts the equality implied by the usage of the single identifier \farg{ch} in two different places in the type signature of \fname{min\_parse$_{\terminal{\farg{ch}}}$}.
 
@@ -204,12 +204,12 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
 
     Another key ingredient is the ``string'' splitter, which naturally breaks a parse tree into its child trees.  We define it like so:
     \begin{align*}
-    & \fname{split}~\hole~\hole~\left(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}}\right) \defeq \\
+    & \fname{split}~\termhole~\termhole~\left(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}}\right) \defeq \\
     & \quad \caseof{\fname{parse\_tree\_data}~~\farg{s}} \\
     & \quad \acase{\frac{\frac{\farg{p$_1$}}{\farg{s$_1$}\in \farg{it}}\qquad \frac{\farg{p$_2$}}{\farg{s$_2$}\in \farg{its}}}{\strcat{\farg{s$_1$}}{\farg{s$_2$}} \in \cons{\farg{it}}{\farg{its}}}}
     {\valuelistm{\left(\fname{deloop}~\farg{p$_1$}, \fname{deloop}~\farg{p$_2$}\right)}} \\
-    & \quad \acase{\hole}{\text{\Lightning}} \\
-    & \fname{split}~\hole~\hole~\hole \defeq \nil
+    & \quad \acase{\termhole}{\text{\Lightning}} \\
+    & \fname{split}~\termhole~\termhole~\termhole \defeq \nil
     \end{align*}
     Note that we use \farg{it} and \farg{its} nonlinearly; the pattern only binds if its \farg{it} and \farg{its} match those passed as arguments to \fname{split}.  We thus return a nonempty list only if the query is about a nonempty sequence of items.  Because we use dependent types to enforce the requirement that the parse tree associated with a string match the query we are considering, we can derive contradictions in the non-matching cases.
 
@@ -218,7 +218,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     Now recall that our general parser always returns a type of the form $\typesum{\fname{T$_{\fname{success}}$}}{\fname{T$_{\fname{failure}}$}}$, for some $\fname{T$_{\fname{success}}$}$ and $\fname{T$_{\fname{failure}}$}$.  We want our tree minimizer to return just the type of minimal trees.  However, we can take advantage of the type isomorphism $\typesum{T}{\False} \cong T$ and instantiate $\fname{T$_{\fname{failure}}$}$ with $\False$, the uninhabited type; and then apply a simple fix-up wrapper on top.  Thus, we instantiate the general parser like so:
     \begin{align*}
       & \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\oftype{\farg{d}}{\parsetreetype{\farg{X}}{\farg{s}}}\right) \defeq \minparsetreetype{\farg{s$_0$}}{\farg{unseen}}{\farg{X}}{\farg{s}} \\
-      & \fname{T$_{\fname{failure}}$}~~\hole~~\hole~~\hole \defeq \False
+      & \fname{T$_{\fname{failure}}$}~~\termhole~~\termhole~~\termhole \defeq \False
     \end{align*}
 
     The \fname{success} cases are instantiated in an essentially identical way to the instantiation we used to get \typeoption{\indname{ParseTree}}.  The \fname{terminal\_failure} and \fname{nil\_failure} cases provide enough information ($\farg{s}\neq\str{\farg{ch}}$ and $\farg{s}\neq\str{}$, respectively) to derive \False{} from the existence of the appropriately typed parse tree.  In the \fname{cons\_failure} case, we make use of the splitter's \emph{nonempty preservation} behavior, after which all that remains is \typesum{\False}{\False}~\typeto~\False, which is trivial.  In the \fname{production\_failure$_<$} and \fname{production\_failure$_=$} cases, it is sufficient to note that every nonterminal is mapped by some production to some sequence of items.  Finally, to instantiate the \fname{production\_failure$_{\not\in}$} case, we need to appeal to the \fname{Unloopy}-ness of the tree to deduce that $\farg{nt}\in \farg{unseen}$.  Then we can derive \False{} from the hypothesis that $\farg{nt}\not\in\farg{unseen}$, and we are done.
@@ -233,53 +233,53 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     & \fname{parse}~~\farg{nt}~~\farg{s} \defeq \fname{parse$'$}~~(\farg{s$_0$}\defeq\farg{s})~~(\farg{unseen}\defeq\fname{unseen$_0$})~~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
     \\
     & \fname{parse$'$}~~(\parsetreetype{\terminal{\farg{ch}}}{\str{\farg{ch}}}) \defeq \inl{~\fname{terminal\_success}} \\
-    & \fname{parse$'$}~~(\parsetreetype{\terminal{\farg{ch}}}{\hole}) \defeq \inrp{\fname{terminal\_failure}~\text{\Lightning{}}} \\
+    & \fname{parse$'$}~~(\parsetreetype{\terminal{\farg{ch}}}{\termhole}) \defeq \inrp{\fname{terminal\_failure}~\text{\Lightning{}}} \\
     & \fname{parse$'$}~~(\parsetreetype{\epsilon}{\str{}}) \defeq \inl{~\fname{nil\_success}} \\
-    & \fname{parse$'$}~~(\parsetreetype{\epsilon}{\hole}) \defeq \inrp{\fname{nil\_failure}~\text{\Lightning{}}} \\
+    & \fname{parse$'$}~~(\parsetreetype{\epsilon}{\termhole}) \defeq \inrp{\fname{nil\_failure}~\text{\Lightning{}}} \\
     & \fname{parse$'$}~~(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}}) \defeq \\
     & \qquad\caseof{\fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\left(\fname{split}~~(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}})\right)} \\
     & \qquad\acase{\inl{\farg{ret}}}{\inl{\farg{ret}}} \\
-    & \qquad\acase{\inr{\farg{ret}}}{\inrp{\fname{cons\_failure}~~\hole~~\farg{ret}}} \\
+    & \qquad\acase{\inr{\farg{ret}}}{\inrp{\fname{cons\_failure}~~\termhole~~\farg{ret}}} \\
     & \fname{parse$'$}~~(\parsetreetype{\farg{nt}}{\farg{s}}) \defeq \\
     & \qquad \cif\farg{s} < \farg{s$_0$} \\
     & \qquad \cthen\cif\left(\fname{parse$'$}~~(\farg{s$_0$}\defeq\farg{s})~~(\farg{unseen}\defeq\fname{unseen$_0$})~~(\parsetreetype{\farg{its}}{\farg{s}})\right)~~\text{succeeds returning}~~\farg{d} \\
     & \qquad\cifindent\cifindent\qquad\qquad\text{for any production \farg{p} mapping \farg{nt} to \farg{its}}  \\
-    & \qquad\cifindent\cthen\inlp{\fname{production\_success$_<$}~~\hole~~\farg{p}~~\farg{d}} \\
-    & \qquad\cifindent\celse\inrp{\fname{production\_failure$_<$}~~\hole~~\hole} \\
+    & \qquad\cifindent\cthen\inlp{\fname{production\_success$_<$}~~\termhole~~\farg{p}~~\farg{d}} \\
+    & \qquad\cifindent\celse\inrp{\fname{production\_failure$_<$}~~\termhole~~\termhole} \\
     & \qquad\celse\cif\farg{nt}\in\farg{unseen} \\
     & \qquad\cifindent\cthen\cif\left(\fname{parse$'$}~~(\farg{unseen}\defeq\fname{unseen} - \{\farg{nt}\})~~(\parsetreetype{\farg{its}}{\farg{s}})\right)~~\text{succeeds returning}~~\farg{d} \\
     & \qquad\cifindent\cifindent\cifindent\qquad\qquad\text{for any production \farg{p} mapping \farg{nt} to \farg{its}}  \\
-    & \qquad\cifindent\cifindent\cthen\inlp{\fname{production\_success$_=$}~~\hole~~\farg{p}~~\farg{d}} \\
-    & \qquad\cifindent\cifindent\celse\inrp{\fname{production\_failure$_=$}~~\hole~~\hole} \\
-    & \qquad\cifindent\celse\inrp{\fname{production\_failure$_{\not\in}$}~~\hole~~\hole} \\
+    & \qquad\cifindent\cifindent\cthen\inlp{\fname{production\_success$_=$}~~\termhole~~\farg{p}~~\farg{d}} \\
+    & \qquad\cifindent\cifindent\celse\inrp{\fname{production\_failure$_=$}~~\termhole~~\termhole} \\
+    & \qquad\cifindent\celse\inrp{\fname{production\_failure$_{\not\in}$}~~\termhole~~\termhole} \\
     \\
-    & \fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\nil \defeq \inrp{\afun{\oftype{\hole}{(\hole\in\nil)}}{\text{\Lightning}}} \\
+    & \fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\nil \defeq \inrp{\afun{\oftype{\termhole}{(\termhole\in\nil)}}{\text{\Lightning}}} \\
     & \fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\left(\cons{\farg{x}}{\farg{xs}}\right) \defeq \\
     & \qquad\caseof{\fname{parse$'$}~~(\parsetreetype{\farg{it}}{\fname{take}\ensuremath{{}_{\farg{x}}}~~\farg{s}})
         \textbf{,}~~\fname{parse$'$}~~(\parsetreetype{\farg{its}}{\fname{drop}\ensuremath{{}_{\farg{x}}}~~\farg{s}})
         \textbf{,}~~\fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\farg{xs}} \\
     & \qquad\acase{\inl{\farg{ret$_1$}}
         \textbf{,}~~\inl{\farg{ret$_2$}}
-        \textbf{,}~~\aswidthof{\hole}{\inl{\farg{ret$'$}}}}
-        {\inlp{\fname{cons\_success}~~\hole~~\farg{ret$_1$}~~\farg{ret$_2$}}} \\
-    & \qquad\acase{\aswidthof{\hole}{\inr{\farg{ret$_1$}}}
-            \textbf{,}~~\aswidthof{\hole}{\inr{\farg{ret$_2$}}}
+        \textbf{,}~~\aswidthof{\termhole}{\inl{\farg{ret$'$}}}}
+        {\inlp{\fname{cons\_success}~~\termhole~~\farg{ret$_1$}~~\farg{ret$_2$}}} \\
+    & \qquad\acase{\aswidthof{\termhole}{\inr{\farg{ret$_1$}}}
+            \textbf{,}~~\aswidthof{\termhole}{\inr{\farg{ret$_2$}}}
             \textbf{,}~~\inl{\farg{ret$'$}}}
             {\inl{\farg{ret$'$}}} \\
     & \qquad\acase{\aswidthof{\farg{ret$_1$}}{\inr{\farg{ret$_1$}}}
         \textbf{,}~~\aswidthof{\farg{ret$_2$}}{\inr{\farg{ret$_2$}}}
         \textbf{,}~~\inr{\farg{ret$'$}}}
-        {\inr{\hole}}
+        {\inr{\termhole}}
   \end{align*}
   where the hole on the last line constructs a proof of
-  $$\forall~\farg{x$'$} \in \left(\cons{\farg{x}}{\farg{xs}}\right),~~\typesum{\fname{T$_{\fname{failure}}$}~~\hole~~\hole~~(\parsetreetype{\farg{it}}{\fname{take}_{\farg{x$'$}}~~\farg{s}})}{\fname{T$_{\fname{failure}}$}~~\hole~~\hole~~(\parsetreetype{\farg{its}}{\fname{drop}_{\farg{x$'$}}~~\farg{s}})}$$
+  $$\forall~\farg{x$'$} \in \left(\cons{\farg{x}}{\farg{xs}}\right),~~\typesum{\fname{T$_{\fname{failure}}$}~~\termhole~~\termhole~~(\parsetreetype{\farg{it}}{\fname{take}_{\farg{x$'$}}~~\farg{s}})}{\fname{T$_{\fname{failure}}$}~~\termhole~~\termhole~~(\parsetreetype{\farg{its}}{\fname{drop}_{\farg{x$'$}}~~\farg{s}})}$$
   by using \farg{ret$'$} directly when $\farg{x$'$}\in \farg{xs}$, and using whichever one of \farg{ret$_1$} and \farg{ret$_2$} is on the right when $\farg{x$'$} = \farg{x}$.  While straightforward, the use of sum types makes it painfully verbose without actually adding any insight; we prefer to elide the actual term.
   %% \begin{align*}
   %%   & \qquad\acase{\inr{\farg{ret$_1$}}
-  %%     \textbf{,}~~\aswidthof{\hole}{\inr{\farg{ret$_2$}}}
+  %%     \textbf{,}~~\aswidthof{\termhole}{\inr{\farg{ret$_2$}}}
   %%     \textbf{,}~~\inr{\farg{ret$'$}}}
   %%       {\inrp{\afun{\left((\farg{s$'_1$}, \farg{s$'_2$}) \in \left(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{xs}}\right)\right)}{\fname{helper}~~(\farg{s$'_1$}, \farg{s$'_2$})~~(\farg{s$_1$}, \farg{s$_2$})~~\farg{xs}~~\left(\inl{\farg{ret$_1$}}\right)~~\farg{ret$'$}}}} \\
-  %%   & \qquad\acase{\aswidthof{\hole}{\inr{\farg{ret$_1$}}}
+  %%   & \qquad\acase{\aswidthof{\termhole}{\inr{\farg{ret$_1$}}}
   %%     \textbf{,}~~\inr{\farg{ret$_2$}}
   %%     \textbf{,}~~\inr{\farg{ret$'$}}}
   %%       {\inrp{\afun{\left((\farg{s$'_1$}, \farg{s$'_2$}) \in \left(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{xs}}\right)\right)}{\fname{helper}~~(\farg{s$'_1$}, \farg{s$'_2$})~~(\farg{s$_1$}, \farg{s$_2$})~~\farg{xs}~~\left(\inr{\farg{ret$_2$}}\right)~~\farg{ret$'$}}}} \\
@@ -473,9 +473,9 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
       & \phantom{\fname{parse\_full} }\typeto \typesum{\indname{ParseTreeOf}~\farg{nt}~\farg{s}}{\left(\indname{ParseTreeOf}~\farg{nt}~\farg{s}\typeto\False\right)} \\
       & \fname{parse\_full}~\farg{nt}~\farg{s} \defeq \\
       & \quad \caseof{\fname{parse}~\farg{nt}~\farg{s}\textbf{,}~~\fname{has\_no\_parse}~\farg{nt}~\farg{s}} \\
-      & \quad \acase{\Some{\farg{d}}\textbf{,}~~\aswidthof{\hole}{\inr{\farg{nd}}}}{\inl{\farg{d}}} \\
-      & \quad \acase{\aswidthof{\hole}{\Some{\farg{d}}}\textbf{,}~~\inr{\farg{nd}}}{\inrp{\farg{nd}\circ\fname{min\_parse}}} \\
-      & \quad \acase{\aswidthof{\hole}{\Some{\farg{d}}}\textbf{,}~~\aswidthof{\hole}{\inr{\farg{nd}}}}{\text{\Lightning{}}}
+      & \quad \acase{\Some{\farg{d}}\textbf{,}~~\aswidthof{\termhole}{\inr{\farg{nd}}}}{\inl{\farg{d}}} \\
+      & \quad \acase{\aswidthof{\termhole}{\Some{\farg{d}}}\textbf{,}~~\inr{\farg{nd}}}{\inrp{\farg{nd}\circ\fname{min\_parse}}} \\
+      & \quad \acase{\aswidthof{\termhole}{\Some{\farg{d}}}\textbf{,}~~\aswidthof{\termhole}{\inr{\farg{nd}}}}{\text{\Lightning{}}}
     \end{align*}
     In the final case, we derive a contradiction by applying the parser extensionality axiom, which says that \fname{parse} and \fname{has\_no\_parse} must agree on whether or not \farg{s} parses as \farg{nt}.
     

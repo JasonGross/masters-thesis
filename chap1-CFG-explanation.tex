@@ -81,7 +81,7 @@
     \begin{align*}
       & \fname{any\_parses} \oftypesep \typelistp{\typeprod{\String}{\String}} \typeto \Bool \\
       & \fname{any\_parses}~\nil \defeq \false \\
-      & \fname{any\_parses}~(\cons{(\str{a}, \str{b})}{\hole}) \defeq \true \\
+      & \fname{any\_parses}~(\cons{(\str{a}, \str{b})}{\termhole}) \defeq \true \\
       & \fname{any\_parses}~(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{rest\_splits}}) \\
       & \phantom{\fname{any}} \defeq \left(\fname{parses}~\farg{s$_1$} \booland \fname{parses}~\farg{s$_2$}\right) \boolor \fname{any\_parses}~\farg{rest\_splits} \\
       \\
@@ -97,8 +97,8 @@
     To work around this wrinkle, we keep track of what nonterminals we have not yet tried to parse the current string as, and we abort early if we see a repeat.  Note that this strategy only works for grammars with finite sets of nonterminals, in line with most formalizations of context-free grammars.  For our example grammar, since there is only one nonterminal, we only need to keep track of the current string.  We refactor the above code to introduce a new parameter \farg{prev\_s}, recording the previous string we were parsing.  We use $\farg{s} < \farg{prev\_s}$ to denote the test that \farg{s} is strictly shorter than \farg{prev\_s}. \label{sec:valid-param-parser}
     \begin{align*}
       & \fname{any\_parses} \oftypesep \String \typeto \typelistp{\typeprod{\String}{\String}} \typeto \Bool \\
-      & \fname{any\_parses}~~\hole~~\nil \defeq \false \\
-      & \fname{any\_parses}~~\hole~~(\cons{(\str{a}, \str{b})}{\hole}) \defeq \true \\
+      & \fname{any\_parses}~~\termhole~~\nil \defeq \false \\
+      & \fname{any\_parses}~~\termhole~~(\cons{(\str{a}, \str{b})}{\termhole}) \defeq \true \\
       & \fname{any\_parses}~~\farg{prev\_s}~~(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{rest\_splits}}) \\
       & \quad \defeq \left( \farg{s$_1$} < \farg{prev\_s} \booland \farg{s$_2$} < \farg{prev\_s} \right. \\
       & \phantom{\quad \defeq \left(\right.} \left.\booland \fname{parses}~~\farg{s$_1$} \booland \fname{parses}~~\farg{s$_2$}\right) \\
