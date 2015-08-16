@@ -154,6 +154,13 @@
         \TrinaryInfC{\strcat{\strcat{$s_0$}{$s_1$}}{$s_2$} $\in$ \regex{(ab)$^*$}}
       \DisplayProof
       \end{center}
+      
+      
+      An alternative, more standard, more compact, notation for specifying context free grammars would present this grammar as:
+      \begin{align*}
+      &\nt{(ab)\ensuremath{^*}}~\Coloneqq~\epsilon~|~\terminal{a}~\terminal{b}~\nt{(ab)\ensuremath{^*}}
+      \end{align*}
+      This can be read as saying that there is a single nonterminal \nt{(ab)\ensuremath{^*}}, which parses empty strings, as well as parsing strings which are an \terminal{a}, followed by a \terminal{b}, followed by a string which parses as the nonterminal \nt{(ab)\ensuremath{^*}}.
 
   \subsection{Parse Trees} \label{sec:formal-parse-tree-definition}
     A string \farg{s} \emph{parses} as:
