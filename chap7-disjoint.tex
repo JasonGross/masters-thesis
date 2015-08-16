@@ -13,42 +13,61 @@
   
   The following code computes the set of possible characters of a rule:
 \begin{verbatim}
-possible-terminals : [String] -> [Item] -> [Char]
-possible-terminals _ [] = []
-possible-terminals valid_nonterminals (Terminal ch :: xs)
-  = [ch] `union` possible-terminals valid_nonterminals xs
-possible-terminals valid_nonterminals (NonTerminal nt :: xs)
+possible-terminals' : [String] -> [Item] -> [Char]
+possible-terminals' _ [] = []
+possible-terminals' valid_nonterminals (Terminal ch :: xs)
+  = [ch] `union` possible-terminals' valid_nonterminals xs
+possible-terminals' valid_nonterminals (NonTerminal nt :: xs)
   = if nt `in` valid_nonterminals
     then fold
            union
-           (possible-terminals valid_nonterminals xs)
-           (map (possible-terminals (remove nt valid_nonterminals)) (Lookup nt))
-    else possible-terminals valid_nonterminals xs
+           (possible-terminals' valid_nonterminals xs)
+           (map (possible-terminals' (remove nt valid_nonterminals)) (Lookup nt))
+    else possible-terminals' valid_nonterminals xs
+
+possible-terminals : Grammar -> [Item] -> [Char]
+possible-terminals G its = possible-terminals' (valid_nonterminals_of G) its
 \end{verbatim}
     In the case where the nonterminal is not in the list of valid nonterminals, we assume that we have already seen that nonterminal higher up the chain of recursion (which we will have, if it is valid according to the initial list), and thus don't have to recompute its possible terminals.
 
   The following code computes the set of possible first characters of a rule:
 \begin{verbatim}
-possible-first-terminals : [String] -> [Item] -> [Char]
-possible-first-terminals _ [] = []
-possible-first-terminals valid_nonterminals (Terminal ch :: xs)
+possible-first-terminals' : [String] -> [Item] -> [Char]
+possible-first-terminals' _ [] = []
+possible-first-terminals' valid_nonterminals (Terminal ch :: xs)
   = [ch]
-possible-first-terminals valid_nonterminals (NonTerminal nt :: xs)
+possible-first-terminals' valid_nonterminals (NonTerminal nt :: xs)
   = (if nt `in` valid_nonterminals
      then fold
             union
             []
-            (map (possible-first-terminals (remove nt valid_nonterminals))
+            (map (possible-first-terminals' (remove nt valid_nonterminals))
                  (Lookup nt))
      else [])
     `union`
     (if has_parse nt ""
-     then possible-first-terminals valid_nonterminals xs
+     then possible-first-terminals' valid_nonterminals xs
      else [])
+     
+
+possible-first-terminals : Grammar -> [Item] -> [Char]
+possible-first-terminals G its = possible-first-terminals' (valid_nonterminals_of G) its
 \end{verbatim}
    We can decide \verb|has_parse| at refinement-time with the brute-force parser, which tries every split; when the string we're parsing is empty, $\mathcal O(\text{length}!)$ is not that long.  The idea is that we recursively look at the first element of each production; if it is a terminal, then that is the only possible first terminal of that production.  If it's a nonterminal, then we have to fold the recursive call over the alternatives.  Additionally, if the nonterminal might end up parsing the empty string, then we have to also move on to the next item in the production, and see what its first characters might be.
    
    By computing whether or not these two lists are disjoint, we can decide whether or not this rule applies.  When it applies, we can either look for the first character not in the first list (in this example, the list of digits), or we can look for the first character which is in the second list (in this case, the \terminal{+}).  Since there are two alternatives, we leave it up to the user to decide which one to use.
+   
+   For this grammar, we choose the shorter list.  We define a function:
+\begin{align*}
+&\fname{index\_of\_first\_character\_in}~:~\indname{String}~\to~\typelist{\indname{Char}}~\to~\mathbb{N}
+\end{align*}
+   by folding over the string.  We can then phrase the refinement rule as having type
+\begin{align*}
+&\fname{is\_disjoint}~(\fname{possible-terminals}~\farg{G}~\valuelist{\farg{it}})~(\fname{possible-first-terminals}~\farg{G}~\farg{its})~=~\true \\
+&\to~~\fname{ret}~\valuelist{\fname{index\_of\_first\_character\_in}~\farg{str}~(\fname{possible-first-terminals}~\farg{G}~\farg{its})} \\
+&\phantom{\to~}\subseteq \\
+&\ndcompfor[\phantom{\to~~}]{\farg{it}}{\farg{its}}
+\end{align*}
 %\begin{verbatim}
 %Section IndexedImpl.
 %Typeclasses Opaque If_Then_Else.

@@ -103,7 +103,7 @@
     We then refine this into a choice of a splitting location for each rule actually in the grammar (checking for equality with the given rule), and then can refine (implement) the splitter for each rule separately.  For example, for the grammar \regex{(ab)$^*$}, defined to have a single nonterminal \nt{(ab)$^*$} which can either be empty, or be mapped to \terminal{a}~\terminal{b}~\nt{(ab)$^*$}, we would refine this to the computation:\label{sec:if-folding}
 \newcommand{\ndcompfor}[3][]{%
 #1\{~\farg{splits}~:~\indname{list}~{\mathbb{N}} \\
-&#1 |~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~#2~#3~\farg{splits}~\}
+&\phantom{#1} |~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~#2~#3~\farg{splits}~\}
 }
 \begin{align*}
 & \fname{If}~\valuelist{\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
