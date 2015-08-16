@@ -141,6 +141,10 @@ etoolbox.sty::
 	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$(patsubst %.sty,%.def,$@)")
 	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$(patsubst %.sty,%.tex,$@)")
 
+logreq.sty::
+	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$@")
+	$(call WGET,$@,"http://mirrors.ctan.org/macros/latex/contrib/$(patsubst %.sty,%,$@)/$(patsubst %.sty,%.def,$@)")
+
 mathtools.dtx mhsetup.dtx : % : mathtools/%
 	cp -f $< $@
 
