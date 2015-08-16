@@ -125,6 +125,13 @@
     As in standard presentations, we restrict our attention to grammars where the set of nonterminals is finite.  In our formalization, since a nonterminal is named by a string, we require that each grammar provide a list of ``valid'' nonterminals. \todoask{Should I mention the closure condition, that each production of a valid nonterminal can only mention valid nonterminals?  Does this belong here, or elsewhere?}
 
     \subsubsection{Example: \texorpdfstring{\regex{(ab)$^*$}}{(ab)*}}
+      The regular-expression grammar \regex{(ab)$^*$} has a single nonterminal \nt{(ab)\ensuremath{^*}}, which parses empty strings, as well as parsing strings which are an \terminal{a}, followed by a \terminal{b}, followed by a string which parses as the nonterminal \nt{(ab)\ensuremath{^*}}.  In the standard, compact, notation for specifying context free grammars, we can write this as:
+      \begin{align*}
+      &\nt{(ab)\ensuremath{^*}}~\Coloneqq~\epsilon~|~\terminal{a}~\terminal{b}~\nt{(ab)\ensuremath{^*}}
+      \end{align*}
+    
+      We can also present this grammar as a collection of inference rules, one for each production, and one for each terminal, in the grammar.  This presentation is most useful for describing parse trees, so we will use it primarily in \Autoref{ch:correctness}; we'll use the more compact representation for the larger grammars described in later chapters.
+      
       The inference rules of the regular-expression grammar \regex{(ab)$^*$} are:
 
       \noindent Terminals:
@@ -155,13 +162,6 @@
         \TrinaryInfC{\strcat{\strcat{$s_0$}{$s_1$}}{$s_2$} $\in$ \regex{(ab)$^*$}}
       \DisplayProof
       \end{center}
-      
-      
-      An alternative, more standard, more compact, notation for specifying context free grammars would present this grammar as:
-      \begin{align*}
-      &\nt{(ab)\ensuremath{^*}}~\Coloneqq~\epsilon~|~\terminal{a}~\terminal{b}~\nt{(ab)\ensuremath{^*}}
-      \end{align*}
-      This can be read as saying that there is a single nonterminal \nt{(ab)\ensuremath{^*}}, which parses empty strings, as well as parsing strings which are an \terminal{a}, followed by a \terminal{b}, followed by a string which parses as the nonterminal \nt{(ab)\ensuremath{^*}}.
 
   \subsection{Parse Trees} \label{sec:formal-parse-tree-definition}
     A string \farg{s} \emph{parses} as:
