@@ -52,6 +52,8 @@
   Roughly speaking, we read the interface of our general parser off from the types of the constructors for minimal parse trees.  Every constructor leads to one parameter passed to the parser, much as one derives the types of general ``fold'' functions for arbitrary inductive datatypes.  For instance, lists have constructors \constructorname{nil} and \constructorname{cons}, so a fold function for lists has arguments corresponding to \constructorname{nil} (initial accumulator) and \constructorname{cons} (step function).  The situation for the type of our parser is similar, though we need parallel success (managed to parse the string) and failure (could prove that no parse is possible) parameters for each constructor of minimal parse trees.
 
   The type signatures in the interface are presented in \autoref{fig:parser-interface}.  We explain each type one by one, presenting various instantiations as examples.  Note that the interface we actually implemented is also parameterized over a type of \String s, which we will instantiate with parse trees later in this paper.  The interface we present here fixes \String, for conciseness.
+  
+  \todo{Fix the figure so it fits on one page}
 
 \begin{figure*} \caption{The dependently typed interface of our parser}\label{fig:parser-interface}
 We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\str{a} $\in$ \terminal{a}}''; a query consists of a string and a grammar rule the string might be parsed into.  We use the same notation for \ParseQuery{} and \indname{ParseTree} inhabitants.  All \fname{*\_success} and \fname{*\_failure} type signatures are implicitly parameterized over a string \farg{s$_0$} and a list of nonterminals \farg{unseen}.  We assume we are given \oftype{\fname{unseen$_0$}}{\typelist{\Nonterminal}}.
@@ -134,7 +136,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
   Since we want to be able to specialize our parser to return either \Bool\space or \typeoption{\!\!\indname{ParseTree}}, we want to be able to reuse our soundness and completeness proofs for both.  Our strategy for generalization is to parameterize on dependent type families for ``success'' and ``failure'', so we can use relational parametricity to ensure that all instantiations of the parser succeed or fail together.  The parser has the rough type signature
   $$\oftype{\fname{parse}}{\Nonterminal~\typeto~\String~\typeto~\typesum{\fname{T$_{\fname{success}}$}}{\fname{T$_{\fname{failure}}$}}}.$$
 
-  To instantiate the parser as a Boolean recognizer, we instantiate everything trivially; we use the fact that $\typesum{\Unit}{\Unit}\cong\Bool$.  Just to show how trivial everything is, here is a precise instantiation of the parser, still parameterized over the initial list of nonterminals and the splitter, where $\Unit$ is the one constructor of the one-element type~$\Unit$:
+  To instantiate the parser as a Boolean recognizer, we instantiate everything trivially; we use the fact that $\typesum{\Unit}{\Unit}\cong\Bool$, where \Unit\space is the singleton type inhabited by \unittt.  Just to show how trivial everything is, here is a precise instantiation of the parser, still parameterized over the initial list of nonterminals and the splitter, where $\Unit$ is the one constructor of the one-element type~$\Unit$:
   {\allowdisplaybreaks
   \begin{align*}
     & \fname{T$_{\fname{success}}$}~\termhole~\termhole~\termhole \defeq \Unit \\
@@ -152,9 +154,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     & \fname{production\_failure$_=$}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt \\
     & \fname{production\_failure$_{\not\in}$}~\termhole~\termhole~\termhole~\termhole~\termhole~\termhole \defeq \unittt
   \end{align*}}
-
   To instantiate our parser so that it returns \typeoption{\!\!\indname{ParseTree}} (rather, the dependently typed flavor, \indname{ParseTreeOf}), we take advantage of the isomorphism $\typesum{T}{\Unit} \cong \typeoption{T}$.  We show only the \fname{success} instantiations, as the \fname{failure} ones are identical with the Boolean recognizer.  For readability of the code, we write schematic natural-deduction proof trees inline.
-
   \begin{align*}
     & \fname{T$_{\fname{success}}$}~~\termhole~~\termhole~~\left(\parsetreetype{\farg{X}}{\farg{s}}\right) \defeq \parsetreetype{\farg{X}}{\farg{s}} \\
     \\
@@ -162,11 +162,9 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     & \fname{nil\_success}~~\termhole~~\termhole \defeq \overline{\str{}\in\epsilon} \\
     & \fname{cons\_success}~~\termhole~~\termhole~~\farg{it}~~\farg{its}~~\farg{s$_1$}~~\farg{s$_2$}~~\termhole~~\farg{d$_1$}~~\farg{d$_2$} \defeq \frac{\frac{\farg{d$_1$}}{\farg{s$_1$} \in \farg{it}}\qquad \frac{\farg{d$_2$}}{\farg{s$_2$} \in \farg{its}}}{\strcat{\farg{s$_1$}}{\farg{s$_2$}} \in \cons{\farg{it}}{\farg{its}}} \\
     & \fname{production\_success$_<$}~~\termhole~~\termhole~~\farg{it}~~\farg{nt}~~\farg{s}~~\termhole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}} \\
-    & \fname{production\_success$_=$}~~\termhole~~\termhole~~\farg{it}~~\farg{nt}~~\farg{s}~~\termhole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}} \\
+    & \fname{production\_success$_=$}~~\termhole~~\termhole~~\farg{it}~~\farg{nt}~~\farg{s}~~\termhole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}}
   \end{align*}
-
   What remains is to instantiate the parser in such a way that proving completeness is trivial.  The simpler of our two tasks is to show that when the parser fails, no minimal parse tree exists.  Hence we instantiate the types as follows, where $\False$ is the empty type (equivalently, the false proposition).
-
   \begin{align*}
     & \fname{T$_{\fname{success}}$}~~\termhole~~\termhole~~\termhole \defeq \Unit \\
     & \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{X}}{\farg{s}}\right) \defeq \left(\minparsetreetype{\farg{s$_0$}}{\farg{unseen}}{\farg{X}}{\farg{s}}\right) \typeto \False
@@ -483,7 +481,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
   We will now take a step back from the parser itself, and briefly talk about the process of coding it.  We encountered a few pitfalls that we think highlight some key aspects of dependently typed programming, and our successes suggest benefits to be reaped from using dependent types.
 
   \subsection{The Trouble of Choosing the Right Types}
-    Although we began by attempting to write the type-signature of our parser, we found that trying to write down the correct interface, without any code to implement it, was essentially intractable.  Giving your functions dependent types requires performing a nimble balancing act between being uselessly general on the one hand, and too overly specific on the other, all without falling from the highropes of well-typedness onto the unforgiving floor of type errors.
+    Although we began by attempting to write the type signature of our parser, we found that trying to write down the correct interface, without any code to implement it, was essentially intractable.  Giving your functions dependent types requires performing a nimble balancing act between being uselessly general on the one hand, and too overly specific on the other, all without falling from the highropes of well-typedness onto the unforgiving floor of type errors.
 
     We have found what we believe to be the worst sin the typechecker will let you get away with: having different levels of generality in different parts of your code base, which are supposed to interface with each other without a thoroughly vetted abstraction barrier between them.  Like setting your highropes at different tensions, every trip across the interface will be costly, and if the abstraction levels get too far away, recovering your balance will require Herculean effort.
 
