@@ -105,14 +105,6 @@
       \begin{itemize}
         \item parse by consuming characters from the string.
         \item Allow incremental parsing
-        \item Can be extended to return lists of possible parses
-        \item Ridge describes a way to wrap parser combinators to guarantee termination and ensure completeness; the algorithm we presented above uses essentially the same strategy.  He also proves correctness.
-      \end{itemize}
-    \item Parsing with derivatives
-      \begin{itemize}
-        \item a kind-of conceptual dual to standard parser-combinators; rather than mutating the string as we go along, we mutate the language
-        \item With parser combinators, we drop bits of the string handled by each rule as we go along.  With derivatives, we drop bits of each rule (or entire rules) as we go down the string.
-        \item \todo{Look into whether its been verified}
       \end{itemize}
     \item Look into what \cite{PEG}s and \cite{GLL}s are.
     \item Approaches to verifying parsers: correct-by-construction, induction.  Other way?  \todo{Read paper}
@@ -134,6 +126,6 @@
   
   We begin with naive recursive-descent parsing.\todo{Citation?}  \todo{Say something about viewing recursive-descent as an instance of general inhabitation-decision not being anywhere in the literature?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse (\autoref{sec:splitting-oracle}).  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
   
-  We use Fiat to incrementally build efficient parsers by refinement; we describe Fiat starting in \autocite{ch:fiat}.
+  We use Fiat to incrementally build efficient parsers by refinement; we describe Fiat starting in \autoref{ch:fiat}.
   
   Additionally, we take a digression in \autoref{ch:dep-types} to describe how our parser can be used to prove its own completeness; the idea of reusing the parsing algorithm to generate proofs, parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge.
