@@ -8,6 +8,15 @@
 
   Stepping back a bit, we describe how our approach to parsing relates to existing work.
   
+  \todo{Mention LR (and LL(1)?) parsers: ``The field of parsing is one of the most venerable in computer-science.  Still with us are a variety of parsing approaches born in times of much more severe constraints on memory and processor speed, including various flavors of LR parsers, which apply only to strict subsets of the context-free grammars, to guarantee ability to predict which production applies based on finite look-ahead into a string.''}
+  
+  \section{Recursive Descent Parsing}
+    The most conceptually straightforward approaches to parsing fall into the class called recursive descent parsing, where, to parse a string $s$ as a given production $p$, you attempt to parse various parts of $s$ as each of the items in the list $p$.  The control flow of the code mirrors the structure of the grammar, as well as the structure of the eventual parse tree, descending down the branches of the parse tree, recursively calling itself at each step.
+    
+    \subsection{Parser Combinators}
+      A popular approach to implementing recursive descent parsing
+      
+  
   \todo{Fill in content}
   \todoask{Am I missing any branches?}
   \begin{itemize}
@@ -31,7 +40,8 @@
   \end{itemize}
 
   \todo{Rewrite the rest of this part so it's not just Adam's words}
-  The field of parsing is one of the most venerable in computer-science.  Still with us are a variety of parsing approaches born in times of much more severe constraints on memory and processor speed, including various flavors of LR parsers, which apply only to strict subsets of the context-free grammars, to guarantee ability to predict which production applies based on finite look-ahead into a string.  However, despite rumors to the contrary, the field of parsing is far from dead.  In the twentieth century, the functional-programming world experimented with a variety of approaches to \emph{parser combinators}~\cite{pcomb}, where parsers are higher-order functions built from a small set of typed combinators.  In the twenty-first century alone, a number of new parsing approaches have been proposed or popularized, including parsing expression grammars (PEGs)~\cite{PEG}, derivative-based parsing~\cite{Derivs}, and GLL parsers~\cite{GLL}.
+  
+    However, despite rumors to the contrary, the field of parsing is far from dead.  In the twentieth century, the functional-programming world experimented with a variety of approaches to \emph{parser combinators}~\cite{pcomb}, where parsers are higher-order functions built from a small set of typed combinators.  In the twenty-first century alone, a number of new parsing approaches have been proposed or popularized, including parsing expression grammars (PEGs)~\cite{PEG}, derivative-based parsing~\cite{Derivs}, and GLL parsers~\cite{GLL}.
 
   However, our approach is essentially the same, algorithmically, as the one that Ridge demonstrated with a verified parser-combinator system~\cite{Ridge}, taking naive recursive-descent parsing and adding a layer to prune duplicative calls to the parser.  His proof was carried out in HOL4, necessarily without using dependent types.  Our new work may be interesting for the aesthetic appeal of our unusual application of dependent types to get the parser to generate some of its own soundness proof.  Ridge's parser also has worst-case $O(n^5)$ running time in the input-string length.  In the context of our verified implementation, we plan to explore a variety of optimizations based on clever, grammar-specific choices of string-splitter functions, which should have a substantial impact on the run-time cost of parsing some relevant grammars, and which we conjecture will not require any changes to the development presented in this paper.
 
