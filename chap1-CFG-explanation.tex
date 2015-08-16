@@ -1,4 +1,4 @@
-\chapter{Parsing Context-Free Grammars}
+\chapter{Parsing Context-Free Grammars}\label{ch:cfg}
 
   We begin with an overview of the general setting and a description of our approach to parsing.
 
@@ -92,7 +92,8 @@
 
   \subsection{Aborting Early} \label{sec:solve-nontermination}
 
-    To work around this wrinkle, we keep track of what nonterminals we have not yet tried to parse the current string as, and we abort early if we see a repeat.  Note that this strategy only works for grammars with finite sets of nonterminals, in line with most formalizations of context-free grammars.  For our example grammar, since there is only one nonterminal, we only need to keep track of the current string.  We refactor the above code to introduce a new parameter \farg{prev\_s}, recording the previous string we were parsing.  We use $\farg{s} < \farg{prev\_s}$ to denote the test that \farg{s} is strictly shorter than \farg{prev\_s}. \label{sec:valid-param-parser}
+    To work around this wrinkle, we keep track of what nonterminals we have not yet tried to parse the current string as, and we abort early if we see a repeat.  %Note that this strategy only works for grammars with finite sets of nonterminals, in line with most formalizations of context-free grammars.
+    For our example grammar, since there is only one nonterminal, we only need to keep track of the current string.  We refactor the above code to introduce a new parameter \farg{prev\_s}, recording the previous string we were parsing.  We use $\farg{s} < \farg{prev\_s}$ to denote the test that \farg{s} is strictly shorter than \farg{prev\_s}. \label{sec:valid-param-parser}
     \begin{align*}
       & \fname{any\_parses} \oftypesep \String \typeto \typelistp{\typeprod{\String}{\String}} \typeto \Bool \\
       & \fname{any\_parses}~~\termhole~~\nil \defeq \false \\
@@ -107,19 +108,21 @@
       & \fname{parses}~~\farg{str} \defeq \fname{any\_parses}~~\farg{str}~~(\fname{split}~~\farg{str})
     \end{align*}
 
-    We can convince Coq that this definition is total via well-founded recursion on the length of the string passed to \fname{parses}.  For a more-complicated grammar, we'd need to use a well-founded relation that also included the number of nonterminals not yet tried for this string; we do this in \autoref{fig:parser-impl} in \autoref{sec:parser-impl}.
+    We can convince Coq that this definition is total via well-founded recursion on the length of the string passed to \fname{parses}.  For a more complicated grammar, we'd need to use a well-founded relation that also included the number of nonterminals not yet tried for this string; we do this in \autoref{fig:parser-impl} in \autoref{sec:parser-impl}.
 
     %Correctness is still straightforward; we can still simply trace the parsing algorithm, generating the corresponding tree at each step.
 
     With this refactoring, however, completeness is no longer straightforward.  We must show that aborting early does not eliminate good parse trees.
 
-    We devote the rest of this paper to describing an elegant approach to proving completeness.  Ridge~\cite{Ridge} carried out a proof about essentially the same algorithm in HOL4, a proof assistant that does not support dependent types.  We instead refine our parser to have a more general polymorphic type signature that takes advantage of dependent types, supporting a proof strategy with a different kind of aesthetic appeal.  Relational parametricity frees us from worrying about different control flows with different instantiations of the arguments: when care is taken to ensure that the execution of the algorithm does not depend on the values of the arguments, we are guaranteed that all instantiations succeed or fail together.  Freed from this worry, we convince our parser to prove its own soundness and completeness by instantiating its arguments correctly.
+    We devote the rest of \Autoref{ch:cfg,ch:correctness,ch:dep-types} to describing an elegant approach to proving completeness.  Ridge~\cite{Ridge} carried out a proof about essentially the same algorithm in HOL4, a proof assistant that does not support dependent types.  We instead refine our parser to have a more general polymorphic type signature that takes advantage of dependent types, supporting a proof strategy with a different kind of aesthetic appeal.  Relational parametricity frees us from worrying about different control flows with different instantiations of the arguments: when care is taken to ensure that the execution of the algorithm does not depend on the values of the arguments, we are guaranteed that all instantiations succeed or fail together.  Freed from this worry, we convince our parser to prove its own soundness and completeness by instantiating its arguments correctly.
 
 \section{Standard Formal Definitions} \label{sec:standard-definitions}
   Before proceeding, we pause to standardize on terminology and notation for context-free grammars and parsers.  In service of clarity for some of our later explanations, we formalize grammars via natural-deduction inference rules, a slightly nonstandard choice.
 
   \subsection{Context-Free Grammar}
     A \emph{context-free grammar} consists of \emph{items}, which may be either \emph{terminals} (characters) or \emph{nonterminals}; plus a set of \emph{productions}, each mapping a nonterminal to a sequence of items.
+    
+    As in standard presentations, we restrict our attention to grammars where the set of nonterminals is finite.  In our formalization, since a nonterminal is named by a string, we require that each grammar provide a list of ``valid'' nonterminals. \todoask{Should I mention the closure condition, that each production of a valid nonterminal can only mention valid nonterminals?  Does this belong here, or elsewhere?}
 
     \subsubsection{Example: \texorpdfstring{\regex{(ab)$^*$}}{(ab)*}}
       The inference rules of the regular-expression grammar \regex{(ab)$^*$} are:

@@ -1,4 +1,4 @@
-\chapter{Completeness and Soundness}
+\chapter{Completeness and Soundness}\label{ch:correctness}
     Parsers come in a number of flavors.  The simplest flavor is the \emph{recognizer}, which simply says whether or not there exists a parse tree of a given string for a given nonterminal; it returns Booleans.  There is also a richer flavor of parser that returns inhabitants of \typeoption{\indname{ParseTree}}.
 
     For any recognizer \oftype{\fname{has\_parse}}{\Nonterminal\space\typeto\space\String\space\typeto\space\Bool}, we may ask whether it is \emph{sound}, meaning that when it returns \true, there is always a parse tree; and \emph{complete}, meaning that when there is a parse tree, it always returns \true.  We may express these properties as theorems (alternatively, dependently typed functions) with the following type signatures:
