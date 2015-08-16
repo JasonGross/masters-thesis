@@ -1,6 +1,12 @@
 \pagenumbering{roman}
-\newcommand{\todo}[1]{\textcolor{red}{[\textbf{TODO:} #1]}}
-\newcommand{\todoask}[1]{\textcolor{purple}{[\textbf{QUESTION FOR ADAM:} #1]}}
+\makeatletter
+\newcommand{\todo}[1]{%
+\@latex@warning{TODO: \detokenize{#1}}%
+\textcolor{red}{[\textbf{TODO:} #1]}}%
+\newcommand{\todoask}[1]{%
+\@latex@warning{QUESTION FOR ADAM: \detokenize{#1}}%
+\textcolor{purple}{[\textbf{QUESTION FOR ADAM:} #1]}}%
+\makeatother
 
 \todo{Fill in acknowledgements in cover.tex}
 
