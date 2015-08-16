@@ -106,7 +106,7 @@
       
       How do we get around computing a new table on splits?  We pull the same trick here that we pulled on strings; we refer only to the table that is built from the initial string, and describe the correctness condition on the table in terms of arbitrary substrings of that string.
       
-      Fiat presents us with a goal involving a statement of the form ``non-deterministically pick a list of splitting locations that is complete for the substring of \farg{str} starting at \farg{n} and ending at \farg{m}, for the rule \nt{pexpr}\nt{+expr}.''  In code form, this is:
+      Fiat presents us with a goal involving a statement of the form ``nondeterministically pick a list of splitting locations that is complete for the substring of \farg{str} starting at \farg{n} and ending at \farg{m}, for the rule \nt{pexpr}\nt{+expr}.''  In code form, this is:
 \begin{verbatim}
 {splits : list nat
 | split_list_is_complete

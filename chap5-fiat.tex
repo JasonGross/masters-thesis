@@ -27,12 +27,12 @@
 %    \begin{itemize} \item   \end{itemize} \end{itemize}
 
 \section{Splitters at a Glance}
-  We have now finished describing the general parsing algorithm, as well as its correctness proofs; we have an algorithm, that decides whether or not a given structure can be imposed on any block of unstructured text.  The algorithm is parametrized on an ``oracle'' that describes how to split the string for each rule; essentially all of the algorithmically interesting content is in the splitters.  For the remainder of this paper, we will focus on how to implement the splitting oracle.  Correctness is not enough, in general; algorithms also need to be fast to use.  We thus focus primarily on efficiency when designing splitting algorithms, and work in a framework that guarantees correctness.
+  We have now finished describing the general parsing algorithm, as well as its correctness proofs; we have an algorithm that decides whether or not a given structure can be imposed on any block of unstructured text.  The algorithm is parametrized on an ``oracle'' that describes how to split the string for each rule; essentially all of the algorithmically interesting content is in the splitters.  For the remainder of this paper, we will focus on how to implement the splitting oracle.  Correctness is not enough, in general; algorithms also need to be fast to use.  We thus focus primarily on efficiency when designing splitting algorithms, and work in a framework that guarantees correctness.
   
-  The goals of this work, as mentioned in \autoref{sec:goals}, are to present a framework for constructing proven-correct parsers incrementally, and argue for its eventual feasibility.  To this end, we build on the previous work of Fiat~\cite{fiat}, to allow us to build programs incrementally while maintaining correctness guarantees.  This section will describe Fiat, and how it is used in this project.  The following sections will focus more on the details of the splitting algorithms, and less on Fiat itself.
+  The goals of this work, as mentioned in \autoref{sec:goals}, are to present a framework for constructing proven-correct parsers incrementally and argue for its eventual feasibility.  To this end, we build on the previous work of Fiat~\cite{fiat}, to allow us to build programs incrementally while maintaining correctness guarantees.  This section will describe Fiat and how it is used in this project.  The following sections will focus more on the details of the splitting algorithms and less on Fiat itself.
   
 \section{What counts as efficient?}
-  To guide our implementations, we characterize efficient splitters informally, as follows.  Although our eventual concrete efficiency target is to be competitive with extant open source JavaScript parsers, when designing algorithms, we aim at the asymptotic efficiency target of linearity in the length of the string.  In practice, the dominating concern is that doubling the length of the string should only double the duration of the parse, and not quadruple it (or more!).  {}\todo{CITATION NEEDED}  To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is $\mathcal O($length of string${} \times ($product over all nonterminals of the number of possible rules for that nonterminal$))$.
+  To guide our implementations, we characterize efficient splitters informally, as follows.  Although our eventual concrete efficiency target is to be competitive with extant open-source JavaScript parsers, when designing algorithms, we aim at the asymptotic efficiency target of linearity in the length of the string.  In practice, the dominating concern is that doubling the length of the string should only double the duration of the parse, and not quadruple it (or more!).  {}\todo{CITATION NEEDED}  To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is $\mathcal O($length of string${} \times ($product over all nonterminals of the number of possible rules for that nonterminal$))$.
     
   Here is an example of hitting the worst-case scenario. \todo{Is this actually possible?} % Suppose we have a grammar with one rule for each assignment of $d$ and $d'$ to a decimal digit, of the following template:
 %    \begin{center}
@@ -63,10 +63,10 @@
   \subsection{Incremental Construction by Refinement}
   Efficiency targets in hand, we move on to incremental construction.  The key idea is that parsing rules tend to fall into clumps that are similar between grammars.  For example, many grammars use delimiters (such as whitespace, commas, or binary operation symbols) as splitting points, but only between well-balanced brackets (such as double quotes, parentheses, or comment markers).  We can take advantage of these similarities by baking the relevant algorithms into basic building blocks, which can then be reused across different grammars.  To allow this reuse, we construct the splitters incrementally, allowing us to deal with different rules in different ways.
   
-  The Fiat framework~\cite{fiat} is the scaffolding of our splitter implementations.  As a framework, the goal of Fiat is to enable library-writers to construct algorithmic building blocks packaged with correctness guarantees, in such a way that users can easily and mostly-automatically make use of these building blocks when they apply. 
+  The Fiat framework~\cite{fiat} is the scaffolding of our splitter implementations.  As a framework, the goal of Fiat is to enable library writers to construct algorithmic building blocks packaged with correctness guarantees, in such a way that users can easily and mostly automatically make use of these building blocks when they apply. 
   
   \subsection{The Fiat Mindset}
-    The correctness guarantees of Fiat are based on specifications in the form of propositions in Gallina, the mathematical language used by Coq.  For example, the specification of a valid \fname{has\_parse} method is that \fname{has\_parse}~~\farg{nt}~~\farg{str}~~=~~\true~~\allowbreak$\longleftrightarrow$\allowbreak~~\fname{inhabited}~~(\indname{ParseTreeOf}~~\farg{nt}~~\farg{s}).  Fiat allows incremental construction of algorithms by providing a language for seamlessly mixing specifications and code.  The language is a light-weight monadic syntax with one extra operator: a non-deterministic choice operator; we define the following combinators:
+    The correctness guarantees of Fiat are based on specifications in the form of propositions in Gallina, the mathematical language used by Coq.  For example, the specification of a valid \fname{has\_parse} method is that \fname{has\_parse}~~\farg{nt}~~\farg{str}~~=~~\true~~\allowbreak$\longleftrightarrow$\allowbreak~~\fname{inhabited}~~(\indname{ParseTreeOf}~~\farg{nt}~~\farg{s}).  Fiat allows incremental construction of algorithms by providing a language for seamlessly mixing specifications and code.  The language is a light-weight monadic syntax with one extra operator: a nondeterministic choice operator; we define the following combinators:
     \begin{align*}
       &\farg{x} \leftarrow \farg{c};~~\farg{c$'$} && \text{Run \farg{c} and store the result in \farg{x}; continue with \farg{c$'$}, which may mention \farg{x}} \\
       &\farg{c};;~~\farg{c$'$}&&\text{Run \farg{c}.  If it terminates, throw away the result, and run \farg{c$'$}} \\
@@ -77,7 +77,7 @@
     An algorithm starts out as a nondeterministic choice of a value satisfying the specification.  Coding then proceeds by refinement.  Formally, we say that a computation \farg{c$'$} \emph{refines} a computation \farg{c}, written \farg{c$'$} $\subseteq$ \farg{c}, if every value that \farg{c$'$} can compute to, \farg{c} can also compute to.  We freely generate the relation ``the computation \farg{c} can compute to the value \farg{v}'', written \cancomputeto{\farg{c}}{\farg{v}}, by the rules:
     \begin{align*}
       \cancomputeto{\constructorname{ret}~~\farg{v}&}{\farg{v}} \\
-      \cancomputeto{\{\farg{x}~|~\farg{P}(\farg{x})\}&}{\farg{v}}\quad\text{iff \farg{x} satisfies \farg{P}} \\
+      \cancomputeto{\{\farg{x}~|~\farg{P}(\farg{x})\}&}{\farg{v}}\quad\text{iff \farg{v} satisfies \farg{P}} \\
       \cancomputeto{(\farg{c};;~~\farg{c$'$})&}{\farg{v}}\quad\text{iff there is a \farg{v$'$} such that \cancomputeto{\farg{c}}{\farg{v$'$}} and \cancomputeto{\farg{c$'$}}{\farg{v}}} \\
       \cancomputeto{(\farg{x} \leftarrow \farg{c};~~\farg{c$'$}(\farg{x}))&}{\farg{v}}\quad\text{iff there is a \farg{v$'$} such that \cancomputeto{\farg{c}}{\farg{v$'$}} and \cancomputeto{\farg{c$'$}(\farg{v$'$})}{\farg{v}}}
     \end{align*}
@@ -220,7 +220,7 @@ H := ?88 : hiddenT
     (NonTerminal "pexpr") [Terminal "+"; NonTerminal "expr"]
     splits}
 \end{verbatim}
-     It says that we have to find a refinement of non-deterministically picking a complete list of splits for the rule ``a \nt{pexpr}, followed by a \terminal{+}, followed by a \nt{expr}.''
+     It says that we have to find a refinement of nondeterministically picking a complete list of splits for the rule ``a \nt{pexpr}, followed by a \terminal{+}, followed by a \nt{expr}.''
      
      To get to this goal, we write this code:
 \begin{verbatim}

@@ -1,4 +1,4 @@
-\chapter{Future work}
+\chapter{Future Work}
   \begin{itemize} \item  Grammars and efficiency: The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations. <lookup list of JS implementations>  We plan to profile our parser against these on <lookup test suite>
     \begin{itemize} \item  Description of anticipated challenges, based on the JavaScript grammar <lookup JS grammar> \end{itemize}
   \item  Generating Parse Trees
@@ -6,13 +6,13 @@
   \item  Validating extraction
     \begin{itemize} \item  By adapting <Clement's work>, our parsers will be able to be compiled to verified bedrock/assembly, within Coq \end{itemize}
     \end{itemize}
-\section{Future work with dependent types}
+\section{Future Work with Dependent Types}
   Recall from \autoref{ch:dep-types} that dependent types have allowed us to refine our parsing algorithm to prove its own soundness and completeness.
   
   However, we still have some work left to do to clean up the implementation of the dependently typed version of the parser.
   
   \paragraph{Formal extensionality/parametricity proof}
-    To completely finish the formal proof of completeness, as described in this paper, we need to prove the parser extensionality axiom from \autoref{sec:parser-extensionality-theorem}.  We need to prove that the parser does not make any decisions based on any arguments to its interface other than \fname{split}, internalizing the obvious parametricity proof.  (Alternatively, as mentioned above, we could hope to use an extension of Coq with internalized parametricity~\cite{InColor}.)
+    To completely finish the formal proof of completeness, as described in this thesis, we need to prove the parser extensionality axiom from \autoref{sec:parser-extensionality-theorem}.  We need to prove that the parser does not make any decisions based on any arguments to its interface other than \fname{split}, internalizing the obvious parametricity proof.  (Alternatively, as mentioned above, we could hope to use an extension of Coq with internalized parametricity~\cite{InColor}.)
 
   \paragraph{Even more self-reference}
     We might also consider reusing the same generic parser to generate the extensionality proofs, by instantiating the type families for success and failure with families of propositions saying that all instantiations of the parser, when called with the same parsing problem, always return values that are equivalent when converted to Booleans.  A more specialized approach could show just that \fname{has\_parse} agrees with \fname{parse} on successes and with \fname{has\_no\_parse} on failures:
