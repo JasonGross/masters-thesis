@@ -19,7 +19,7 @@
     \subsection{Parser Combinators}
       A popular approach, called \emph{combinator parsing}~\cite{pcomb}, to implementing recursive-descent parsing involves writing a small set of typed combinators, or higher-order functions, which are then applied to each other in various combinations to write a parser that mimics closely the structure of the grammar.
       
-      Essentially, parsers defined via parser combinators answer the question ``what prefixes of a given string can be parsed as a given item?''  Each function returns a list of postfixes of the string it is passed, indicating all of the strings that might remain for the other items in a given rule.  \todo{Mention and describe semantic actions; informally explain how to generalize examples below to semantic actions}
+      Essentially, parsers defined via parser combinators answer the question ``what prefixes of a given string can be parsed as a given item?''  Each function returns a list of postfixes of the string it is passed, indicating all of the strings that might remain for the other items in a given rule.
       
     \subsubsection{Basic Combinators}
       We now define the basic combinators.  In the simplest form, each combinator takes in a string, and returns a list of strings (the postfixes); we can define the type
@@ -59,6 +59,15 @@
 &\fname{parse-\regex{(ab)\ensuremath{^*}}}~=~(\fname{terminal}~\terminal{a}~\sequencing~\fname{terminal}~\terminal{b}~\sequencing~\fname{parse-\regex{(ab)\ensuremath{^*}}})~~\fname{|||}~~\epsilon
 \end{align*}
       Note that, by putting $\epsilon$ last, we ensure that this parser returns the list in order of longest parse (shortest postfix) to shortest parse (longest postfix).
+      
+    \subsubsection{Semantic Actions}
+      \newtext{Frequently, programmers want parsers to not just say whether or not a given string, or prefix of a string, can be parsed, but to also build a parse tree, or perform some other computation or construction on the structure of the string.  A common way to acommplish this is with \emph{semantic actions}:  Associate to each production a function which, when given values associated to each of the nonterminals in its sequence, computes a value to associate to the given nonterminal.  By calling these functions at each node of the parse tree, passing the function at each node the values returned by its descendants, we can compute a value associated to a string as we parse it. For example, we might annotate a simple expression grammar, to compute the numerical value associated with a string expression, like this:}
+\begin{align*}
+  e \mathrel{\vcentcolon\coloneqq}{} & n && \left\{\fname{int\_of\_string}(n)\right\} \\
+  \mathrel{|}{} & e_1\mathrel{\str{+}}e_2 && \left\{e_1 + e_2\right\} \\
+  \mathrel{|}{} & \str{(}~e~\str{)} && \left\{e\right\}
+\end{align*}
+      \newtext{Parser combinators can be easily extended to return a list not just of postfixes, but of pairs of a value and a postfix.  The \coqtype{parser} type can be parameterized over the type of the value returned.  The alternative combinator would return a disjoint union, and the sequencing combinator would return a pair of the two values returned by its inputs.  The terminal parser would return the single character it parsed, and the empty string parser would return an element of the singleton type.  Each rule for a nonterminal could then be wrapped with a combinator which applies the semantic action to the relevant values.  A more detailed explanation can be found in \cite{pcomb}. \todoask{Should I include Haskell-like code for semantic actions of these parser combinators?  Should I mention that the dependently typed parser of \autoref{ch:dep-types} can be easily extended to work with semantic actions?}}
       
     \subsubsection{Proving Correctness and Dealing with Nontermination}
       Although parser combinators are straightforward, it is easy to make them loop forever.  It is well-known that parsers defined naively using parser combinators don't handle grammars with \emph{left recursion}, where the first item in a given production rule is the nonterminal currently being defined.  For example, if we have the nonterminal \nt{expr} $\Coloneqq$ \nt{number}~|~\nt{expr}~\terminal{+}~\nt{expr}, then the parser for \nt{expr}~\terminal{+}~\nt{expr} will call the parser for \nt{expr}, which will call the parse for \nt{expr}~\terminal{+}~\nt{expr}, which will quickly loop forever.

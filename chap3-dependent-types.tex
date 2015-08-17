@@ -164,12 +164,12 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     & \fname{production\_success$_<$}~~\termhole~~\termhole~~\farg{it}~~\farg{nt}~~\farg{s}~~\termhole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}} \\
     & \fname{production\_success$_=$}~~\termhole~~\termhole~~\farg{it}~~\farg{nt}~~\farg{s}~~\termhole~~\farg{p}~~\farg{d} \defeq \frac{\frac{\farg{d}}{\farg{s} \in \farg{its}}}{\farg{s} \in \farg{nt}}{\text{\tiny\space(\farg{p})}}
   \end{align*}
-  What remains is to instantiate the parser in such a way that proving completeness is trivial.  The simpler of our two tasks is to show that when the parser fails, no minimal parse tree exists.  Hence we instantiate the types as follows, where $\False$ is the empty type (equivalently, the false proposition).
+  What remains is instantiating the parser in such a way that proving completeness is trivial.  The simpler of our two tasks is to show that when the parser fails, no minimal parse tree exists.  Hence we instantiate the types as follows, where $\False$ is the empty type (equivalently, the false proposition).
   \begin{align*}
     & \fname{T$_{\fname{success}}$}~~\termhole~~\termhole~~\termhole \defeq \Unit \\
     & \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{X}}{\farg{s}}\right) \defeq \left(\minparsetreetype{\farg{s$_0$}}{\farg{unseen}}{\farg{X}}{\farg{s}}\right) \typeto \False
   \end{align*}
-  Using \Lightning{} to denote deriving a contradiction, we can unenlighteningly instantiate the arguments as
+  Using \Lightning{} to denote a (possibly automated) proof deriving a contradiction, we can unenlighteningly instantiate the arguments as
   \begin{align*}
     & \fname{terminal\_success}~~\termhole~~\termhole~~\termhole \defeq \unittt \\
     & \fname{terminal\_failure}~~\termhole~~\termhole~~\termhole~~\termhole~~\termhole \defeq \text{\Lightning} \\
@@ -442,7 +442,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     \end{enumerate}
 
   \subsection{Parametricity} \label{sec:parser-extensionality-theorem}
-    Before we can combine different instantiations of this interface, we need to know that they behave similarly.  Inspection of the code, together with relational parametricity, validates assuming the following axiom, which should also be internally provable by straightforward induction (though we have not bothered to prove it).
+    Before we can combine different instantiations of this interface, we need to know that they behave similarly.  Inspection of the code, together with relational parametricity, validates assuming the following axiom, which should also be internally provable by straightforward induction (though we have not bothered to prove it).  \newtext{The alternative that we have actually taken to get our end-to-end proof to be axiom-free, in the code base we use to perform various optimizations described in \Autoref{ch:fiat,ch:fixed-length,ch:disjoint,ch:tables}, is to prove soundness more manually, for the instantiation of the parser that we use in those sections.}
 
     The \emph{parser extensionality axiom} states that, for any fixed instantiation of \fname{split}, and any arbitrary instantiations of the rest of the interface, giving rise to two different functions \fname{parse$_1$} and \fname{parse$_2$}, we have
     \begin{align*}
