@@ -1,7 +1,7 @@
 \chapter{Parsing Context-Free Grammars}\label{ch:cfg}
 
-  We begin with an overview of the general setting and a description of our approach to parsing.
-
+  We begin with an overview of the general setting and a description of our approach to parsing.  \todoask{Is this a good place to link to code?  Should it be inline, or in a footnote?}  \newtext{Our parser can be found on GitHub, in the folder \texttt{src/Parsers} of \url{https://github.com/JasonGross/fiat}.}\footnote{\newtext{The version, as of the writing of this thesis, is \href{https://github.com/JasonGross/fiat/tree/2c1aa766b9923ce75f26d6477f9fd5d8b6d3f9c1}{2c1aa766b9923ce75f26d6477f9fd5d8b6d3f9c1}.  The Fiat homepage is \url{http://plv.csail.mit.edu/fiat/}.  The more general, dependently typed version of the parser is at \url{https://github.com/JasonGross/parsing-parses}.}}
+  
 \section{Parsing}
   The job of a parser is to decompose a flat list of characters, called a \emph{string}, into a structured tree, called a \emph{parse tree}, on which further operations can be performed.  As a simple example, we can parse \str{ab} as an instance of the regular expression \regex{(ab)$^*$}, giving this parse tree, where we write $\cdot$ for string concatenation.
   \begin{prooftree}
@@ -12,12 +12,17 @@
     \TrinaryInfC{\llstrcat{\str{a}}{\llstrcat{\str{b}}{\str{}}} $\in$ \regex{ab(ab)$^*$}}
     \UnaryInfC{\str{ab} $\in$ \regex{(ab)$^*$}}
   \end{prooftree}
+  
+  \todo{Find a place for this justification}  \todoask{Who am I justifying the importance of parsing as a problem to?}
+  \newtext{\paragraph{Why parsing?}  Parsing is the first step for a variety of applications.  To perform meaningful analysis on text of any written language, the first step is generally to break the text up into words, sentences, and paragraphs, and impose some sort of structure on the words in each sentence; this requires parsing.  To compile, interpret, or execute a program, a computer first needs to read its code from the disk, and turn the resulting stream of bytes into a structured representation that it can manipulate and run; this requires parsing.  Parsing JavaScript, in particular, is a useful application; JavaScript has become the de facto language of the web.  Unlike machine code, which was designed to be easy for computers to manipulate quickly, JavaScript was designed to be relatively easy to read by a person.  Having responsive dynamic webpages requires downloading and interpreting JavaScript quickly; if the JavaScript parser being used is slow, there's no hope of loading content without frustrating delays for the user.}
+  
+  
 
-  Our parse tree is implicitly constructed from a set of general inference rules for parsing.  There is a naive approach to parsing a string $s$: run the inference rules as a logic program.  Several execution orders work: we may proceed bottom-up, by generating all of the strings that are in the language and not longer than $s$, checking each one for equality with $s$; or top-down, by splitting $s$ into smaller parts in a way that mirrors the inference rules.  In this paper, we present an implementation based on the second strategy, parameterizing over a ``splitting oracle'' that provides a list of candidate locations at which to split the string, based on the available inference rules.  Soundness of the algorithm is independent of the splitting oracle; each location in the list is attempted.  To be complete, if any split of the string yields a valid parse, the oracle must give at least one splitting location that also yields a valid parse.  Different splitters yield different simple recursive-descent parsers. \label{sec:splitting-oracle} %~\cite{}. \todoAdamOrJason{Find a reference}
+  Our parse tree is implicitly constructed from a set of general inference rules for parsing.  There is a naive approach to parsing a string $s$: run the inference rules as a logic program.  Several execution orders work: we may proceed bottom-up, by generating all of the strings that are in the language and not longer than $s$, checking each one for equality with $s$; or top-down, by splitting $s$ into smaller parts in a way that mirrors the inference rules.  In this thesis, we present an implementation based on the second strategy, parameterizing over a ``splitting oracle'' that provides a list of candidate locations at which to split the string, based on the available inference rules.  Soundness of the algorithm is independent of the splitting oracle; each location in the list is attempted.  To be complete, if any split of the string yields a valid parse, the oracle must give at least one splitting location that also yields a valid parse.  Different splitters yield different simple recursive-descent parsers. \label{sec:splitting-oracle} %~\cite{}. \todoAdamOrJason{Find a reference}
 
   There is a trivial, brute-force splitter that suffices for proving correctness: simply return the list of all locations in the string, the list of all numbers between 0 and the length of the string.  Because we construct a parser that terminates no matter what list it is given, and all valid splits are trivially in this list, this splitting ``oracle'' is enough to fill the oracle-shaped-hole in the correctness proofs.  Thus, we can largely separate concerns about correctness and concerns about efficiency.  In \autoref{ch:dep-types}, we focus only on correctness; we set up the framework we use to achieve efficiency in \autoref{ch:fiat}, and we demonstrate the use of the framework in \Autoref{ch:fixed-length,ch:disjoint,ch:tables}.
 
-  Although this simple splitter is sufficient for proving the algorithm correct, it is horribly inefficient, running in time $\mathcal O(n!)$, where $n$ is the length of the string.  We synthesize more efficient splitters in later chapters; we believe that parameterizing the parser over a splitter gives us enough expressiveness to implement essentially all optimizations of interest, while being a sufficiently simple language to make proofs relatively straightforward.  For example, to achieve linear parse time on the \regex{(ab)$^*$} grammar, we could have a splitter that, when trying to parse \llstrcat{\llstrcat{\terminal{\farg{c$_1$}}}{\terminal{\farg{c$_2$}}}}{\farg{s}} as \regex{ab(ab)$^*$}, splits the string into (\terminal{\farg{c$_1$}}, \terminal{\farg{c$_2$}}, \farg{s}); and when trying to parse \farg{s} as $\epsilon$, does not split the string at all.
+  Although this simple splitter is sufficient for proving the algorithm correct, it is horribly inefficient, running in time $\mathcal O(n!)$, where $n$ is the length of the string.  We synthesize more efficient splitters in later chapters; we believe that parameterizing the parser over a splitter gives us enough expressiveness to implement essentially all optimizations of interest, while being a sufficiently \editedtext{constrained design space} to make proofs relatively straightforward.  For example, to achieve linear parse time on the \regex{(ab)$^*$} grammar, we could have a splitter that, when trying to parse \llstrcat{\llstrcat{\terminal{\farg{c$_1$}}}{\terminal{\farg{c$_2$}}}}{\farg{s}} as \regex{ab(ab)$^*$}, splits the string into (\terminal{\farg{c$_1$}}, \terminal{\farg{c$_2$}}, \farg{s}); and when trying to parse \farg{s} as $\epsilon$, does not split the string at all.
   
   Parameterizing over a splitting oracle allows us to largely separate correctness concerns from efficiency concerns.
 
@@ -25,10 +30,10 @@
 
   %Thus this construction can be instantiated to give both predictive recursive-descent parsers (which, by definition, are the non-backtracking ones~\cite{}), as well as being able to handle arbitrary context-free-grammars, which entirely predictive parsers cannot~\cite{}.
 
-  Proving completeness---that our parser succeeds whenever there is a valid parse tree---is conceptually straightforward: trace the algorithm, showing that if the parser returns \false\space at a given point, then assuming a corresponding parse tree exists yields a contradiction.  The one wrinkle in this approach is that the algorithm, the logic program, is not guaranteed to terminate.
+  Proving completeness---that our parser succeeds whenever there is a valid parse tree---is conceptually straightforward: trace the algorithm, showing that if the parser returns \false\space at a given point, then assuming a corresponding parse tree exists yields a contradiction.  The one wrinkle in this approach is that the \editedtext{procedure}, the logic program, is not guaranteed to terminate.
 
   \subsection{Infinite Regress} \label{sec:loopy-grammar-example}
-    Since we have programmed our parser in Coq (see \autoref{sec:coq}),\todo{Add intro about Coq} \todoask{Where should the intro about Coq go?}, our program must be terminating by construction.  However, naive recursive-descent parsers do not always terminate!
+    \newtext{Nontermination is a particularly pressing problem for us; we have programmed our parser in the proof assistant Coq~\cite{Coq12}, which only permits terminating programs.  Coq is an interactive proof assistant; it includes a strongly-typed functional programming language, called Gallina, in the tradition of OCaml and Haskell.  Because Gallina programs do double duty as both functional programs and proofs, via the Curry-Howard isomorphism~\cite{Curry-Howard}, all programs are required to be provably terminating.}\label{sec:first-short-coq-intro} However, naive recursive-descent parsers do not always terminate!
 
     To see how such parsers can diverge, consider the following example.  When defining the grammar \regex{(ab)$^*$}, perhaps we give the following production rules:
 
@@ -87,8 +92,9 @@
       & \fname{parses}~\str{} \defeq \true \\
       & \fname{parses}~\farg{str} \defeq \fname{any\_parses}~(\fname{split}~\farg{str})
     \end{align*}
+    Here and throughout this thesis, we take the Haskell convention of using \typelist{\coqtype{T}} to denote a list whose elements are of type \coqtype{T}.
 
-    If \fname{split} returns $(\str{}, \str{ab})$ as the first item in its list when given \str{ab}, then the code given above will diverge in the way demonstrated above with the infinite derivation tree.
+    If \fname{split} returns $(\str{}, \str{ab})$ as the first item in its list when given \str{ab}, then \fname{parses} will diverge in the way demonstrated above with the infinite derivation tree.
 
   \subsection{Aborting Early} \label{sec:solve-nontermination}
 
@@ -108,13 +114,19 @@
       & \fname{parses}~~\farg{str} \defeq \fname{any\_parses}~~\farg{str}~~(\fname{split}~~\farg{str})
     \end{align*}
 
-    We can convince Coq that this definition is total via well-founded recursion on the length of the string passed to \fname{parses}.  For a more complicated grammar, we'd need to use a well-founded relation that also included the number of nonterminals not yet tried for this string; we do this in \autoref{fig:parser-impl} in \autoref{sec:parser-impl}.
+    We can convince Coq that this definition is total via well-founded recursion on the length of the string passed to \fname{parses}.  For a more complicated grammar, we would need to use a well-founded relation that also included the number of nonterminals not yet tried for this string; we do this in \autoref{fig:parser-impl} in \autoref{sec:parser-impl}.
 
     %Correctness is still straightforward; we can still simply trace the parsing algorithm, generating the corresponding tree at each step.
 
     With this refactoring, however, completeness is no longer straightforward.  We must show that aborting early does not eliminate good parse trees.
 
-    We devote the rest of \Autoref{ch:cfg,ch:correctness,ch:dep-types} to describing an elegant approach to proving completeness.  Ridge~\cite{Ridge} carried out a proof about essentially the same algorithm in HOL4, a proof assistant that does not support dependent types.  We instead refine our parser to have a more general polymorphic type signature that takes advantage of dependent types, supporting a proof strategy with a different kind of aesthetic appeal.  Relational parametricity frees us from worrying about different control flows with different instantiations of the arguments: when care is taken to ensure that the execution of the algorithm does not depend on the values of the arguments, we are guaranteed that all instantiations succeed or fail together.  Freed from this worry, we convince our parser to prove its own soundness and completeness by instantiating its arguments correctly.
+    We devote the rest of \Autoref{ch:cfg,%ch:correctness,
+    ch:dep-types} to describing an elegant approach to proving completeness.  Ridge~\cite{Ridge} carried out a proof about essentially the same algorithm in HOL4, a proof assistant that does not support dependent types.  We instead refine our parser to have a more general polymorphic type signature that takes advantage of dependent types, supporting a proof strategy with a different kind of aesthetic appeal.  Relational parametricity frees us from worrying about different control flows with different instantiations of the arguments: when care is taken to ensure that the execution of the algorithm does not depend on the values of the arguments, we are guaranteed that all instantiations succeed or fail together.  Freed from this worry, we convince our parser to prove its own soundness and completeness by instantiating its arguments correctly.
+        
+    \subsection{Aside: Removing Left Recursion}
+      \newtext{To wrap up the description of our parsing algorithm, we call attention to a venerable technique for eliminating nontermination: preprocessing the grammar to remove left recursion.  Intuitively, \emph{left recursion} occurs whenever it is possible to encounter the same inference rule multiple times without removing any characters from the beginning of the string.  \todoask{Does this need a citation?  What citation should I use?}  The standard technique for removing left recursion involves ordering the inference rules, and then replacing each rule that references a ``later'' rule before referencing any characters, with multiple rules that only reference rules earlier in the ordering.}
+      
+      \newtext{We choose a slightly different approach to eliminating nontermination.  Since we will want to prove correctness properties of our parser, we have to verify the correctness of each step of our algorithm.  Verifying the correctness of such a left-recursion-eliminating step is non-trivial, and, furthermore, preprocessing the grammar in such a fashion does not significantly simplify the evidence Coq requires to ensure termination.  The approach we take is a kind of lazy variant of this; rather than preemptively eliminating the possibility of infinite chains of identical inference rules, we forbid such parses on-the-fly.}
 
 \section{Standard Formal Definitions} \label{sec:standard-definitions}
   Before proceeding, we pause to standardize on terminology and notation for context-free grammars and parsers.  In service of clarity for some of our later explanations, we formalize grammars via natural-deduction inference rules, a slightly nonstandard choice.
@@ -122,7 +134,7 @@
   \subsection{Context-Free Grammar}
     A \emph{context-free grammar} consists of \emph{items}, which may be either \emph{terminals} (characters) or \emph{nonterminals}; plus a set of \emph{productions}, each mapping a nonterminal to a sequence of items.
     
-    As in standard presentations, we restrict our attention to grammars where the set of nonterminals is finite.  In our formalization, since a nonterminal is named by a string, we require that each grammar provide a list of ``valid'' nonterminals. \todoask{Should I mention the closure condition, that each production of a valid nonterminal can only mention valid nonterminals?  Does this belong here, or elsewhere?}
+    As in standard presentations, we restrict our attention to grammars where the set of nonterminals is finite.  In our formalization, since a nonterminal is named by a string, we require that each grammar provide a list of ``valid'' nonterminals, each of which must only reference other valid nonterminals.
 
     \subsubsection{Example: \texorpdfstring{\regex{(ab)$^*$}}{(ab)*}}
       The regular-expression grammar \regex{(ab)$^*$} has a single nonterminal \nt{(ab)\ensuremath{^*}}, which parses empty strings, as well as parsing strings which are an \terminal{a}, followed by a \terminal{b}, followed by a string which parses as the nonterminal \nt{(ab)\ensuremath{^*}}.  In the standard, compact, notation for specifying context free grammars, we can write this as:
@@ -130,7 +142,7 @@
       &\nt{(ab)\ensuremath{^*}}~\Coloneqq~\epsilon~|~\terminal{a}~\terminal{b}~\nt{(ab)\ensuremath{^*}}
       \end{align*}
     
-      We can also present this grammar as a collection of inference rules, one for each production, and one for each terminal, in the grammar.  This presentation is most useful for describing parse trees, so we will use it primarily in \Autoref{ch:correctness}; we'll use the more compact representation for the larger grammars described in later chapters.
+      We can also present this grammar as a collection of inference rules, one for each production, and one for each terminal, in the grammar.  This presentation is most useful for describing parse trees, so we will use it primarily in \autoref{sec:correctness}; we'll use the more compact representation for the larger grammars described in later chapters.
       
       The inference rules of the regular-expression grammar \regex{(ab)$^*$} are:
 
@@ -197,3 +209,45 @@
 
     We also define a type of all parse trees, independent of the string and item, as this dependent-pair ($\Sigma$) type, using set-builder notation; we use \indname{ParseTree} to denote the type
     $$\left\{\oftype{(\farg{nt}, \farg{s})}{\typeprod{\Nonterminal}{\String}}\ \middle|\ \indname{ParseTreeOf}~\farg{nt}~\farg{s}\right\}$$
+    
+  \section{Completeness and Soundness}\label{sec:correctness}
+      Parsers come in a number of flavors.  The simplest flavor is the \emph{recognizer}, which simply says whether or not there exists a parse tree of a given string for a given nonterminal; it returns Booleans.  There is also a richer flavor of parser that returns inhabitants of \typeoption{\indname{ParseTree}}.
+  
+      For any recognizer \oftype{\fname{has\_parse}}{\Nonterminal\space\typeto\space\String\space\typeto\space\Bool}, we may ask whether it is \emph{sound}, meaning that when it returns \true, there is always a parse tree; and \emph{complete}, meaning that when there is a parse tree, it always returns \true.  We may express these properties as theorems (alternatively, dependently typed functions) with the following type signatures:
+      \begin{align*}
+        \fname{has\_parse\_sound} & \oftypesep
+        (\oftype{\farg{nt}}{\Nonterminal})
+        \typeto (\oftype{\farg{s}}{\String}) \\
+        & \typeto \fname{has\_parse}~\farg{nt}~\farg{s} = \true \\
+        & \typeto \indname{ParseTreeOf}~\farg{nt}~\farg{s} \\
+        \fname{has\_parse\_complete} & \oftypesep
+        (\oftype{\farg{nt}}{\Nonterminal})
+        \typeto (\oftype{\farg{s}}{\String}) \\
+        & \typeto \indname{ParseTreeOf}~\farg{nt}~\farg{s} \\
+        & \typeto \fname{has\_parse}~\farg{nt}~\farg{s} = \true
+      \end{align*}
+      For any parser
+      $$\oftype{\fname{parse}}{\Nonterminal~\typeto~\String~\typeto~\typeoption{\indname{ParseTree}}},$$
+      we may also ask whether it is sound and complete, leading to theorems with the following type signatures, using \proj1{\farg{p}} to denote the first projection of \farg{p}:
+      \begin{align*}
+        \fname{parse\_sound} & \oftypesep
+        (\oftype{\farg{nt}}{\Nonterminal}) \\
+        & \typeto (\oftype{\farg{s}}{\String}) \\
+        & \typeto (\oftype{\farg{p}}{\indname{ParseTree}}) \\
+        & \typeto \fname{parse}~\farg{nt}~\farg{s} = \Some{\farg{p}} \\
+        & \typeto \proj1{\farg{p}} = (\farg{nt}, \farg{s}) \\
+        \fname{parse\_complete} & \oftypesep
+        (\oftype{\farg{nt}}{\Nonterminal}) \\
+        & \typeto (\oftype{\farg{s}}{\String}) \\
+        & \typeto \indname{ParseTreeOf}~\farg{nt}~\farg{s} \\
+        & \typeto \fname{parse}~\farg{nt}~\farg{s} \neq \None
+      \end{align*}
+      Since we are programming in Coq, this separation into code and proof actually makes for more awkward type assignments.  We also have the option of folding the soundness and completeness conditions into the types of the code.  For instance, the following type captures the idea of a sound and complete parser returning parse trees, using the type constructor $+$ for disjoint union (i.e., sum or variant type):
+      \begin{align*}
+        \fname{parse} & \oftypesep
+        (\oftype{\farg{nt}}{\Nonterminal}) \\
+        & \typeto (\oftype{\farg{s}}{\String}) \\
+        & \typeto \indname{ParseTreeOf}~\farg{nt}~\farg{s} + (\indname{ParseTreeOf}~\farg{nt}~\farg{s} \typeto \False)
+      \end{align*}
+      That is, given a nonterminal and a string, $\fname{parse}$ either returns a valid parse tree, or returns a \emph{proof} that the existence of any parse tree is \emph{contradictory} (i.e., implies $\False$, the empty type).  Our implementation follows this dependently typed style.  Our main initial goal in the project was to arrive at a $\fname{parse}$ function of just this type, generic in an arbitrary choice of context-free grammar, implemented and proven correct in an elegant way.
+  
