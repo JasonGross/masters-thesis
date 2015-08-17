@@ -9,21 +9,19 @@
   Stepping back a bit, we describe how our approach to parsing relates to existing work.
   
   \section{Coq} \label{sec:coq}
-    \editedtext{As stated in \autoref{sec:first-short-coq-intro}, we define our parser and prove its correctness in the proof assistant Coq.~\cite{Coq12}  Like other proof assistants utilizing dependent type theory, Coq takes advantage of the Curry-Howard isomorphism~\cite{Curry-Howard} to allow proofs to be written as functional programs; dependent types allow universal and existential quantification.  Coq natively permits only structural recursion, where recursive function calls may be invoked only on direct structural subterms of a given, specified argument.  The standard library defines combinators for turning well-founded recursion into structural recursion, which can be used to define essentially all recursive functions which provably halt in all cases (which is a class containing, as it turns out, essentially all algorithms of interest).  Coq's mathematical language, Gallina, implements Martin-L\"of's dependent lambda calculus.  Coq has a separate tactic language, called \Ltac~\cite{ltac}, which allows imperative construction of proof objects, and functions, by forwards and backwards reasoning.}
-  
-  \todo{Mention LR (and LL(1) and LALR) parsers: ``The field of parsing is one of the most venerable in computer-science.  Still with us are a variety of parsing approaches born in times of much more severe constraints on memory and processor speed, including various flavors of LR parsers, which apply only to strict subsets of the context-free grammars, to guarantee ability to predict which production applies based on finite look-ahead into a string.''  Adam also says these ``were considered `the only practical ones in the 20th century.'{}''}
+    \editedtext[1]{As stated in \autoref{sec:first-short-coq-intro}, we define our parser and prove its correctness in the proof assistant Coq.~\cite{Coq12}  Like other proof assistants utilizing dependent type theory, Coq takes advantage of the Curry-Howard isomorphism~\cite{Curry-Howard} to allow proofs to be written as functional programs; dependent types allow universal and existential quantification.  Coq natively permits only structural recursion, where recursive function calls may be invoked only on direct structural subterms of a given, specified argument.  The standard library defines combinators for turning well-founded recursion into structural recursion, which can be used to define essentially all recursive functions which provably halt in all cases (which is a class containing, as it turns out, essentially all algorithms of interest).  Coq's mathematical language, Gallina, implements Martin-L\"of's dependent lambda calculus.  Coq has a separate tactic language, called \Ltac~\cite{ltac}, which allows imperative construction of proof objects, and functions, by forwards and backwards reasoning.}
   
   \section{Recursive-Descent Parsing}
-    The most conceptually straightforward approaches to parsing fall into the class called recursive-descent parsing, where, to parse a string $s$ as a given production $p$, you attempt to parse various parts of $s$ as each of the items in the list $p$.  The control flow of the code mirrors the structure of the grammar, as well as the structure of the eventual parse tree, descending down the branches of the parse tree, recursively calling itself at each step.
+    The most conceptually straightforward approaches to parsing fall into the class called recursive-descent parsing, where, to parse a string $s$ as a given production $p$, you attempt to parse various parts of $s$ as each of the items in the list $p$.  The control flow of the code mirrors the structure of the grammar, as well as the structure of the eventual parse tree, descending down the branches of the parse tree, recursively calling itself at each step.  The algorithm we have described in \autoref{ch:basic-rdp-algorithm} seems to fall out almost trivially from the inductive description of parse trees; we come back to this in \autoref{sec:generalized-inhabitation-decision} when we briefly sketch how it should be possible to generalize this algorithm to other inductive type families.
     
     \subsection{Parser Combinators}
-      A popular approach, called \emph{combinator parsing}~\cite{pcomb}, to implementing recursive-descent parsing involves writing a small set of typed combinators, or higher-order functions, which are then applied to each other in various combinations to write a parser that mimics closely the structure of the grammar.
+      A popular approach to implementing recursive-descent parsing, called \emph{combinator parsing}~\cite{pcomb}, involves writing a small set of typed combinators, or higher-order functions, which are then applied to each other in various combinations to write a parser that mimics closely the structure of the grammar.
       
       Essentially, parsers defined via parser combinators answer the question ``what prefixes of a given string can be parsed as a given item?''  Each function returns a list of postfixes of the string it is passed, indicating all of the strings that might remain for the other items in a given rule.
       
     \subsubsection{Basic Combinators}
       We now define the basic combinators.  In the simplest form, each combinator takes in a string, and returns a list of strings (the postfixes); we can define the type
-\editedtext{\begin{align*}
+\editedtext[1]{\begin{align*}
 & \fname{parser}~\coloneqq~ \indname{String}~\to~\typelist{\indname{String}}.
 \end{align*}}
      We can define the empty-string parser, as well as the parser for a nonterminal with no production rules, which always fails:
@@ -39,7 +37,7 @@
 \begin{align*}
 &\fname{terminal}~:~\indname{Char}~\to~\fname{parser}\\
 &\fname{terminal}~\farg{ch}~(\cons{\farg{ch}}{\farg{str}})~=~\valuelist{\farg{str}} \\
-&\fname{terminal}~\aswidthof{\termhole}{\farg{ch}}~\str{}~=~\nil
+&\fname{terminal}~\aswidthof{\termhole}{\farg{ch}}~\termhole~=~\nil
 \end{align*}
       We now define combinators for sequencing and alternatives:
 \newcommand{\sequencing}{\fname{>{}>{}>}}
@@ -61,13 +59,13 @@
       Note that, by putting $\epsilon$ last, we ensure that this parser returns the list in order of longest parse (shortest postfix) to shortest parse (longest postfix).
       
     \subsubsection{Semantic Actions}
-      \newtext{Frequently, programmers want parsers to not just say whether or not a given string, or prefix of a string, can be parsed, but to also build a parse tree, or perform some other computation or construction on the structure of the string.  A common way to acommplish this is with \emph{semantic actions}:  Associate to each production a function which, when given values associated to each of the nonterminals in its sequence, computes a value to associate to the given nonterminal.  By calling these functions at each node of the parse tree, passing the function at each node the values returned by its descendants, we can compute a value associated to a string as we parse it. For example, we might annotate a simple expression grammar, to compute the numerical value associated with a string expression, like this:}
+      \newtext[1]{Frequently, programmers want parsers to not just say whether or not a given string, or prefix of a string, can be parsed, but to also build a parse tree, or perform some other computation or construction on the structure of the string.  A common way to acommplish this is with \emph{semantic actions}:  Associate to each production a function which, when given values associated to each of the nonterminals in its sequence, computes a value to associate to the given nonterminal.  By calling these functions at each node of the parse tree, passing the function at each node the values returned by its descendants, we can compute a value associated to a string as we parse it. For example, we might annotate a simple expression grammar, to compute the numerical value associated with a string expression, like this:}
 \begin{align*}
   e \mathrel{\vcentcolon\coloneqq}{} & n && \left\{\fname{int\_of\_string}(n)\right\} \\
   \mathrel{|}{} & e_1\mathrel{\str{+}}e_2 && \left\{e_1 + e_2\right\} \\
   \mathrel{|}{} & \str{(}~e~\str{)} && \left\{e\right\}
 \end{align*}
-      \newtext{Parser combinators can be easily extended to return a list not just of postfixes, but of pairs of a value and a postfix.  The \coqtype{parser} type can be parameterized over the type of the value returned.  The alternative combinator would return a disjoint union, and the sequencing combinator would return a pair of the two values returned by its inputs.  The terminal parser would return the single character it parsed, and the empty string parser would return an element of the singleton type.  Each rule for a nonterminal could then be wrapped with a combinator which applies the semantic action to the relevant values.  A more detailed explanation can be found in \cite{pcomb}. \todoask{Should I include Haskell-like code for semantic actions of these parser combinators?  Should I mention that the dependently typed parser of \autoref{ch:dep-types} can be easily extended to work with semantic actions?}}
+      \newtext[1]{Parser combinators can be easily extended to return a list not just of postfixes, but of pairs of a value and a postfix.  The \coqtype{parser} type can be parameterized over the type of the value returned.  The alternative combinator would return a disjoint union, and the sequencing combinator would return a pair of the two values returned by its inputs.  The terminal parser would return the single character it parsed, and the empty string parser would return an element of the singleton type.  Each rule for a nonterminal could then be wrapped with a combinator which applies the semantic action to the relevant values.  A more detailed explanation can be found in \cite{pcomb}. \todoask{Should I include Haskell-like code for semantic actions of these parser combinators?  Should I mention that the dependently typed parser of \autoref{ch:dep-types} can be easily extended to work with semantic actions?}}
       
     \subsubsection{Proving Correctness and Dealing with Nontermination}
       Although parser combinators are straightforward, it is easy to make them loop forever.  It is well-known that parsers defined naively using parser combinators don't handle grammars with \emph{left recursion}, where the first item in a given production rule is the nonterminal currently being defined.  For example, if we have the nonterminal \nt{expr} $\Coloneqq$ \nt{number}~|~\nt{expr}~\terminal{+}~\nt{expr}, then the parser for \nt{expr}~\terminal{+}~\nt{expr} will call the parser for \nt{expr}, which will call the parse for \nt{expr}~\terminal{+}~\nt{expr}, which will quickly loop forever.
@@ -124,6 +122,8 @@
     \item Look into what \cite{PEG}s and \cite{GLL}s are.
     \item Approaches to verifying parsers: correct-by-construction, induction.  Other way?  \todo{Read paper}
   \end{itemize}
+  \todo{Mention LR (and LL(1) and LALR) parsers: ``The field of parsing is one of the most venerable in computer-science.  Still with us are a variety of parsing approaches born in times of much more severe constraints on memory and processor speed, including various flavors of LR parsers, which apply only to strict subsets of the context-free grammars, to guarantee ability to predict which production applies based on finite look-ahead into a string.''  Adam also says these ``were considered `the only practical ones in the 20th century.'{}''}
+
 
   \todo{Rewrite the rest of this part so it's not just Adam's words}
   
@@ -139,7 +139,7 @@
 \section{What's New and What's Old} \label{sec:new} \label{sec:goals}
   The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
   
-  We begin with naive recursive-descent parsing.\todo{Citation?}  \todo{Say something about viewing recursive-descent as an instance of general inhabitation-decision not being anywhere in the literature?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse (\autoref{sec:splitting-oracle}).  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
+  We begin with naive recursive-descent parsing.\todo{Citation?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse (\autoref{sec:splitting-oracle}).  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
   
   We use Fiat to incrementally build efficient parsers by refinement; we describe Fiat starting in \autoref{ch:fiat}. \todo{One sentence summary of Fiat}
   

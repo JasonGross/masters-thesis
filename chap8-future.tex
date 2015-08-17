@@ -1,18 +1,18 @@
 \chapter{Future Work}
   \section{Parsing JavaScript}
-     The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations. \todo{<lookup list of JS implementations>}  We plan to profile our parser against these on \editedtext{various test-suites and examples of JavaScript code.}
+     The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations. \todo{<lookup list of JS implementations>}  We plan to profile our parser against these on \editedtext[1]{various test-suites and examples of JavaScript code.}
      
   \section{Generating Parse Trees}
-    We plan to eventually generate parse trees, and error messages, rather than just Booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser; \editedtext{what remains is integrating it with the Fiat code for refining splitters.}
+    We plan to eventually generate parse trees, and error messages, rather than just Booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser; \editedtext[1]{what remains is integrating it with the Fiat code for refining splitters.}
   
   \section{Validating Extraction}
-    \todoask{Does Clement have a paper I can cite?}  By adapting \todo{<Clement's work>}, our parsers will be able to be compiled to verified Bedrock, and thus to assembly, within Coq.  \editedtext{Currently, we use Coq's unverified extraction mechanism to turn our parsers into OCaml.}
+    \todoask{Does Clement have a paper I can cite?}  By adapting \todo{<Clement's work>}, our parsers will be able to be compiled to verified Bedrock, and thus to assembly, within Coq.  \editedtext[1]{Currently, we use Coq's unverified extraction mechanism to turn our parsers into OCaml.}
     
   \section{Picking Productions}
-    \newtext{As mentioned in \autoref{sec:worst-case}, our parsers perform poorly on large grammars with many rules.  We plan to improve performance by parameterizing over an oracle to pick which rules to look at for a given nonterminal; much like the oracle for splitting, it should also be possible to handle a wide swath of cases automatically, and handle the remaining ones by refinement.}
+    \newtext[1]{As mentioned in \autoref{sec:worst-case}, our parsers perform poorly on large grammars with many rules.  We plan to improve performance by parameterizing over an oracle to pick which rules to look at for a given nonterminal; much like the oracle for splitting, it should also be possible to handle a wide swath of cases automatically, and handle the remaining ones by refinement.}
     
   \section{Common Subexpression Elimination: Lifting Computation out of Recursive Calls}
-    \newtext{As mentioned briefly in \autoref{sec:must-lift-table-mention}, we plan to implement common subexpression elimination during the extraction phase.  This will effectively memoize the computation of the table for splitting locations described in \autoref{ch:tables}.}
+    \newtext[1]{As mentioned briefly in \autoref{sec:must-lift-table-mention}, we plan to implement common subexpression elimination during the extraction phase.  This will effectively memoize the computation of the table for splitting locations described in \autoref{ch:tables}.}
     
     \todoask{I feel like some of these sections (above) merit a bit more explanation, but I'm not sure what needs saying (or what questions there are to answer).  I'm also not sure if it's worth the time at this point.  What do you think?}
     
@@ -39,8 +39,8 @@
   \paragraph{Synthesizing dependent types automatically?}
     Although finding sufficiently general (dependent) type signatures was a Herculean task before we finished the completeness proof and discovered the idea of using parallel parse traces, it was mostly straightforward once we had proofs of soundness and completeness of the simply typed parser in hand; most of the issues we faced involving having to figure out how to thread additional hypotheses, which showed up primarily at the very end of the proof, through the entire parsing process.  Subsequently instantiating the types was also mostly straightforward, with most of our time and effort being spent writing transformations between nearly identical types that had slightly different hypotheses, e.g., converting a \indname{Foo} involving strings shorter than $s_1$ into another analogous \indname{Foo}, but allowing strings shorter than $s_2$, where $s_1$ is not longer than $s_2$.  Our experience raises the question of whether it might be possible to automatically infer dependently typed generalizations of an algorithm, which subsume already-completed proofs about it, and perhaps allow additional proofs to be written more easily.
 
-  \paragraph{Further generalization}
-    Finally, we believe our parser could be generalized even further; the algorithm we have implemented is essentially an algorithm for inhabiting arbitrary inductive type families, subject to some well-foundedness, enumerability, and finiteness restrictions on the arguments to the type family.  The interface we described is, conceptually, a composition of this inhabitation algorithm with recursion and inversion principles for the type family we are inhabiting (\indname{ParseTreeOf} in this thesis).  Our techniques for refining this algorithm so that it could prove itself sound and complete should therefore generalize to this viewpoint.
+  \paragraph{Further generalization}\label{sec:generalized-inhabitation-decision}
+    Finally, we believe our parser could be generalized even further; the algorithm we have implemented is essentially an algorithm for inhabiting arbitrary inductive type families, subject to some well-foundedness, enumerability, and finiteness restrictions on the arguments to the type family.  The interface we described in \autoref{ch:dep-types} is, conceptually, a composition of this inhabitation algorithm with recursion and inversion principles for the type family we are inhabiting (\indname{ParseTreeOf} in this thesis).  Our techniques for refining this algorithm so that it could prove itself sound and complete should therefore generalize to this viewpoint.
   
 %\section{Concluding remarks}
 %      Though there remain many useful extensions to investigate, we believe our approach to parsing highlights some of the benefits and pitfalls of dependently typed programming.  Dependent types allow more code reuse---but require more type annotations and more thought about type signatures---and, in our experience, make it easier to think about proofs, and perhaps easier to maintain them altogether.

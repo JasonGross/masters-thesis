@@ -35,7 +35,7 @@
   To guide our implementations, we characterize efficient splitters informally, as follows.  Although our eventual concrete efficiency target is to be competitive with extant open-source JavaScript parsers, when designing algorithms, we aim at the asymptotic efficiency target of linearity in the length of the string.  In practice, the dominating concern is that doubling the length of the string should only double the duration of the parse, and not quadruple it (or more!).  %{}\todo{CITATION NEEDED}
   To be efficient, it suffices to have the splitter return at most one index.  In this case, the parsing time is $\mathcal O($length of string${} \times ($product over all nonterminals of the number of possible rules for that nonterminal$))$.
     
-  \newtext{Consider, for example, the following very silly grammar for parsing either the empty string, or the character \terminal{a}: let \nt{E}$_{0}$ $\Coloneqq$ $\epsilon$ and \nt{F}$_{0}$ $\Coloneqq$ $\epsilon$ denote nonterminals with a single production rule which allow them to parse the empty string.  Let \nt{E}$_{i+1}$ $\Coloneqq$ \nt{E}$_i$~\texttt{|}~\nt{F}$_i$ and \nt{F}$_{i+1}$ $\Coloneqq$ \nt{E}$_i$~\texttt{|}~\nt{F}$_i$ be nonterminals, for each $i$, which have two rules which both eventually allow them to parse the empty string.  If we let \nt{G} $\Coloneqq$ \nt{E}$_{i}$ \texttt{|} \terminal{a} for some $i$, then, to successfully parse the string \str{a}, we end up making approximately $2^{i+1}$ calls to the splitter.}
+  \newtext[1]{Consider, for example, the following very silly grammar for parsing either the empty string, or the character \terminal{a}: let \nt{E}$_{0}$ $\Coloneqq$ $\epsilon$ and \nt{F}$_{0}$ $\Coloneqq$ $\epsilon$ denote nonterminals with a single production rule which allow them to parse the empty string.  Let \nt{E}$_{i+1}$ $\Coloneqq$ \nt{E}$_i$~\texttt{|}~\nt{F}$_i$ and \nt{F}$_{i+1}$ $\Coloneqq$ \nt{E}$_i$~\texttt{|}~\nt{F}$_i$ be nonterminals, for each $i$, which have two rules which both eventually allow them to parse the empty string.  If we let \nt{G} $\Coloneqq$ \nt{E}$_{i}$ \texttt{|} \terminal{a} for some $i$, then, to successfully parse the string \str{a}, we end up making approximately $2^{i+1}$ calls to the splitter.}
 
   To avoid hitting this worst-case scenario, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be $\mathcal O(\text{length of string})$; backtracking will never happen.  This is future work.\label{sec:worst-case}
   
@@ -97,7 +97,7 @@
 \end{align*}
        where $=_p$ refers to a Boolean equality test for productions.  Note that in the final case, we permit any list to be picked, because whenever the production we are handling is reachable, the value returned by that case will never be used.
     
-       We can now refine each of these cases separately, using \tactic{setoid\_rewrite}; \newtext{this tactic replaces one subterm of your goal with an ``equivalent'' subterm, where the ``equivalence'' can be any transitive relation.  Using \tactic{setoid\_rewrite} allows us to hide the glue required to state our lemmas about computations as wholes, while using them to replace \emph{subterms} of other computations.}  The key to refining each part separately, to making Fiat work, is that the refinement rules package their correctness properties, so users don't have to worry about correctness when programming by refinement.  We use Coq's setoid rewriting machinery to automatically glue together the various correctness proofs when refining only a part of a program.
+       We can now refine each of these cases separately, using \tactic{setoid\_rewrite}; \newtext[1]{this tactic replaces one subterm of your goal with an ``equivalent'' subterm, where the ``equivalence'' can be any transitive relation.  Using \tactic{setoid\_rewrite} allows us to hide the glue required to state our lemmas about computations as wholes, while using them to replace \emph{subterms} of other computations.}  The key to refining each part separately, to making Fiat work, is that the refinement rules package their correctness properties, so users don't have to worry about correctness when programming by refinement.  We use Coq's setoid rewriting machinery to automatically glue together the various correctness proofs when refining only a part of a program.
            
       For example, we might have a lemma \fname{singleton} which says that returning the length of the string is a valid refinement for any rule that has only one nonterminal; its type, for a particular grammar \farg{G}, a particular string \farg{str}, and a particular nonterminal \farg{nt}, would be
 \begin{align*}
@@ -128,7 +128,7 @@ into
 & \fname{Else} \\
 &\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\}
 \end{align*}
-    \newtext{Note that the only change is in the computation returned in the first branch of the conditional.}
+    \newtext[1]{Note that the only change is in the computation returned in the first branch of the conditional.}
 
     We now describe the refinements that we do within this framework, to implement efficient splitters.
     
@@ -136,10 +136,10 @@ into
   \subsection{An Easy First Optimization: Indexed Representation of Strings}
     One optimization that is always possible is to represent the current string being parsed in this recursive call as a pair of indices into the original string.  This allows us to optimize the code doing string manipulation, as it will no longer need to copy strings around, only do index arithmetic.
     
-    \newtext{This optimization, as well as the trivial optimizations described in \autoref{ch:fixed-length}, are implemented automatically by the initial lines of any parser refinement process in Fiat.}
+    \newtext[1]{This optimization, as well as the trivial optimizations described in \autoref{ch:fixed-length}, are implemented automatically by the initial lines of any parser refinement process in Fiat.}
     
   \subsection{Putting It All Together}
-    \newtext{Now that we have the concepts and ideas behind refining parsers, or, more precisely, splitting oracles for parsers, in the Fiat framework, what does the code actually look like?  Every refinement process, which defines a representation for strings, along with a proven-correct method of splitting them, begins with the same code:}
+    \newtext[1]{Now that we have the concepts and ideas behind refining parsers, or, more precisely, splitting oracles for parsers, in the Fiat framework, what does the code actually look like?  Every refinement process, which defines a representation for strings, along with a proven-correct method of splitting them, begins with the same code:}
 \begin{align*}
 & \texttt{\kw{Lemma}~\oftype{\fname{ComputationalSplitter'}}{\fname{FullySharpened}~\coqgroup{\fname{string\_spec}~\farg{G}}}.} \\
 & \texttt{\kw{Proof}.} \\
@@ -148,7 +148,7 @@ into
 &\qquad\texttt{\{} \\
 &\qquad\qquad\texttt{\tactic{simplify~parser~splitter}.}
 \end{align*}
-      \newtext{The first line of the proof takes care of the switch to using indices into the original string, of replacing the single nondeterministic choice of a complete list of splits with a sequence of \texttt{If} statements returning separate computations for each rule, and of replacing nondeterministic choices with direct return values when such values can be determined by trivial rules (which will be described in \autoref{ch:fixed-length}).  The tactic \tactic{hone method "splits"} says that we want to refine the splitter, rather than, say, the representation of strings that we are using.  The tactic \tactic{simplify parser splitter} performs a number of straightforward and simple optimizations, such as combining nested \texttt{If} statements which return the same value.}
+      \newtext[1]{The first line of the proof takes care of the switch to using indices into the original string, of replacing the single nondeterministic choice of a complete list of splits with a sequence of \texttt{If} statements returning separate computations for each rule, and of replacing nondeterministic choices with direct return values when such values can be determined by trivial rules (which will be described in \autoref{ch:fixed-length}).  The tactic \tactic{hone method "splits"} says that we want to refine the splitter, rather than, say, the representation of strings that we are using.  The tactic \tactic{simplify parser splitter} performs a number of straightforward and simple optimizations, such as combining nested \texttt{If} statements which return the same value.}
 
     
   \subsection{Upcoming Optimizations}
