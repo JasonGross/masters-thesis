@@ -37,7 +37,7 @@
     
   Consider, for example, the following very silly grammar for parsing either the empty string, or the character \terminal{a}: let \nt{E}$_{0}$ $\Coloneqq$ $\epsilon$ and \nt{F}$_{0}$ $\Coloneqq$ $\epsilon$ denote nonterminals with a single production rule which allow them to parse the empty string.  Let \nt{E}$_{i+1}$ $\Coloneqq$ \nt{E}$_i$~\texttt{|}~\nt{F}$_i$ and \nt{F}$_{i+1}$ $\Coloneqq$ \nt{E}$_i$~\texttt{|}~\nt{F}$_i$ be nonterminals, for each $i$, which have two rules which both eventually allow them to parse the empty string.  If we let \nt{G} $\Coloneqq$ \nt{E}$_{i}$ \texttt{|} \terminal{a} for some $i$, then, to successfully parse the string \str{a}, we end up making approximately $2^{i+1}$ calls to the splitter.
 
-  To avoid hitting this worst-case scenario, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be $\mathcal O(\text{length of string})$; backtracking will never happen.  This is future work.
+  To avoid hitting this worst-case scenario, we can use a nonterminal-picker, which returns the list of possible production rules for a given string and nonterminal.  As long as it returns at most one possible rule in most cases, in constant time, the parsing time will be $\mathcal O(\text{length of string})$; backtracking will never happen.  This is future work.\label{sec:worst-case}
   
 \section{Introducing Fiat}
   \subsection{Incremental Construction by Refinement}

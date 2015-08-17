@@ -138,7 +138,7 @@ refine {splits : list nat
              end])
 \end{verbatim}
 
-    By phrasing the rule in terms of \fname{substring}~\farg{n}~\farg{m}~\farg{str}, rather than in terms of an arbitrary string, the computation of the table is the same in every call to the splitter.  All that remains is to lift the computation of the table to a location outside the recursive call to the parsing function; we plan to implement code to do this during the extraction phase soon. \todo{Section reference future work.  Add bit to future work.}
+    By phrasing the rule in terms of \fname{substring}~\farg{n}~\farg{m}~\farg{str}, rather than in terms of an arbitrary string, the computation of the table is the same in every call to the splitter.  All that remains is to lift the computation of the table to a location outside the recursive call to the parsing function; we plan to implement code to do this during the extraction phase soon.\label{sec:must-lift-table-mention}
     
     Before moving on to the other components of making usage of this rule require only one line of code, we note that we make use of the essential property that removing characters from the end of the string doesn't add new locations where splitting could yield a valid parse; if a given location is the first \terminal{+} at the current level of parenthesization, this does not change when we remove characters from the end of the string.
     
