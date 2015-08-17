@@ -1,0 +1,94 @@
+\chapter{Selected Coq Code}
+  \section{A Fiat Goal After Trivial Rules Are Refined}
+      For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the grammar that parses arithmetic expressions involving plusses and parentheses, after taking care of the trivial obligations that we describe in the next chapter, looks like this:\label{sec:after-if-folding-num-+-paren}
+\begin{verbatim}
+1 focused subgoals (unfocused: 3)
+, subgoal 1 (ID 3491)
+  
+r_n : string * (nat * nat)
+n : item ascii * production ascii
+H := ?88 : hiddenT
+============================
+ refine
+   (ls <- If ([Nonterminal "pexpr"] =p fst n :: snd n)
+             || (([Nonterminal "expr"] =p fst n :: snd n)
+             || ([Nonterminal "number"] =p fst n :: snd n)
+             || (([Terminal ")"] =p fst n :: snd n)
+             || ([Terminal "0"] =p fst n :: snd n)
+             || ([Terminal "1"] =p fst n :: snd n)
+             || ([Terminal "2"] =p fst n :: snd n)
+             || ([Terminal "3"] =p fst n :: snd n)
+             || ([Terminal "4"] =p fst n :: snd n)
+             || ([Terminal "5"] =p fst n :: snd n)
+             || ([Terminal "6"] =p fst n :: snd n)
+             || ([Terminal "7"] =p fst n :: snd n)
+             || ([Terminal "8"] =p fst n :: snd n)
+             || ([Terminal "9"] =p fst n :: snd n)
+             || ([Nonterminal "digit"] =p fst n :: snd n)))
+          Then ret [ilength r_n]
+          Else (If [Nonterminal "pexpr"; Terminal "+";
+                   Nonterminal "expr"] =p fst n :: snd n
+          Then {splits : list nat
+               | ParserInterface.split_list_is_complete
+                 plus_expr_grammar
+                 (string_of_indexed r_n)
+                 (Nonterminal "pexpr")
+                 [Terminal "+"; Nonterminal "expr"]
+                 splits}
+          Else
+            ret [If ([Terminal "+"; Nonterminal "expr"]
+                        =p fst n :: snd n)
+                    || ([Terminal "("; Nonterminal "expr"; Terminal ")"]
+                        =p fst n :: snd n)
+                    || ([Nonterminal "digit"; Nonterminal "number"]
+                        =p fst n :: snd n)
+                 Then 1
+                 Else (If [Nonterminal "expr"; Terminal ")"]
+                             =p fst n :: snd n 
+                 Then  pred (ilength r_n)
+                 Else (If [Nonterminal "number"]
+                             =p fst n :: snd n 
+                 Then ilength r_n
+                 Else 0))]);
+  ret (r_n, ls)) (H r_n n)
+\end{verbatim}
+
+   \section{Coq Code for the First Refinement Step} \label{sec:expanded-fallback-list}
+       The general code for computing the goal the user is presented with, after \tactic{start honing parser using indexed representation}, is:
+\begin{verbatim}
+Definition expanded_fallback_list'
+           (P : String -> item Ascii.ascii -> production Ascii.ascii -> item Ascii.ascii -> production Ascii.ascii -> list nat -> Prop)
+           (s : T)
+           (it : item Ascii.ascii) (its : production Ascii.ascii)
+           (dummy : list nat)
+: Comp (T * list nat)
+  := (ls <- (forall_reachable_productions
+               G
+               (fun p else_case
+                => If production_beq ascii_beq p (it::its)
+                   Then (match p return Comp (list nat) with
+                           | nil => ret dummy
+                           | _::nil => ret [ilength s]
+                           | (Terminal _):: _ :: _ => ret [1]
+                           | (Nonterminal nt):: p'
+                             => If has_only_terminals p'
+                                Then
+                                  ret [(ilength s - Datatypes.length p')%natr]
+                                Else
+                                (option_rect
+                                   (fun _ => Comp (list nat))
+                                   (fun (n : nat) => ret [n])
+                                   { splits : list nat
+                                   | P
+                                       (string_of_indexed s)
+                                       (Nonterminal nt)
+                                       p'
+                                       it
+                                       its
+                                       splits }%comp
+                                   (length_of_any G nt))
+                         end)
+                   Else else_case)
+               (ret dummy));
+      ret (s, ls))%comp.
+\end{verbatim}

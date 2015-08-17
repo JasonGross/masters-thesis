@@ -40,12 +40,11 @@
   
 \section{The Splitting Strategy}
   \subsection{The Main Idea}
-    The only rule not already handled is the rule that says that a \nt{pexpr}~\nt{+expr} is an \nt{expr}.  The key insight here is that, to know where to split, we need to know where the next \terminal{+} at the current level of parenthesization is.  If we can compute an appropriate lookup table in time linear in the length of the string, then our splitter overall with be linear.
+    The only rule not already handled by the baseline automation of \tactic{start honing parser using indexed representation} is the rule that says that a \nt{pexpr}~\nt{+expr} is an \nt{expr}.  The key insight here is that, to know where to split, we need to know where the next \terminal{+} at the current level of parenthesization is.  If we can compute an appropriate lookup table in time linear in the length of the string, then our splitter overall will be linear.
     
   \subsection{Building the Lookup Table}
-    We build the table by reading the string from right to left, storing for each character the location of the next \terminal{+} at the current level of parenthesization.  To compute this location we keep a list of the location of next \terminal{+} at every level of parenthesization.
+    We build the table by reading the string from right to left, storing for each character the location of the next \terminal{+} at the current level of parenthesization.  To compute this location we keep a list of the location of the next \terminal{+} at every level of parenthesization.
     
-    \todoask{Should this example be set off with a \texttt{\textbackslash subsubsection} or a bold \textbf{Example.} or something?}
     Let's start with a very simple example, before moving to a more interesting one.  To parse \str{4+5}, we are primarily interested in the case where we are parsing something that is a number, or parenthesized on the left, followed by a \terminal{+}, followed by any expression.  For this item, we want to split the string right before the \terminal{+}, and say that the \str{4} can be parsed as a number (or parenthesized expression), and that the \str{+5} can be parsed as a \terminal{+} followed by an expression.
     
     To do this, we build a table that keeps track of the location of the next \terminal{+}, starting from the right of the string.  We will end up with the table:
@@ -56,7 +55,7 @@
     \textrm{String: } &\stropen&\strcolored{4}&\strcolored{+}&\strcolored{5}&\strclose
     \end{tabular}
     \end{center}
-    At the \terminal{5}, there is no next \terminal{+}, and we are not parenthesized at all, so we record this as \nullentry.  At the \terminal{+}, we record that there is a \terminal{+} at the current level of parenthesization, with \texttt{0}.  Then, since the \terminal{4} is not a \terminal{+}, we increment the previous number, and store \texttt{1}.  This is the correct location to split the string: we parse 1 character as a \nt{number}, and the rest as \nt{+expr}.
+    At the \terminal{5}, there is no next \terminal{+}, and we are not parenthesized at all, so we record this as \nullentry.  At the \terminal{+}, we record that there is a \terminal{+} at the current level of parenthesization, with \texttt{0}.  Then, since the \terminal{4} is not a \terminal{+}, we increment the previous number, and store \texttt{1}.  This is the correct location to split the string: we parse one character as a \nt{number} and the rest as \nt{+expr}.
     
     Now let's try a more complicated example: \str{(1+2)+3}.  We want to split this string into \str{(1+2)} and \str{+3}.  The above strategy is insufficient to do this; we need to keep track of the next \terminal{+} at all levels of parenthesization at each point.  We will end up with the following table, where the bottom-most element is the current level, and the ones above that are higher levels.  We use lines to indicate chains of numbers at the same level of parenthesization.    
     \[
@@ -75,50 +74,53 @@
   \subsection{Table Correctness}
     What is the correctness condition on this table?  The correctness condition Fiat gives us is that the splits we compute must be the only ones that give rise to valid parses.  This is hard to reason about directly, so we use an intermediate correctness condition.  Intuitively, this condition corresponds to saying that the table should have a cell pointing to a given location if and only if that location is the first \terminal{+} at the relevant level of parenthesization; importantly, we talk about \emph{every} level of parenthesization at every point in the string.
     
-    More formally, each cell in the table corresponds to some level of parenthesization; if a list $\ell$ is associated to a given position in the string, then the $n^{\text{th}}$ element of that list talks about the \terminal{+} at parenthesization level $n$.  The correctness condition is then: for any cell of the table, talking about parenthesization level $n$, if the cell is empty (is \nullentry, or does not exist at all), then, for any substring $s$ of the string starting at the location corresponding to that cell, and ending with a \terminal{+}, the result of prepending $n$ open parentheses to $s$ must \emph{not} be well-parenthesized.  \todoask{I made the sentence more precise based on your comment; I'm afraid it might still be just as opaque.} Additionally, if the cell points to a given location, then that location must contain a \terminal{+}, and the fragment of the string starting at the current location and going up to but not including the \terminal{+}, must not contain any \terminal{+}s which are ``exposed''.
+    More formally, each cell in the table corresponds to some level of parenthesization; if a list $\ell$ is associated to a given position in the string, then the $n^{\text{th}}$ element of that list talks about the \terminal{+} at parenthesization level $n$.  The correctness condition is then: for any cell of the table, talking about parenthesization level $n$, if the cell is empty (is \nullentry, or does not exist at all), then, for any substring $s$ of the string starting at the location corresponding to that cell, and ending with a \terminal{+}, the result of prepending $n$ open parentheses to $s$ must \emph{not} be well-parenthesized.  %\todoask{I made the sentence more precise based on your comment; I'm afraid it might still be just as opaque.}
+    Additionally, if the cell points to a given location, then that location must contain a \terminal{+}, and the fragment of the string starting at the current location and going up to but not including the \terminal{+}, must not contain any \terminal{+}s which are ``exposed''; \newtext{all intervening \terminal{+}s must be hidden by pair of parentheses enclosing a well-parenthesized substring of this fragment.}
     
-    Even more formally, we can define a notation of paren-balanced and paren-balanced-hiding-\terminal{+}.  Say that a string is paren-balanced at level $n$ if it closes exactly $n$ more parentheses than it opens, and there is no point at which it has closed more than n more parentheses than it has opened.  So the string \str{1+2)} is paren-balanced at level 1 (because it closes 1 more parenthesis than it opens), and the string \str{1+2)+(3} is not paren balanced at any level (though the string \str{1+2)+(3)} is paren-balanced at level 1).  A string is paren-balanced-hiding-\terminal{+} at level $n$ if it is paren-balanced at level $n$, and, at any point at which there is a \terminal{+}, at most $n-1$ more parentheses have been closed than opened.  So \str{(1+2)} is paren-balanced-hiding-\terminal{+} at level 0, and \str{(1+2))} is paren-balanced-hiding-\terminal{+} at level 1, and \str{(1+2)+3} is not paren-balanced-hiding-\terminal{+} at any level, though it is paren-balanced at level 0.  \todoask{THIS IS VERBOSE.  MAYBE I SHOULD START WITH CODE?  Or forward-reference code in ``Discharging the Side-Conditions Trivially''?}
+    Even more formally, we can define a notation of paren-balanced and paren-balanced-hiding-\terminal{+}.  Say that a string is paren-balanced at level $n$ if it closes exactly $n$ more parentheses than it opens, and there is no point at which it has closed more than $n$ more parentheses than it has opened.  So the string \str{1+2)} is paren-balanced at level 1 (because it closes 1 more parenthesis than it opens), and the string \str{1+2)+(3} is not paren balanced at any level (though the string \str{1+2)+(3)} is paren-balanced at level 1).  A string is paren-balanced-hiding-\terminal{+} at level $n$ if it is paren-balanced at level $n$, and, at any point at which there is a \terminal{+}, at most $n-1$ more parentheses have been closed than opened.  So \str{(1+2)} is paren-balanced-hiding-\terminal{+} at level 0, and \str{(1+2))} is paren-balanced-hiding-\terminal{+} at level 1, and \str{(1+2)+3} is not paren-balanced-hiding-\terminal{+} at any level, though it is paren-balanced at level 0. %\todoask{THIS IS VERBOSE.  MAYBE I SHOULD START WITH CODE?  Or forward-reference code in ``Discharging the Side Conditions Trivially''?}
     
     Then, the formal correctness condition is that if a cell at parenthesis level $n$ points to a location $\ell$, then the string from the cell up to but not including $\ell$ must be paren-balanced-hiding-\terminal{+} at level $n$, and the character at location $\ell$ must be a \terminal{+}.  If the cell is empty, then the string up to but not including any subsequent \terminal{+} must not be paren-balanced at level $n$.
     
-    The table computed by the algorithm given above satisfies this correctness condition, and this correctness condition implies that the splitting locations given by the table are the only ones that produce valid parse trees; there is a unique table satisfying this correctness condition (because it picks out the \emph{first} \terminal{+} at the relevant level), and any split location which is not appropriately paren-balanced/paren-balanced-hiding results in no parse tree.  \todoask{THIS SEEMS REPETITIVE?}
+    The table computed by the algorithm given above satisfies this correctness condition, and this correctness condition implies that the splitting locations given by the table are the only ones that produce valid parse trees; there is a unique table satisfying this correctness condition (because it picks out the \emph{first} \terminal{+} at the relevant level), and any split location which is not appropriately paren-balanced/paren-balanced-hiding results in no parse tree.  %\todoask{THIS SEEMS REPETITIVE?}
   
   \subsection{Diving into Refinement Code}
-    \todo{Check the following assumptions: that the reader has seen:
-    \begin{itemize}
-    \item what Fiat goals look like
-    \item what the initial representation change to the indexed representation looks like
-    \item the general structure of remaining splitter goals
-    \end{itemize}
-    }
-    
-    \todo{Remove me.  GOALS: rule is non-trivial, but use should be trivial.  pieces to making it trivial: no representation change, automatic discovery of binary operation and brackets, reflective side-conditions}
+%    \todo{Check the following assumptions: that the reader has seen:
+%    \begin{itemize}
+%    \item what Fiat goals look like
+%    \item what the initial representation change to the indexed representation looks like
+%    \item the general structure of remaining splitter goals
+%    \end{itemize}
+%    }
+%    
+%    \todo{Remove me.  GOALS: rule is non-trivial, but use should be trivial.  pieces to making it trivial: no representation change, automatic discovery of binary operation and brackets, reflective side conditions}
     
     Although the rule itself is non-trivial, our goal is to make using this rule as trivial as possible; we now explain how this refinement rule requires only one line of code to use (modulo long tactic names):
-\begin{verbatim}
-  setoid_rewrite refine_binop_table;
-  [ presimpl_after_refine_binop_table | reflexivity.. ].
-\end{verbatim}
-    \todoask{How much explanation at this point?  Mention that \tactic{presimpl\ldots} only unfolds things?}
+\begin{align*}
+ & \texttt{\tactic{setoid\_rewrite}~\fname{refine\_binop\_table};} \\
+ &\texttt{[~\tactic{presimpl\_after\_refine\_binop\_table}~|~\tacREFLEXIVITY..~].}
+\end{align*}
+    \newtext{The tactic \tactic{presimpl\_after\_refine\_binop\_table} is nothing more than a neatly packaged collection of calls to the \tactic{unfold} tactic, which performs $\delta$-reduction (definition unfolding); this unfolding allows the subsequent call to \tacREFLEXIVITY\space to instantiate some existential variables (placeholders which tell Coq ``fill me in later''), without needing higher-order unification.  As mentioned \refAtReflectiveCompLoc, \tacREFLEXIVITY\space takes care of discharging the side conditions which can be decided by computation; this is commonly called ``reflective automation,'' for its widespread use in proving a lemma by appealing to computation run on a ``reflection,'' or syntactic representation, of that lemma.}
     
-    There are three components to making a rule that can be used with a one-liner: not requiring a change of representation; reflective computation of the side-conditions, allowing them all to be discharged with \tacREFLEXIVITY; and automatic discovery of any arguments to the rule.  We cover each of these separately.
+    There are three components to making a rule that can be used with a one-liner: not requiring a change of representation; reflective computation of the side conditions, allowing them all to be discharged with \tacREFLEXIVITY; and automatic discovery of any arguments to the rule.  We cover each of these separately.
     
-    \subsubsection{Doing Without a New Representation}
-      Recall from \todo{secref} that the first step in any parser/splitter \todo{decide on which one to use} is to use an indexed representation of strings, where splitting a string only involves updating the indices into the original string, as well as taking care of all of the straightforward grammar rules.  Naively, we'd need to store a fresh table every time we split the string.
+    \subsubsection{Doing Without a New Representation of Strings}
+      \editedtext{Recall from \autoref{sec:first-mention-first-honing-step} that the first step in any splitter refinement, implemented as part of the \tactic{start honing parser using indexed representation} tactic, is to use an indexed representation of strings, where splitting a string only involves updating the indices into the original string.  Naively, to implement the refinement strategy of this chapter, we'd either need to store a fresh table, somehow derived from the previous one, every time we split the string, or recompute the entire table from scratch on every invocation of the splitting method.}
       
       How do we get around computing a new table on splits?  We pull the same trick here that we pulled on strings; we refer only to the table that is built from the initial string, and describe the correctness condition on the table in terms of arbitrary substrings of that string.
       
-      Fiat presents us with a goal involving a statement of the form ``nondeterministically pick a list of splitting locations that is complete for the substring of \farg{str} starting at \farg{n} and ending at \farg{m}, for the rule \nt{pexpr}\nt{+expr}.''  In code form, this is:
+      Fiat presents us with a goal involving a statement of the form ``nondeterministically pick a list of splitting locations that is complete for the substring of \farg{str} starting at \farg{n} and ending at \farg{m}, for the rule \nt{pexpr}\nt{+expr}.''  In code form, this is:\todo{reuse macro from earlier to uniformize code}
 \begin{verbatim}
 {splits : list nat
 | split_list_is_complete
     G
     (substring n m str)
-    (NonTerminal nt)
+    (Nonterminal nt)
     (Terminal ch :: its)
     splits}
 \end{verbatim}
     \todoask{How much should I say about this code?  For example, the current Coq code doesn't line up perfectly with the explanation; the code only handles the case where the rule is ``a nonterminal, followed by a terminal, followed by other things'', not the form presented above, where the nonterminal is hidden by one layer of indirection (to prevent backtracking).}
+    \todoask{You said ``I don't understand where this rule oversimplifies, so maybe it is worth an explanation.''  Here's an explanation directed at you; is it worth including?}
+    \newtext{This code, which matches our current implementation, doesn't quite allow us to handle what we claim to handle in this section; we should be able to handle any rule that starts with a nonterminal \nt{nt}, such that the set of possible characters in any string which can be parsed as \nt{nt} is disjoint from the set of possible first characters of any string parsed by the rest of the rule.  This code only handles the case where the rest of the rule begins with a terminal.}
     
     The final refinement rule, which we use with \tactic{setoid\_rewrite}, says that this is refined by a lookup into a suitably defined \farg{table}:
 \todo{Standardize notation for goals, or drop code}
@@ -127,7 +129,7 @@ refine {splits : list nat
        | split_list_is_complete
            G
            (substring n m str)
-           (NonTerminal nt)
+           (Nonterminal nt)
            (Terminal ch :: its)
            splits}
        (ret [match List.nth n table None with
@@ -136,22 +138,22 @@ refine {splits : list nat
              end])
 \end{verbatim}
 
-    By phrasing the rule in terms of \fname{substring}~\farg{n}~\farg{m}~\farg{str}, rather than in terms of an arbitrary string, the computation of the table is the same in every call to the splitter.  All that remains is to lift the computation outside of the recursive call to the parsing function during the extraction phase, which we plan to do soon. \todo{Section reference future work.  Add bit to future work.}
+    By phrasing the rule in terms of \fname{substring}~\farg{n}~\farg{m}~\farg{str}, rather than in terms of an arbitrary string, the computation of the table is the same in every call to the splitter.  All that remains is to lift the computation of the table to a location outside the recursive call to the parsing function; we plan to implement code to do this during the extraction phase soon. \todo{Section reference future work.  Add bit to future work.}
     
-    Before moving on to the other components of making usage of this rule require only one line of code, we note that we make use of the essential property that removing characters from the end of the string doesn't add new locations where splitting could yield a valid parse; if a given location is the first \terminal{+} at the current level of parenthesization, this does not change when we remove characters from the end of the string.  \todoask{Should there be more content here?}
+    Before moving on to the other components of making usage of this rule require only one line of code, we note that we make use of the essential property that removing characters from the end of the string doesn't add new locations where splitting could yield a valid parse; if a given location is the first \terminal{+} at the current level of parenthesization, this does not change when we remove characters from the end of the string.
     
-  \subsubsection{Discharging the Side-Conditions Trivially}
+  \subsubsection{Discharging the Side Conditions Trivially}
     To prove the correctness condition on the table, we need to know some things about the grammar that we are handling.  In particular, we need to know that if we are trying to parse a string as a rule analogous to \nt{pexpr}, then there can be no exposed \terminal{+} characters, and, furthermore, that every such parseable string has well-balanced parentheses.  To allow discharging the side conditions trivially, we define a function that computes whether or not this is the case for a given nonterminal in a given grammar.  We then prove that, whenever this function returns \true, valid tables yield complete lists of splitting locations.
     
     To make things simple, we approximate which grammars are valid; we require that every open parenthesis be closed in the same rule (rather than deeply nested in further nonterminals).  In Haskell-like pseudocode, the function we use to check validity of a grammar can be written as:
 \begin{verbatim}
-grammar-and-nonterminal-is-valid : Grammar -> NonTerminal -> Bool
+grammar-and-nonterminal-is-valid : Grammar -> Nonterminal -> Bool
 grammar-and-nonterminal-is-valid G nt
-  = fold (&&) paren-balanced-hiding G (G.(Lookup) nt)
+  = fold (&&) true (map (paren-balanced-hiding G) (G.(Lookup) nt))
 
 pb' : Grammar -> Char -> Nat -> [Item] -> Bool
 pb' G n []         = (n == 0)
-pb' G n (NonTerminal nt :: s)
+pb' G n (Nonterminal nt :: s)
   = fold (&&) (pb' G 0) (G.(Lookup) nt) && pb' G n s
 pb' G n ('(' :: s) = pb' G (n + 1) s
 pb' G n (')' :: s) = n > 0 && pb' G (n - 1) s
@@ -161,7 +163,7 @@ paren-balanced G = pb' G 0
 
 pbh' : Grammar -> Char -> Nat -> [Item] -> Bool
 pbh' G n []         = (n == 0)
-pbh' G n (NonTerminal nt :: s)
+pbh' G n (Nonterminal nt :: s)
   = fold (pbh' G 0) (G.(Lookup) nt) && pb' G n s
 pbh' G n ('+' :: s) = n > 0 && pbh' G n s
 pbh' G n ('(' :: s) = pbh' G (n + 1) s
@@ -169,17 +171,16 @@ pbh' G n (')' :: s) = n > 0 && pbh' G (n - 1) s
 pbh' G n (_ :: s)   = pbh' G n s
 
 paren-balanced-hiding G = pbh' G 0
-\end{verbatim}    
-    \todoask{Does this code need more explanation?}
+\end{verbatim}
     
-    There is one subtlety here, that was swept under the rug in the above code: this computation might not terminate!  We could deal with this by memoizing this computation in much the same way that we memoized the parser to deal with potentially infinite parse trees.  Rather than dealing with the subtleties of figuring out what to do when we hit repeated nonterminals, we perform the computation in two steps.  First, we trace the algorithm above, building up a list of which nonterminals need to be paren-balanced, and which ones need to be paren-balanced-hiding.  Second, we fold the computation over these lists, replacing the recursive calls for nonterminals with list membership tests. \todoask{Does this need code?}
+    There is one subtlety here, that was swept under the rug in the above code: this computation might not terminate!  We could deal with this by memoizing this computation in much the same way that we memoized the parser to deal with potentially infinite parse trees.  Rather than dealing with the subtleties of figuring out what to do when we hit repeated nonterminals, we perform the computation in two steps.  First, we trace the algorithm above, building up a list of which nonterminals need to be paren-balanced, and which ones need to be paren-balanced-hiding.  Second, we fold the computation over these lists, replacing the recursive calls for nonterminals with list membership tests.
     
   \subsubsection{Automatic Discovery of Arguments}
-    Throughout this chapter, we've been focusing on the arithmetic expression example.  However, the exact same rule can handle S-expressions, with just a bit of generalization.  There are two things to be computed: the binary operation, and the parenthesis characters.\footnote{Currently, our code requires the binary operation to be exposed as a terminal in the rule we are handling.  We plan on generalizing this to the grammars described in this chapter shortly.}
+    Throughout this chapter, we've been focusing on the arithmetic-expression example.  However, the exact same rule can handle S-expressions, with just a bit of generalization.  There are two things to be computed: the binary operation, and the parenthesis characters.\footnote{Currently, our code requires the binary operation to be exposed as a terminal in the rule we are handling.  We plan on generalizing this to the grammars described in this chapter shortly.}
     
     We require that the first character of any string parsed by the nonterminal analogous to \nt{+expr} be uniquely determined; that character will be the binary operator; we can reuse the code from \autoref{ch:disjoint} to compute this character and ensure that it is unique.
     
-    To find the parenthesis characters, we first compute a list of candidate character pairs: for each rule associated to the nonterminal analogous to \nt{pexpr}, we consider the pair of the first character and the last character (assuming both are terminals) to be a candidate pair.\footnote{Again, generalizing this to characters hidden by nested nonterminals should be straightforward.}  We then filter the list for characters which yield the conclusion that this rule is applicable to the grammar, according to the algorithm of the previous subsubsection.  We then require, as a side-condition, that the length of this list be positive.
+    To find the parenthesis characters, we first compute a list of candidate character pairs: for each rule associated to the nonterminal analogous to \nt{pexpr}, we consider the pair of the first character and the last character (assuming both are terminals) to be a candidate pair.\footnote{Again, generalizing this to characters hidden by nested nonterminals should be straightforward.}  We then filter the list for characters which yield the conclusion that this rule is applicable to the grammar, according to the algorithm of the previous subsubsection.  We then require, as a side condition, that the length of this list be positive.
     
 %  \subsection{The Correctness Proof}
 %    To use this as a refinement rule, we need to prove it complete.  To do this, we prove \todo{explain correctness criterion and insert relation of paren-balanced-hiding on a string to properties of grammar.}
@@ -224,7 +225,7 @@ paren-balanced-hiding G = pbh' G 0
 %    := (refine {splits : list nat
 %               | split_list_is_complete
 %                   G (substring n m str)
-%                   (NonTerminal nt)
+%                   (Nonterminal nt)
 %                   (Terminal ch :: its) splits}
 %               (ret [match List.nth n table None with
 %                       | Some idx => idx

@@ -118,7 +118,7 @@
 \end{align*}
        where $=_p$ refers to a Boolean equality test for productions.  Note that in the final case, we permit any list to be picked, because whenever the production we are handling is reachable, the value returned by that case will never be used.
     
-       We can now refine each of these cases separately, using \tactic{setoid\_rewrite}; \newtext{\tactic{setoid\_rewrite} is a tactic that replaces one subterm of your goal with an ``equivalent'' subterm, where the ``equivalence'' can be any transitive relation.  Using \tactic{setoid\_rewrite} allows us to hide the glue required to state our lemmas about computations as wholes, while using them to replace \emph{subterms} of other computations.}  The key to refining each part separately, to making Fiat work, is that the refinement rules package their correctness properties, so users don't have to worry about correctness when programming by refinement.  We use Coq's setoid rewriting machinery to automatically glue together the various correctness proofs when refining only a part of a program.
+       We can now refine each of these cases separately, using \tactic{setoid\_rewrite}; \newtext{this tactic replaces one subterm of your goal with an ``equivalent'' subterm, where the ``equivalence'' can be any transitive relation.  Using \tactic{setoid\_rewrite} allows us to hide the glue required to state our lemmas about computations as wholes, while using them to replace \emph{subterms} of other computations.}  The key to refining each part separately, to making Fiat work, is that the refinement rules package their correctness properties, so users don't have to worry about correctness when programming by refinement.  We use Coq's setoid rewriting machinery to automatically glue together the various correctness proofs when refining only a part of a program.
            
       For example, we might have a lemma \fname{singleton} which says that returning the length of the string is a valid refinement for any rule that has only one nonterminal; its type, for a particular grammar \farg{G}, a particular string \farg{str}, and a particular nonterminal \farg{nt}, would be
 \begin{align*}
@@ -131,100 +131,47 @@
 \begin{align*}
 & \fname{If}~\valuelist{\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
 &\ndcompfor[\qquad]{\nt{(ab)\ensuremath{^*}}}{\nil} \\
-& \fname{Else}~\ldots
+& \fname{Else~If}~\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{b}}{\valuelist{\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else~If}~\valuelist{\terminal{a},~\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{a}}{\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else} \\
+&\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\}
 \end{align*}
 into
 \begin{align*}
 & \fname{If}~\valuelist{\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
 &\qquad\fname{ret}~\valuelist{\fname{length}~\farg{str}}\\
-& \fname{Else} \ldots
+& \fname{Else~If}~\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{b}}{\valuelist{\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else~If}~\valuelist{\terminal{a},~\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
+&\ndcompfor[\qquad]{\terminal{a}}{\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}} \\
+& \fname{Else} \\
+&\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\}
 \end{align*}
-    where the \ldots\space parts remain the same.
-    
+    \newtext{Note that the only change is in the computation returned in the first branch of the conditional.}
+
     We now describe the refinements that we do within this framework, to implement efficient splitters.
     
 \section{Optimizations}
   \subsection{An Easy First Optimization: Indexed Representation of Strings}
     One optimization that is always possible is to represent the current string being parsed in this recursive call as a pair of indices into the original string.  This allows us to optimize the code doing string manipulation, as it will no longer need to copy strings around, only do index arithmetic.
     
-  \subsection{Upcoming Optimizations}
-    In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this thesis.  We begin by tying up the \regex{(ab)*} grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and \terminal{+}, and then expressions with numbers, \terminal{+} and parentheses. 
+    \newtext{This optimization, as well as the trivial optimizations described in \autoref{ch:fixed-length}, are implemented automatically by the initial lines of any parser refinement process in Fiat.}
     
-    \todo{The following is mostly redundant with what was said above; remove most of it.}  \todoask{Is there any part here worth keeping, that isn't taken care of by the above.}
-    For each grammar, the Fiat framework presents us with goals describing the unimplemented portion of the splitter for this particular grammar.  For example, the goal for the grammar that parses arithmetic expressions involving plusses and parentheses, after taking care of the trivial obligations that we describe in the next chapter, looks like this:\label{sec:after-if-folding-num-+-paren}
-\begin{verbatim}
-1 focused subgoals (unfocused: 3)
-, subgoal 1 (ID 3491)
-  
-r_n : string * (nat * nat)
-n : item ascii * production ascii
-H := ?88 : hiddenT
-============================
- refine
-   (ls <- If ([NonTerminal "pexpr"] =p fst n :: snd n)
-             || (([NonTerminal "expr"] =p fst n :: snd n)
-             || ([NonTerminal "number"] =p fst n :: snd n)
-             || (([Terminal ")"] =p fst n :: snd n)
-             || ([Terminal "0"] =p fst n :: snd n)
-             || ([Terminal "1"] =p fst n :: snd n)
-             || ([Terminal "2"] =p fst n :: snd n)
-             || ([Terminal "3"] =p fst n :: snd n)
-             || ([Terminal "4"] =p fst n :: snd n)
-             || ([Terminal "5"] =p fst n :: snd n)
-             || ([Terminal "6"] =p fst n :: snd n)
-             || ([Terminal "7"] =p fst n :: snd n)
-             || ([Terminal "8"] =p fst n :: snd n)
-             || ([Terminal "9"] =p fst n :: snd n)
-             || ([NonTerminal "digit"] =p fst n :: snd n)))
-          Then ret [ilength r_n]
-          Else (If [NonTerminal "pexpr"; Terminal "+";
-                   NonTerminal "expr"] =p fst n :: snd n
-          Then {splits : list nat
-               | ParserInterface.split_list_is_complete
-                 plus_expr_grammar
-                 (string_of_indexed r_n)
-                 (NonTerminal "pexpr")
-                 [Terminal "+"; NonTerminal "expr"]
-                 splits}
-          Else
-            ret [If ([Terminal "+"; NonTerminal "expr"]
-                        =p fst n :: snd n)
-                    || ([Terminal "("; NonTerminal "expr"; Terminal ")"]
-                        =p fst n :: snd n)
-                    || ([NonTerminal "digit"; NonTerminal "number"]
-                        =p fst n :: snd n)
-                 Then 1
-                 Else (If [NonTerminal "expr"; Terminal ")"]
-                             =p fst n :: snd n 
-                 Then  pred (ilength r_n)
-                 Else (If [NonTerminal "number"]
-                             =p fst n :: snd n 
-                 Then ilength r_n
-                 Else 0))]);
-  ret (r_n, ls)) (H r_n n)
-\end{verbatim}
-     The important part of this goal is:
-\begin{verbatim}
-{splits : list nat
-| ParserInterface.split_list_is_complete
-    plus_expr_grammar
-    (string_of_indexed r_n)
-    (NonTerminal "pexpr") [Terminal "+"; NonTerminal "expr"]
-    splits}
-\end{verbatim}
-     It says that we have to find a refinement of nondeterministically picking a complete list of splits for the rule ``a \nt{pexpr}, followed by a \terminal{+}, followed by a \nt{expr}.''
-     
-     To get to this goal, we write this code:
-\begin{verbatim}
-Lemma ComputationalSplitter'
-: FullySharpened (string_spec plus_paren_expr_grammar).
-Proof.
-  start honing parser using indexed representation.
+  \subsection{Putting It All Together}
+    \newtext{Now that we have the concepts and ideas behind refining parsers, or, more precisely, splitting oracles for parsers, in the Fiat framework, what does the code actually look like?  Every refinement process, which defines a representation for strings, along with a proven-correct method of splitting them, begins with the same code:}
+\begin{align*}
+& \texttt{\kw{Lemma}~\oftype{\fname{ComputationalSplitter'}}{\fname{FullySharpened}~\coqgroup{\fname{string\_spec}~\farg{G}}}.} \\
+& \texttt{\kw{Proof}.} \\
+&\qquad\texttt{\tactic{start~honing~parser~using indexed~representation}.} \\ \\
+&\qquad\texttt{\tactic{hone~method~"splits"}.} \\
+&\qquad\texttt{\{} \\
+&\qquad\qquad\texttt{\tactic{simplify~parser~splitter}.}
+\end{align*}
+      \newtext{The first line of the proof takes care of the switch to using indices into the original string, of replacing the single nondeterministic choice of a complete list of splits with a sequence of \texttt{If} statements returning separate computations for each rule, and of replacing nondeterministic choices with direct return values when such values can be determined by trivial rules (which will be described in \autoref{ch:fixed-length}).  The tactic \tactic{hone method "splits"} says that we want to refine the splitter, rather than, say, the representation of strings that we are using.  The tactic \tactic{simplify parser splitter} performs a number of straightforward and simple optimizations, such as combining nested \texttt{If} statements which return the same value.}
 
-  hone method "splits".
-  {
-    simplify parser splitter.
-\end{verbatim}
-      The first line of the proof takes care of the trivial rules, and \verb|hone method "splits"| says that we want to refine the splitter.  The tactic \verb|simplify parser splitter| performs a number of straightforward and simple optimizations, such as combining nested \verb|if| statements which return the same value.
-      
-      We begin the next section by describing the strategies for the ``trivial'' rules.
+    
+  \subsection{Upcoming Optimizations}
+    In the next few sections, we build up various strategies for splitters.  Although our eventual target is JavaScript, we cover only a more modest target of very simple arithmetical expressions in this thesis.  We begin by tying up the \regex{(ab)\ensuremath{^*}} grammar, and then moving on to parse numbers, parenthesized numbers, expressions with only numbers and \terminal{+}, and then expressions with numbers, \terminal{+} and parentheses. 
+    

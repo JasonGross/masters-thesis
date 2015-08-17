@@ -22,12 +22,12 @@
 has-at-most-one-nt : [Item] -> Bool
 has-at-most-one-nt [] = true
 has-at-most-one-nt (Terminal _)::xs = has-at-most-one-nt xs
-has-at-most-one-nt (NonTerminal _)::xs = has-only-terminals xs
+has-at-most-one-nt (Nonterminal _)::xs = has-only-terminals xs
 
 has-only-terminals : [Item] -> Bool
 has-only-terminals [] = true
 has-only-terminals (Terminal _)::xs = has-only-terminals xs
-has-only-terminals (NonTerminal _)::xs = false
+has-only-terminals (Nonterminal _)::xs = false
 \end{verbatim}
 
   The code for determining the split location is even easier: if the first item of the rule is a terminal, then split at character 1; if the first item of the rule is a nonterminal, and there are $n$ remaining items in the rule, then split $n$ characters before the end of the string.
@@ -35,16 +35,16 @@ has-only-terminals (NonTerminal _)::xs = false
   \section{Parsing Parenthesized Numbers: Fixed Lengths}
     The grammar for parenthsized numbers has only one rule with multiple nonterminals: the rule for \nt{number}~$\Coloneqq$~\nt{digit}~\nt{number?}.  The strategy here is also simple: because \nt{digit} only accepts strings of length exactly 1, we always want to split after the first character.
 
-    The following pseudocode computes the determines whether or not all strings parsed by a given item are a fixed length, and, if so, what that length is:
+    The following pseudocode determines whether or not all strings parsed by a given item are a fixed length, and, if so, what that length is:
     \todo{Colorize code; use macros to ensure it matches the conventions of the rest of the document}
 \begin{verbatim}
-fixed-length-of : [String] -> [Item] -> Maybe Int
+fixed-length-of : [Nonterminal] -> [Item] -> Maybe Int
 fixed-length-of valid_nonterminals [] = just 0
 fixed-length-of valid_nonterminals (Terminal _::xs)
   = case fixed-length-of valid_nonterminals xs of
       | just k -> just (1 + k)
       | nothing -> nothing
-fixed-length-of valid_nonterminals (NonTerminal nt::xs)
+fixed-length-of valid_nonterminals (Nonterminal nt::xs)
   if nt `in` valid_nonterminals
   then let lengths = map (fixed-length-of (remove nt valid_nonterminals)) (Lookup nt)
        in if all of the elements of lengths are equal to L for some L
@@ -55,50 +55,11 @@ fixed-length-of valid_nonterminals (NonTerminal nt::xs)
   else nothing
 \end{verbatim}
 
-    We have proven that for any nonterminal for which this method returns \texttt{just }$k$, the only valid split of the any string for this rule is at location $k$.  This is the correctness obligation that Fiat demands of us to be able to use this rule.
+    We have proven that for any nonterminal for which this method returns \texttt{just }$k$, the only valid split of any string for this rule is at location $k$.  This is the correctness obligation that Fiat demands of us to be able to use this rule.
 
-  \section{Putting It Together}
-     Both of these rules are simple and complete for the rules they handle; if a rule has at most one nonterminal, or if the first element of a rule has a fixed length, then we can't do any better than these rules.  Therefore, we incorperate them into the initial invocation of \verb|start honing parser using indexed representation|.  To do this, we express the splitter by folding \verb|if| statements over all of the rules of the grammar that are reachable from valid nonterminals.  The \verb|if| statements check equality of the rule against the one we were given, and, if they match, looks to see if either of these strategies applies.  If either does, than we return the appropriate singleton value.  If neither applies, then we leave over a nondeterminisitic pick of a list containing all possible valid splits.  The results of applying this procedure without treating any rules specially was shown in \autoref{sec:if-folding}.  The results of applying this procedure, including the rules of this chapter, was shown in \autoref{sec:after-if-folding-num-+-paren}.
+  \section{Putting It Together}\label{sec:first-mention-first-honing-step}
+     Both of these refinement strategies are simple and complete for the rules they handle; if a rule has at most one nonterminal, or if the first element of a rule has a fixed length, then we can't do any better than these rules.  Therefore, we incorporate them into the initial invocation of \verb|start honing parser using indexed representation|.  \editedtext{As described in \autoref{ch:fiat},} to do this, we express the splitter by folding \verb|If| statements over all of the rules of the grammar that are reachable from valid nonterminals.  The \verb|If| statements check equality of the rule against the one we were given, and, if they match, look to see if either of these strategies applies.  If either does, than we return the appropriate singleton value.  If neither applies, then we default to the nondeterministic pick of a list containing all possible valid splits.  The results of applying this procedure without treating any rules specially was shown in \autoref{sec:if-folding}.  \editedtext{The readers interested in precise details can find verbatim code for the results of applying this procedure, including the rules of this chapter, in \autoref{sec:after-if-folding-num-+-paren}.  For the similarly interested readers, the Coq code that computes the goal that the user is presented with, after \tactic{start honing parser using indexed representation}, can be found in \autoref{sec:expanded-fallback-list}.}
      
-     \todoask{Is it worth including more code?  I don't actually write out the refinement rules in the code I use, since I never need to setoid\_rewrite with them; it's all baked into the initial first-step refinement rule.  The general code for defining the computation, in case it's worth including is:}
-\begin{verbatim}
-Definition expanded_fallback_list'
-           (P : String -> item Ascii.ascii -> production Ascii.ascii -> item Ascii.ascii -> production Ascii.ascii -> list nat -> Prop)
-           (s : T)
-           (it : item Ascii.ascii) (its : production Ascii.ascii)
-           (dummy : list nat)
-: Comp (T * list nat)
-  := (ls <- (forall_reachable_productions
-               G
-               (fun p else_case
-                => If production_beq ascii_beq p (it::its)
-                   Then (match p return Comp (list nat) with
-                           | nil => ret dummy
-                           | _::nil => ret [ilength s]
-                           | (Terminal _):: _ :: _ => ret [1]
-                           | (NonTerminal nt):: p'
-                             => If has_only_terminals p'
-                                Then
-                                  ret [(ilength s - Datatypes.length p')%natr]
-                                Else
-                                (option_rect
-                                   (fun _ => Comp (list nat))
-                                   (fun (n : nat) => ret [n])
-                                   { splits : list nat
-                                   | P
-                                       (string_of_indexed s)
-                                       (NonTerminal nt)
-                                       p'
-                                       it
-                                       its
-                                       splits }%comp
-                                   (length_of_any G nt))
-                         end)
-                   Else else_case)
-               (ret dummy));
-      ret (s, ls))%comp.
-
-\end{verbatim}
 
 
 %
@@ -145,11 +106,11 @@ Definition expanded_fallback_list'
 %        (list nat) :=
 %          dummy <- {_ : list nat | True};
 %          ls <- If [Terminal "a"%char; Terminal "b"%char;
-%                   NonTerminal "(ab)*"] =p fst p :: snd p Then
+%                   Nonterminal "(ab)*"] =p fst p :: snd p Then
 %                ret [1]
-%                Else (If [Terminal "b"%char; NonTerminal "(ab)*"] =p
+%                Else (If [Terminal "b"%char; Nonterminal "(ab)*"] =p
 %                         fst p :: snd p Then ret [1]
-%                      Else (If [NonTerminal "(ab)*"] =p fst p :: snd p
+%                      Else (If [Nonterminal "(ab)*"] =p fst p :: snd p
 %                            Then ret [ilength s] Else
 %                            ret dummy));
 %          ret (s, ls) ,
@@ -160,7 +121,7 @@ Definition expanded_fallback_list'
 %                     Equality.ascii_beq
 %                     [[];
 %                     [Terminal "a"%char; Terminal "b"%char;
-%                     NonTerminal "(ab)*"]] p
+%                     Nonterminal "(ab)*"]] p
 %                Then option_rect
 %                       (fun _ : option Ascii.ascii => Comp (list nat))
 %                       (fun ch : Ascii.ascii =>
@@ -194,11 +155,11 @@ Definition expanded_fallback_list'
 %  ============================
 %   refine
 %     (dummy <- {_ : list nat | True};
-%      ls <- If [Terminal "a"%char; Terminal "b"%char; NonTerminal "(ab)*"] =p
+%      ls <- If [Terminal "a"%char; Terminal "b"%char; Nonterminal "(ab)*"] =p
 %               fst n :: snd n Then ret [1]
-%            Else (If [Terminal "b"%char; NonTerminal "(ab)*"] =p
+%            Else (If [Terminal "b"%char; Nonterminal "(ab)*"] =p
 %                     fst n :: snd n Then ret [1]
-%                  Else (If [NonTerminal "(ab)*"] =p fst n :: snd n
+%                  Else (If [Nonterminal "(ab)*"] =p fst n :: snd n
 %                        Then ret [ilength r_n] Else
 %                        ret dummy));
 %      ret (r_n, ls)) (H r_n n)
@@ -215,11 +176,11 @@ Definition expanded_fallback_list'
 %   refine
 %     (ret
 %        (r_n,
-%        [If ([Terminal "a"%char; Terminal "b"%char; NonTerminal "(ab)*"] =p
+%        [If ([Terminal "a"%char; Terminal "b"%char; Nonterminal "(ab)*"] =p
 %             fst n :: snd n)
-%            || ([Terminal "b"%char; NonTerminal "(ab)*"] =p fst n :: snd n)
+%            || ([Terminal "b"%char; Nonterminal "(ab)*"] =p fst n :: snd n)
 %         Then 1
-%         Else (If [NonTerminal "(ab)*"] =p fst n :: snd n Then
+%         Else (If [Nonterminal "(ab)*"] =p fst n :: snd n Then
 %               ilength r_n Else 0)])) (H r_n n)
 %\end{verbatim}
 %
@@ -252,7 +213,7 @@ Definition expanded_fallback_list'
 %                     | match fst p with
 %                         | Terminal _
 %                           => True
-%                         | NonTerminal _
+%                         | Nonterminal _
 %                           => if has_only_terminals (snd p)
 %                              then True
 %                              else split_list_is_complete G (string_of_indexed s) (fst p) (snd p) ls
@@ -262,7 +223,7 @@ Definition expanded_fallback_list'
 %                     => [ilength s]
 %                   | _::_, Terminal _
 %                     => [1]
-%                   | _::_, NonTerminal _
+%                   | _::_, Nonterminal _
 %                     => if has_only_terminals (snd p)
 %                        then [ilength s - List.length (snd p)]
 %                        else fallback_ls
@@ -307,7 +268,7 @@ Definition expanded_fallback_list'
 %                               | cyclic_length => cyclic_length
 %                               | not_yet_handled_empty_rule => not_yet_handled_empty_rule
 %                             end
-%       | (NonTerminal nt)::xs => match length_of_any_nt nt, length_of_any_production' length_of_any_nt xs with
+%       | (Nonterminal nt)::xs => match length_of_any_nt nt, length_of_any_production' length_of_any_nt xs with
 %                                   | same_length n1, same_length n2 => same_length (n1 + n2)
 %                                   | cyclic_length, _ => cyclic_length
 %                                   | _, cyclic_length => cyclic_length
