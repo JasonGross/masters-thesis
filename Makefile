@@ -3,7 +3,7 @@ all: proposal thesis
 
 PROPOSAL_PDFS = jgross-thesis-proposal.pdf
 THESIS_PDFS = jgross-thesis.pdf
-MAIN_TEXS = $(patsubst \include{%},%.tex,$(filter \include{%},$(shell cat main-files.tex)))
+MAIN_TEXS = $(patsubst \include{%},%.tex,$(filter \include{%},$(shell cat main-files.tex jgross-thesis.tex)))
 THESIS_TEXS = packages.tex contents.tex mitthesis.cls abstract.tex cover.tex new-date.tex todo.tex main-files.tex $(MAIN_TEXS)
 PDFS = $(PROPOSAL_PDFS) $(THESIS_PDFS)
 
