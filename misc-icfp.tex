@@ -10,42 +10,6 @@
 
 
 
-\section{Semantic Actions} \label{sec:semantic-actions}
-  Our parsing algorithm can also be specialized to handle the common use case of semantic actions.  Consider, for example, the following simultaneous specification of a grammar and some semantic actions:
-  \begin{align*}
-    e \mathrel{\vcentcolon\coloneqq}{} & n && \left\{\fname{int\_of\_string}(n)\right\} \\
-    \mathrel{|}{} & e_1\mathrel{\str{+}}e_2 && \left\{e_1 + e_2\right\} \\
-    \mathrel{|}{} & \str{(}~e~\str{)} && \left\{e\right\}
-  \end{align*}
-
-  Supposing we have defined this grammar separately for our parser, we can instantiate the interface as follows to implement these semantic actions:
-  \begin{alignat*}{2}
-    & \fname{T$_{\fname{success}}$}~~\hole~~\hole~~\left(\parsetreetype{e}{\hole}\right) && \defeq \mathbb{Z} \\
-    %& \fname{T$_{\fname{success}}$}~~\hole~~\hole~~\left(\parsetreetype{e_1\mathrel{\str{+}}e_2}{\hole}\right) && \defeq \typeprod{\mathbb{Z}}{\mathbb{Z}} \\
-    %& \fname{T$_{\fname{success}}$}~~\hole~~\hole~~\left(\parsetreetype{\str{(}e\str{)}}{\hole}\right) && \defeq \mathbb{Z} \\
-    & \fname{T$_{\fname{success}}$}~~\hole~~\hole~~\left(\parsetreetype{\terminal{\farg{ch}}}{\hole}\right) && \defeq \Unit \\
-    & \fname{T$_{\fname{success}}$}~~\hole~~\hole~~\left(\parsetreetype{\left(\oftype{\farg{its}}{\typelist{\indname{Item}}}\right)}{\hole}\right) && \defeq \smashoperator{\prod_{\farg{it}\in \farg{its}}} \fname{T$_{\fname{success}}$}~\hole~\hole~\left(\parsetreetype{\farg{it}}{\hole}\right)  \\
-    \\
-    & \fname{T$_{\fname{failure}}$}~~\hole~~\hole~~\hole  && \defeq \Unit
-  \end{alignat*}
-  As all \fname{failure} cases are instantiated with \unittt, we elide them.
-  \begin{align*}
-  \intertext{The \fname{terminal} case is trivial:}
-    & \fname{terminal\_success}~~\hole~~\hole~~\hole \defeq \unittt \\
-  \intertext{The \fname{nil} and \fname{cons} cases are similarly straightforward; we have defined \fname{T$_{\fname{success}}$} on item sequences to be the corresponding tuple type.}
-    & \fname{nil\_success}~~\hole~~\hole \defeq \unittt \\
-    & \fname{cons\_success}~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\hole~~\farg{x}~~\farg{xs} \defeq (\farg{x}, \farg{xs})
-  \end{align*}
-  We will use a single definition definition \fname{production\_success} to combine \fname{production\_success$_<$} and \fname{production\_success$_=$} here, as the definition does not depend on any of the arguments that vary between them.  This is where the semantic actions take place.  We deal first with the case of a number:
-  \begin{align*}
-    & \fname{production\_success}~~\hole~~n~~e~~\farg{s}~~\hole~~\hole~~\hole \defeq \fname{int\_of\_string}~~\farg{s} \\
-  \intertext{In the case of $e_1\mathrel{\str{+}}e_2$, we get a tuple of three values: the value corresponding to $e_1$, the value corresponding to \str{+} (which in this case must just be \unittt), and the value corresponding to $e_2$:}
-    & \fname{production\_success}~~\hole~~\valuelist{e, \terminal{+}, e}~~e~~\hole~~\hole~~\hole~~(\farg{v$_1$}, \hole, \farg{v$_2$}) \\
-    & \quad \defeq \farg{v$_1$} + \farg{v$_2$} \\
-  \intertext{Finally, we deal with the case of $\str{(}~e~\str{)}$.  We again get a tuple of three values: the value corresponding to \str{(}, the value corresponding to $e$, and the value corresponding to \str{)}.  As above, the character literals are mapped to dummy $\True$ semantic values, so we ignore them.}
-    & \fname{production\_success}~~\hole~~\valuelist{\terminal{(}, e, \terminal{)}}~~e~~\hole~~\hole~~\hole~~(\hole, \farg{v}, \hole) \\
-    & \quad \defeq \farg{v}
-  \end{align*}
 
 
 

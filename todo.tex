@@ -6,10 +6,19 @@
 \newcommand{\todoask}[1]{%
 \@latex@warning{QUESTION FOR ADAM: \detokenize{#1}}%
 \textcolor{purple}{[\textbf{QUESTION FOR ADAM:} #1]}}%
-\makeatother
 
-\newcommand{\editedtext}[2][]{\textcolor{blue}{#2}}
-\newcommand{\newtext}[2][]{\textcolor{blue}{#2}}
+\newcommand{\colorifzero}[3]{%
+\ifnum#1=0\relax
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\textcolor{#2}{#3}}%
+{#3}%
+}%
+\makeatother
+\newcommand{\editedtext}[2][0]{\colorifzero{#1}{blue}{#2}}
+\newcommand{\newtext}[2][0]{\colorifzero{#1}{blue}{#2}}
 
 \todo{Fill in acknowledgements in cover.tex}
 

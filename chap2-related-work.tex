@@ -12,7 +12,7 @@
     \editedtext[1]{As stated in \autoref{sec:first-short-coq-intro}, we define our parser and prove its correctness in the proof assistant Coq.~\cite{Coq12}  Like other proof assistants utilizing dependent type theory, Coq takes advantage of the Curry-Howard isomorphism~\cite{Curry-Howard} to allow proofs to be written as functional programs; dependent types allow universal and existential quantification.  Coq natively permits only structural recursion, where recursive function calls may be invoked only on direct structural subterms of a given, specified argument.  The standard library defines combinators for turning well-founded recursion into structural recursion, which can be used to define essentially all recursive functions which provably halt in all cases (which is a class containing, as it turns out, essentially all algorithms of interest).  Coq's mathematical language, Gallina, implements Martin-L\"of's dependent lambda calculus.  Coq has a separate tactic language, called \Ltac~\cite{ltac}, which allows imperative construction of proof objects, and functions, by forwards and backwards reasoning.}
   
   \section{Recursive-Descent Parsing}
-    The most conceptually straightforward approaches to parsing fall into the class called recursive-descent parsing, where, to parse a string $s$ as a given production $p$, you attempt to parse various parts of $s$ as each of the items in the list $p$.  The control flow of the code mirrors the structure of the grammar, as well as the structure of the eventual parse tree, descending down the branches of the parse tree, recursively calling itself at each step.  The algorithm we have described in \autoref{ch:basic-rdp-algorithm} seems to fall out almost trivially from the inductive description of parse trees; we come back to this in \autoref{sec:generalized-inhabitation-decision} when we briefly sketch how it should be possible to generalize this algorithm to other inductive type families.
+    The most conceptually straightforward approaches to parsing fall into the class called recursive-descent parsing, where, to parse a string $s$ as a given production $p$, you attempt to parse various parts of $s$ as each of the items in the list $p$.  The control flow of the code mirrors the structure of the grammar, as well as the structure of the eventual parse tree, descending down the branches of the parse tree, recursively calling itself at each step.  \newtext{The algorithm we have described in \autoref{ch:basic-rdp-algorithm} seems to fall out almost trivially from the inductive description of parse trees; we come back to this in \autoref{sec:generalized-inhabitation-decision} when we briefly sketch how it should be possible to generalize this algorithm to other inductive type families.}
     
     \subsection{Parser Combinators}
       A popular approach to implementing recursive-descent parsing, called \emph{combinator parsing}~\cite{pcomb}, involves writing a small set of typed combinators, or higher-order functions, which are then applied to each other in various combinations to write a parser that mimics closely the structure of the grammar.
@@ -65,7 +65,7 @@
   \mathrel{|}{} & e_1\mathrel{\str{+}}e_2 && \left\{e_1 + e_2\right\} \\
   \mathrel{|}{} & \str{(}~e~\str{)} && \left\{e\right\}
 \end{align*}
-      \newtext[1]{Parser combinators can be easily extended to return a list not just of postfixes, but of pairs of a value and a postfix.  The \coqtype{parser} type can be parameterized over the type of the value returned.  The alternative combinator would return a disjoint union, and the sequencing combinator would return a pair of the two values returned by its inputs.  The terminal parser would return the single character it parsed, and the empty string parser would return an element of the singleton type.  Each rule for a nonterminal could then be wrapped with a combinator which applies the semantic action to the relevant values.  A more detailed explanation can be found in \cite{pcomb}. \todoask{Should I include Haskell-like code for semantic actions of these parser combinators?  Should I mention that the dependently typed parser of \autoref{ch:dep-types} can be easily extended to work with semantic actions?}}
+      \newtext[1]{Parser combinators can be easily extended to return a list not just of postfixes, but of pairs of a value and a postfix.  The \coqtype{parser} type can be parameterized over the type of the value returned.  The alternative combinator would return a disjoint union, and the sequencing combinator would return a pair of the two values returned by its inputs.  The terminal parser would return the single character it parsed, and the empty string parser would return an element of the singleton type.  Each rule for a nonterminal could then be wrapped with a combinator which applies the semantic action to the relevant values.  A more detailed explanation can be found in \cite{pcomb}.}   \newtext{We describe in \autoref{sec:semantic-actions} how our parser can easily accommodate semantic actions.} 
       
     \subsubsection{Proving Correctness and Dealing with Nontermination}
       Although parser combinators are straightforward, it is easy to make them loop forever.  It is well-known that parsers defined naively using parser combinators don't handle grammars with \emph{left recursion}, where the first item in a given production rule is the nonterminal currently being defined.  For example, if we have the nonterminal \nt{expr} $\Coloneqq$ \nt{number}~|~\nt{expr}~\terminal{+}~\nt{expr}, then the parser for \nt{expr}~\terminal{+}~\nt{expr} will call the parser for \nt{expr}, which will call the parse for \nt{expr}~\terminal{+}~\nt{expr}, which will quickly loop forever.
@@ -107,40 +107,38 @@
       
     \subsubsection{Formal Verification}
       \Citeauthor{DerivsCoq} formally verify, in Coq, finite automata for parsing the fragment of derivative-based parsing which applies to regular expressions.~\cite{DerivsCoq}  This fragment dates back to Brzozowski's original presentation of derivatives.~\cite{BrzozowskiDerivs}
+  
+  \section{Other Approaches to Parsing}
+    \newtext{Recursive-descent parsing is not the only strategy for parsing.}%
+    %\todo{Mention LR (and LL(1) and LALR) parsers: ``The field of parsing is one of the most venerable in computer-science.  Still with us are a variety of parsing approaches born in times of much more severe constraints on memory and processor speed, including various flavors of LR parsers, which apply only to strict subsets of the context-free grammars, to guarantee ability to predict which production applies based on finite look-ahead into a string.''  Adam also says these ``were considered `the only practical ones in the 20th century.'{}''}
+    
+    \paragraph{Top-Down Parsers: LL(\texorpdfstring{$k$}{k})}
+      \newtext{Recursive-descent parsing is a flavor of so-called ``top-down'' parsing; at each point in the algorithm, we know which nonterminal we are parsing the string as.  We thus build the parse tree from the top down, filling in more portions of the parse tree by picking which rule of a fixed nonterminal we should use.}
       
-  
-  \todo{Fill in content}
-  \todo{Include Adam's response to ``Am I missing any branches?''}
-  \begin{itemize}
-    \item Say something about recursive-descent parsing seeming obvious and trivial only after writing out the types inductively?
-    \item Say something about LR parsers and processor/memory constraints?
-    \item Parser combinators
-      \begin{itemize}
-        \item parse by consuming characters from the string.
-        \item Allow incremental parsing
-      \end{itemize}
-    \item Look into what \cite{PEG}s and \cite{GLL}s are.
-    \item Approaches to verifying parsers: correct-by-construction, induction.  Other way?  \todo{Read paper}
-  \end{itemize}
-  \todo{Mention LR (and LL(1) and LALR) parsers: ``The field of parsing is one of the most venerable in computer-science.  Still with us are a variety of parsing approaches born in times of much more severe constraints on memory and processor speed, including various flavors of LR parsers, which apply only to strict subsets of the context-free grammars, to guarantee ability to predict which production applies based on finite look-ahead into a string.''  Adam also says these ``were considered `the only practical ones in the 20th century.'{}''}
-
-
-  \todo{Rewrite the rest of this part so it's not just Adam's words}
-  
-    However, despite rumors to the contrary, the field of parsing is far from dead.  In the twentieth century, the functional-programming world experimented with a variety of approaches to \emph{parser combinators}~\cite{pcomb}, where parsers are higher-order functions built from a small set of typed combinators.  In the twenty-first century alone, a number of new parsing approaches have been proposed or popularized, including parsing expression grammars (PEGs)~\cite{PEG}, derivative-based parsing~\cite{Derivs}, and GLL parsers~\cite{GLL}.
-
-  However, our approach is essentially the same, algorithmically, as the one that Ridge demonstrated with a verified parser-combinator system~\cite{Ridge}, taking naive recursive-descent parsing and adding a layer to prune duplicative calls to the parser.  His proof was carried out in HOL4, necessarily without using dependent types.  Our new work may be interesting for the aesthetic appeal of our unusual application of dependent types to get the parser to generate some of its own soundness proof.  Ridge's parser also has worst-case $O(n^5)$ running time in the input-string length.  In the context of our verified implementation, we plan to explore a variety of optimizations based on clever, grammar-specific choices of string-splitter functions, which should have a substantial impact on the run-time cost of parsing some relevant grammars, and which we conjecture will not require any changes to the development presented in this thesis.
-
-  A few other past projects have verified parsers with proof assistants, applying to derivative-based parsing~\cite{DerivsCoq} and SLR~\cite{SLR} and LR(1)~\cite{LR1} parsers.  Several projects have used proof assistants to apply verified parsers within larger programming-language tools.  RockSalt~\cite{RockSalt} does run-time memory-safety enforcement for x86 binaries, relying on a verified machine-code parser that applies derivative-based parsing for regular expressions.  The verified Jitawa~\cite{Jitawa} and CakeML~\cite{CakeML} language implementations include verified parsers, handling Lisp and ML languages, respectively.
-
-  Our final parser derivation relies on a relational parametricity property for polymorphic functions in Coq's type theory Gallina.  With Coq as it is today, we need to prove this property manually for each eligible function, even though we can prove metatheoretically that it holds for them all.  Bernardy and Guilhem~\cite{InColor} have shown how to extend type theories with support for materializing ``free theorem'' parametricity facts internally, and we might be able to simplify our implementation using such a feature.
-  \todo{Flesh this out, rewrite it so it's not all Adam's words, read the papers}
-
+      \newtext{Some context-free grammars have linear-time recursive-descent parsers that only require $k$ tokens after the current one being considered to decide which rule to apply; these grammars are called LL($k$) grammars.  More recently, arbitrary context-free grammars can be handled with Generalized LL parsers~\cite{GLL}, or with ALL(*) parsers~\cite{parr2014adaptive}, which are based on arbitrary look-ahead using regular expressions.}
+      
+    
+    \paragraph{Bottom-Up Parsers: LR}
+      \newtext{Bottom-up parsers, of which LR parsers~\cite{chapman1987lr} are one of the most well-known flavors, instead associate the parts of the string which have already been parsed to complete parse trees.  For example, consider the grammar with two nonterminals, \nt{ab} $\Coloneqq$ \terminal{a}~\terminal{b}, and \nt{(ab)$^*$} $\Coloneqq$ $\epsilon$~\texttt{|}~\nt{ab}~\nt{(ab)$^*$}.  When parsing \str{abab} as \nt{(ab)$^*$}, an LR parser would parse \terminal{a} as the terminal \terminal{a}, parse \terminal{b} as the terminal \terminal{b}, and then reduce those two parse trees into a single parse tree for \nt{ab}.  It would then parse \terminal{a} as \terminal{a}, parse \terminal{b} as \terminal{b}, and then reduce those into the parse tree for \nt{ab}; we now have two parse trees for \nt{ab}.  Noticing that there are no characters remaining, the parser would reduce the latter \nt{ab} into a parse tree for \nt{(ab)$^*$}, and then combine that with the earlier \nt{ab} parse tree to get a parse of the entire string as \nt{(ab)$^*$}.}
+      
+      \newtext{LR parsers originated in the days when computers has much more stringint constraints on memory and processing power, and apply only to strict subsets of context-free grammars; correctness and completity guarantees rely on being able to uniquely determine what rule to apply based on a fixed lookahead.}
+      
+      \newtext{More recently, Generlaize LR (GLR) parsers have been devised which can handle all context-free grammars~\cite{tomita2013efficient}.}
+          
+    \paragraph{Parsing expression grammars (PEGs)} 
+      \newtext{\Citeauthor{PEG} proposes an alternative to context-free grammars, called parsing expression grammars~\cite{PEG}, which can always be deterministically parsed in linear time.  The basic idea is to incorporate some of the features of regular expressions directly into the grammar specification, and to drop the ability to have ambiguous alternatives; PEGs instead have prioritized alternatives.}
+    
+    \todoask{Do I need to mention more kinds of parsers?  Do I need more explanation of these?  I feel like I did a pretty terrible job being comprehensive, but I don't think I have the mental stamina to keep reading about all the different ways of parsing for the purpose of ticking off checkboxes.}
+    
+  \section{Related Work on Verifying Parsers}    
+    \todoask{Is it okay to just use your paragraph here?  How much explanation is needed for each of these?}
+    In addition to the work on verifying derivative-based parsing of regular expressions~\cite{DerivsCoq}, a few other past projects have verified parsers with proof assistants, applying to SLR~\cite{SLR} and LR(1)~\cite{LR1} parsers.  Several projects have used proof assistants to apply verified parsers within larger programming-language tools.  RockSalt~\cite{RockSalt} does run-time memory-safety enforcement for x86 binaries, relying on a verified machine-code parser that applies derivative-based parsing for regular expressions.  The verified Jitawa~\cite{Jitawa} and CakeML~\cite{CakeML} language implementations include verified parsers, handling Lisp and ML languages, respectively.
+    
 \section{What's New and What's Old} \label{sec:new} \label{sec:goals}
   The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
   
   We begin with naive recursive-descent parsing.\todo{Citation?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse (\autoref{sec:splitting-oracle}).  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
   
-  We use Fiat to incrementally build efficient parsers by refinement; we describe Fiat starting in \autoref{ch:fiat}. \todo{One sentence summary of Fiat}
+  We use the Coq library Fiat~\cite{fiat} to incrementally build efficient parsers by refinement; we describe Fiat starting in \autoref{ch:fiat}.
   
   Additionally, we take a digression in \autoref{ch:dep-types} to describe how our parser can be used to prove its own completeness; the idea of reusing the parsing algorithm to generate proofs, parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge.
