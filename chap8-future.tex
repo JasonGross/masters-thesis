@@ -6,7 +6,7 @@
     We plan to eventually generate parse trees, and error messages, rather than just Booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser; \editedtext[1]{what remains is integrating it with the Fiat code for refining splitters.}
   
   \paragraph{Validating Extraction}
-    By adapting \editedtext{ongoing work by Pit--Claudel et al.}, our parsers will be able to be compiled to verified Bedrock, and thus to assembly, within Coq.  \editedtext[1]{Currently, we use Coq's unverified extraction mechanism to turn our parsers into OCaml.}
+    By adapting \editedtext[2]{ongoing work by Pit--Claudel et al.}, our parsers will be able to be compiled to verified Bedrock, and thus to assembly, within Coq.  \editedtext[1]{Currently, we use Coq's unverified extraction mechanism to turn our parsers into OCaml.}
     
   \paragraph{Picking Productions}
     \newtext[1]{As mentioned in \autoref{sec:worst-case}, our parsers perform poorly on large grammars with many rules.  We plan to improve performance by parameterizing over an oracle to pick which rules to look at for a given nonterminal; much like the oracle for splitting, it should also be possible to handle a wide swath of cases automatically, and handle the remaining ones by refinement.}

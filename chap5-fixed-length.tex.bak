@@ -33,7 +33,7 @@ has-only-terminals (Nonterminal _)::xs = false
   The code for determining the split location is even easier: if the first item of the rule is a terminal, then split at character 1; if the first item of the rule is a nonterminal, and there are $n$ remaining items in the rule, then split $n$ characters before the end of the string.
 
   \section{Parsing Parenthesized Numbers: Fixed Lengths}
-    The grammar for parenthesized numbers has only one rule with multiple nonterminals: the rule for \nt{number}~$\Coloneqq$~\nt{digit}~\nt{number?}.  The strategy here is also simple: because \nt{digit} only accepts strings of length exactly 1, we always want to split after the first character.
+    The grammar for parenthsized numbers has only one rule with multiple nonterminals: the rule for \nt{number}~$\Coloneqq$~\nt{digit}~\nt{number?}.  The strategy here is also simple: because \nt{digit} only accepts strings of length exactly 1, we always want to split after the first character.
 
     The following pseudocode determines whether or not all strings parsed by a given item are a fixed length, and, if so, what that length is:
     \todo{Colorize code; use macros to ensure it matches the conventions of the rest of the document}
