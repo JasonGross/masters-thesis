@@ -23,6 +23,13 @@
 \renewcommand{\sectionautorefname}{Section}
 \renewcommand{\subsectionautorefname}{Subsection}
 \renewcommand{\subsubsectionautorefname}{Subsubsection}
+\newcommand{\appendixautoref}[1]{\bgroup
+\def\chapterautorefname{Appendix}%
+\def\sectionautorefname{Appendix}%
+\def\subsectionautorefname{Appendix}%
+\def\subsubsectionautorefname{Appendix}%
+\autoref{#1}%
+\egroup}
 
 {\catcode`\_=12 \gdef\textunderscore{_}}
 \def\_{\textunderscore}

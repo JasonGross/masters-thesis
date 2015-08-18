@@ -1,20 +1,19 @@
 \chapter{Future Work}
-  \section{Parsing JavaScript}
-     The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations. \todo{<lookup list of JS implementations>}  We plan to profile our parser against these on \editedtext[1]{various test-suites and examples of JavaScript code.}
+  \paragraph{Parsing JavaScript}
+     The eventual target for this demonstration of the framework is the JavaScript grammar, and we aim to be competitive, performance-wise, with popular open-source JavaScript implementations.  We plan to profile our parser against these on \editedtext[1]{various test suites and examples of JavaScript code.}
      
-  \section{Generating Parse Trees}
+  \paragraph{Generating Parse Trees}
     We plan to eventually generate parse trees, and error messages, rather than just Booleans, in the complete pipeline.  We have already demonstrated that this requires only small adjustments to the algorithm in the section on the dependently typed parser; \editedtext[1]{what remains is integrating it with the Fiat code for refining splitters.}
   
-  \section{Validating Extraction}
-    \todoask{Does Clement have a paper I can cite?}  By adapting \todo{<Clement's work>}, our parsers will be able to be compiled to verified Bedrock, and thus to assembly, within Coq.  \editedtext[1]{Currently, we use Coq's unverified extraction mechanism to turn our parsers into OCaml.}
+  \paragraph{Validating Extraction}
+    By adapting \editedtext{ongoing work by Pit--Claudel et al.}, our parsers will be able to be compiled to verified Bedrock, and thus to assembly, within Coq.  \editedtext[1]{Currently, we use Coq's unverified extraction mechanism to turn our parsers into OCaml.}
     
-  \section{Picking Productions}
+  \paragraph{Picking Productions}
     \newtext[1]{As mentioned in \autoref{sec:worst-case}, our parsers perform poorly on large grammars with many rules.  We plan to improve performance by parameterizing over an oracle to pick which rules to look at for a given nonterminal; much like the oracle for splitting, it should also be possible to handle a wide swath of cases automatically, and handle the remaining ones by refinement.}
     
-  \section{Common Subexpression Elimination: Lifting Computation out of Recursive Calls}
+  \paragraph{Common Subexpression Elimination: Lifting Computation out of Recursive Calls}
     \newtext[1]{As mentioned briefly in \autoref{sec:must-lift-table-mention}, we plan to implement common subexpression elimination during the extraction phase.  This will effectively memoize the computation of the table for splitting locations described in \autoref{ch:tables}.}
     
-    \todoask{I feel like some of these sections (above) merit a bit more explanation, but I'm not sure what needs saying (or what questions there are to answer).  I'm also not sure if it's worth the time at this point.  What do you think?}
     
 \section{Future Work with Dependent Types}
   Recall from \autoref{ch:dep-types} that dependent types have allowed us to refine our parsing algorithm to prove its own soundness and completeness.

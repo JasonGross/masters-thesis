@@ -69,7 +69,7 @@ possible-first-terminals G its
 &\phantom{\to~}\subseteq \\
 &\ndcompfor[\phantom{\to~~}]{\farg{it}}{\farg{its}}
 \end{align*}
-    \newtext[1]{Applying this rule involves normalizing the calls to \fname{is\_disjoint}, \fname{possible-terminals}, and \fname{possible-first-terminals}.  This normalization shows up as a side condition, given to us by \tactic{setoid\_rewrite}, which can be solved by the tactic \tacREFLEXIVITY; the \tacREFLEXIVITY\space tactic proves the equality of two things which are syntactically modulo computation.} \label{sec:reflective-comp-first-mention}%
+    \newtext[1]{Applying this rule involves normalizing the calls to \fname{is\_disjoint}, \fname{possible-terminals}, and \fname{possible-first-terminals}.  This normalization shows up as a side condition, given to us by \tactic{setoid\_rewrite}, which can be solved by the tactic \tacREFLEXIVITY; the \tacREFLEXIVITY\space tactic proves the equality of two things which are syntactically equal modulo computation.} \label{sec:reflective-comp-first-mention}%
     \newcommand{\refAtReflectiveCompLoc}{at the end of \autoref{sec:reflective-comp-first-mention}}
 %\begin{verbatim}
 %Section IndexedImpl.
