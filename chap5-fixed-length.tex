@@ -5,7 +5,6 @@
   \begin{align*}
     \nt{(ab)$^*$} & \Coloneqq \nt{$\epsilon$}~|~\terminal{a}~\terminal{b}~\nt{(ab)$^*$}
   \end{align*}
-
   In addition to parsing this grammar, we will also be able to parse the grammar for non-negative parenthesized integers:
   \begin{align*}
     \nt{pexpr} & \Coloneqq \terminal{(}~\nt{pexpr}~\terminal{)}~|~\nt{number} \\
@@ -15,7 +14,7 @@
   \end{align*}
 
   \section{Parsing (ab)*: At Most One Nonterminal}
-    The simpler of these grammars is the one for \regex{(ab)$^*$}.  The idea is that if any rule has at most one nonterminal, then there is only one possible split: we assign one character to each terminal, and the remaining characters to the single nonterminal.
+    The simpler of these grammars is the one for \regex{(ab)$^*$}.  The idea is that if any rule has at most one nonterminal, then there is only one possible split: we assign one character to each terminal and the remaining characters to the single nonterminal.
 
     For any given rule, we can compute straightforwardly whether or not this is the case; Haskell-like pseudocode for doing so is:
 \begin{verbatim}

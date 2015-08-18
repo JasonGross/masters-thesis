@@ -129,17 +129,17 @@
     \paragraph{Parsing expression grammars (PEGs)} 
       \newtext[2]{\Citeauthor{PEG} proposes an alternative to context-free grammars, called parsing expression grammars~\cite{PEG}, which can always be deterministically parsed in linear time.  The basic idea is to incorporate some of the features of regular expressions directly into the grammar specification, and to drop the ability to have ambiguous alternatives; PEGs instead have prioritized alternatives.}
     
-    \todoask{Do I need to mention more kinds of parsers?  Do I need more explanation of these?  I feel like I did a pretty terrible job being comprehensive, but I don't think I have the mental stamina to keep reading about all the different ways of parsing for the purpose of ticking off checkboxes.}
+%    \todoask{Do I need to mention more kinds of parsers?  Do I need more explanation of these?  I feel like I did a pretty terrible job being comprehensive, but I don't think I have the mental stamina to keep reading about all the different ways of parsing for the purpose of ticking off checkboxes.}
     
   \section{Related Work on Verifying Parsers}    
-    \todoask{Is it okay to just use your paragraph here?  How much explanation is needed for each of these?}
+%    \todoask{Is it okay to just use your paragraph here?  How much explanation is needed for each of these?}
     In addition to the work on verifying derivative-based parsing of regular expressions~\cite{DerivsCoq}, a few other past projects have verified parsers with proof assistants, applying to SLR~\cite{SLR} and LR(1)~\cite{LR1} parsers.  Several projects have used proof assistants to apply verified parsers within larger programming-language tools.  RockSalt~\cite{RockSalt} does run-time memory-safety enforcement for x86 binaries, relying on a verified machine-code parser that applies derivative-based parsing for regular expressions.  The verified Jitawa~\cite{Jitawa} and CakeML~\cite{CakeML} language implementations include verified parsers, handling Lisp and ML languages, respectively.
     
 \section{What's New and What's Old} \label{sec:new} \label{sec:goals}
   The goal of this project is to demonstrate a new approach to generating parsers: incrementally building efficient parsers by refinement.
   
-  We begin with naive recursive-descent parsing.\todo{Citation?}  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse (\autoref{sec:splitting-oracle}).  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
+  We begin with naive recursive-descent parsing.  We ensure termination via memoization, a la~\cite{Ridge}.  We parameterize the parser on a ``splitting oracle'', which describes how to recurse (\autoref{sec:splitting-oracle}).  As far as we can tell, the idea of factoring the algorithmic complexity like this is new.
   
   We use the Coq library Fiat~\cite{delaware2015fiat} to incrementally build efficient parsers by refinement; we describe Fiat starting in \autoref{ch:fiat}.
   
-  Additionally, we take a digression in \autoref{ch:dep-types} to describe how our parser can be used to prove its own completeness; the idea of reusing the parsing algorithm to generate proofs, parsing parse trees rather than strings, is not found in the literature, to the authors' knowledge.
+  Additionally, we take a digression in \autoref{ch:dep-types} to describe how our parser can be used to prove its own completeness; the idea of reusing the parsing algorithm to generate proofs, parsing parse trees rather than strings, is not found in the literature, to the author's knowledge.

@@ -66,7 +66,7 @@
     \aswidthof{\text{String:}}{\text{Table Entries:}} & \stropen & \strcolored{(} & \strcolored{1} & \strcolored{+} & \strcolored{2} & \strcolored{)} & \strcolored{+} & \strcolored{3} & \strclose
     }
     \]    
-    We again start from the right.  Since there are no \terminal{+}s that we have seen, we store the singleton list \valuelist{\nullentry}, indicating that we know about only the current level of parenthesization, and that there is no \terminal{+} to the right.  At the \terminal{+} before the \str{3}, we store the singleton list \valuelist{0}, indicating that the current character is a \terminal{+}, and we only know about one level of parenthesization.  At the \terminal{)}, we increment the counter for \terminal{+}, but we also now know about a new level of parenthesization.  So we store the two element list \valuelist{\nullentry, 1}.  At the \terminal{3}, we increment all numbers, storing \valuelist{\nullentry, 2}.  At the \terminal{+} before the \str{2}, we store \texttt{0} at the current level, and increment higher levels, storing \valuelist{0, 3}.  At the \terminal{1}, we simply increment all numbers, storing \valuelist{1, 4}.  Finally, at the \terminal{(}, we pop a level of parenthesization, and increment the remaining numbers, storing \valuelist{5}.  This is correct; we have 5 characters in the first string, and when we go to split \str{1+2} into \str{1} and \str{+2}, we have the list \valuelist{1, 4}, and the first string does indeed contain 1 character.
+    We again start from the right.  Since there are no \terminal{+}s that we have seen, we store the singleton list \valuelist{\nullentry}, indicating that we know about only the current level of parenthesization, and that there is no \terminal{+} to the right.  At the \terminal{+} before the \str{3}, we store the singleton list \valuelist{0}, indicating that the current character is a \terminal{+}, and we only know about one level of parenthesization.  At the \terminal{)}, we increment the counter for \terminal{+}, but we also now know about a new level of parenthesization.  So we store the two element list \valuelist{\nullentry, 1}.  At the \terminal{3}, we increment all numbers, storing \valuelist{\nullentry, 2}.  At the \terminal{+} before the \str{2}, we store \texttt{0} at the current level, and increment higher levels, storing \valuelist{0, 3}.  At the \terminal{1}, we simply increment all numbers, storing \valuelist{1, 4}.  Finally, at the \terminal{(}, we pop a level of parenthesization and increment the remaining numbers, storing \valuelist{5}.  This is correct; we have 5 characters in the first string, and when we go to split \str{1+2} into \str{1} and \str{+2}, we have the list \valuelist{1, 4}, and the first string does indeed contain 1 character.
     
     As an optimization, we can drop all but the first element of each list once we're done computing, and, in fact, can do this as we construct the table.  However, for correctness, it is easier to reason about a list located at each location.
     
@@ -149,7 +149,7 @@ grammar-and-nonterminal-is-valid : Grammar -> Nonterminal -> Bool
 grammar-and-nonterminal-is-valid G nt
   = fold (&&) true (map (paren-balanced-hiding G) (G.(Lookup) nt))
 
-pb' : Grammar -> Char -> Nat -> [Item] -> Bool
+pb' : Grammar -> Nat -> [Item] -> Bool
 pb' G n []         = (n == 0)
 pb' G n (Nonterminal nt :: s)
   = fold (&&) (pb' G 0) (G.(Lookup) nt) && pb' G n s
@@ -159,7 +159,7 @@ pb' G n (_ :: s)   = pb' G n s
 
 paren-balanced G = pb' G 0
 
-pbh' : Grammar -> Char -> Nat -> [Item] -> Bool
+pbh' : Grammar -> Nat -> [Item] -> Bool
 pbh' G n []         = (n == 0)
 pbh' G n (Nonterminal nt :: s)
   = fold (pbh' G 0) (G.(Lookup) nt) && pb' G n s
@@ -174,7 +174,7 @@ paren-balanced-hiding G = pbh' G 0
     There is one subtlety here, that was swept under the rug in the above code: this computation might not terminate!  We could deal with this by memoizing this computation in much the same way that we memoized the parser to deal with potentially infinite parse trees.  Rather than dealing with the subtleties of figuring out what to do when we hit repeated nonterminals, we perform the computation in two steps.  First, we trace the algorithm above, building up a list of which nonterminals need to be paren-balanced, and which ones need to be paren-balanced-hiding.  Second, we fold the computation over these lists, replacing the recursive calls for nonterminals with list membership tests.
     
   \subsubsection{Automatic Discovery of Arguments}
-    Throughout this chapter, we've been focusing on the arithmetic-expression example.  However, the exact same rule can handle S-expressions, with just a bit of generalization.  There are two things to be computed: the binary operation, and the parenthesis characters.\footnote{Currently, our code requires the binary operation to be exposed as a terminal in the rule we are handling.  We plan on generalizing this to the grammars described in this chapter shortly.}
+    Throughout this chapter, we've been focusing on the arithmetic-expression example.  However, the exact same rule can handle S-expressions, with just a bit of generalization.  There are two things to be computed: the binary operation and the parenthesis characters.\footnote{Currently, our code requires the binary operation to be exposed as a terminal in the rule we are handling.  We plan on generalizing this to the grammars described in this chapter shortly.}
     
     We require that the first character of any string parsed by the nonterminal analogous to \nt{+expr} be uniquely determined; that character will be the binary operator; we can reuse the code from \autoref{ch:disjoint} to compute this character and ensure that it is unique.
     
