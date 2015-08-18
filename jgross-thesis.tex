@@ -73,6 +73,13 @@
 
 \addbibresource{references.bib}
 
+\newif\iffinal
+\finalfalse
+
+\iffinal
+\renewcommand{\textcolor}[2]{#2}
+\fi
+
 \begin{document}
 
 \lstset{language=Haskell}
