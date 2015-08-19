@@ -27,34 +27,34 @@
      We can define the empty-string parser, as well as the parser for a nonterminal with no production rules, which always fails:
 \begin{align*}
 &\epsilon~:~\fname{parser}\\
-&\epsilon~\farg{str}~=~\valuelist{\farg{str}} \\ \\
+&\epsilon~\farg{str} \functiondefeq \valuelist{\farg{str}} \\ \\
 &\fname{fail}~:~\fname{parser}\\
-&\fname{fail}~\termhole~=~\nil
+&\fname{fail}~\termhole \functiondefeq \nil
 \end{align*}
       Failure is indicated by returning the empty list; success at parsing the entire string is indicated by returning a list containing the empty string.
       
       The parser for a given terminal fails if the string does not start with that character, and returns all but the first character if it does:
 \begin{align*}
 &\fname{terminal}~:~\indname{Char}~\to~\fname{parser}\\
-&\fname{terminal}~\farg{ch}~(\cons{\farg{ch}}{\farg{str}})~=~\valuelist{\farg{str}} \\
-&\fname{terminal}~\aswidthof{\termhole}{\farg{ch}}~\termhole~=~\nil
+&\fname{terminal}~\farg{ch}~(\cons{\farg{ch}}{\farg{str}}) \functiondefeq \valuelist{\farg{str}} \\
+&\fname{terminal}~\aswidthof{\termhole}{\farg{ch}}~\termhole \functiondefeq \nil
 \end{align*}
       We now define combinators for sequencing and alternatives:
 \newcommand{\sequencing}{\fname{>{}>{}>}}
 \begin{align*}
 &(\sequencing)~:~\fname{parser}~\to~\fname{parser}~\to~\fname{parser}\\
-&(\farg{p\ensuremath{_0}}~\sequencing~\farg{p\ensuremath{_1}})~\farg{str}~=~\fname{flat\_map}~\farg{p\ensuremath{_1}}~(\farg{p\ensuremath{_0}}~\farg{str}) \\ \\
+&(\farg{p\ensuremath{_0}}~\sequencing~\farg{p\ensuremath{_1}})~\farg{str} \functiondefeq \fname{flat\_map}~\farg{p\ensuremath{_1}}~(\farg{p\ensuremath{_0}}~\farg{str}) \\ \\
 &(\fname{|||})~:~\fname{parser}~\to~\fname{parser}~\to~\fname{parser}\\
-&(\farg{p\ensuremath{_0}}~\fname{|||}~\farg{p\ensuremath{_1}})~\farg{str}~=~\farg{p\ensuremath{_0}}~\farg{str}~\fname{++}~\farg{p\ensuremath{_1}}~\farg{str}
+&(\farg{p\ensuremath{_0}}~\fname{|||}~\farg{p\ensuremath{_1}})~\farg{str} \functiondefeq \farg{p\ensuremath{_0}}~\farg{str}~\fname{++}~\farg{p\ensuremath{_1}}~\farg{str}
 \end{align*}
-      where \fname{++} is list concatenation, and \fname{flat\_map}, which concatenates the lists returned by mapping its first argument over each of the elements in its second argument, has type \texttt{(\farg{A} $\to$ \typelist{\farg{B}}) $\to$ \typelist{\farg{A}} $\to$ \typelist{\farg{B}}}, where \typelist{\farg{A}} is the type denoting a list of elements, all of type \farg{A}.\todo{Check if I've defined this notation already.}
+      where \fname{++} is list concatenation, and \fname{flat\_map}, which concatenates the lists returned by mapping its first argument over each of the elements in its second argument, has type \texttt{(\farg{A} $\to$ \typelist{\farg{B}}) $\to$ \typelist{\farg{A}} $\to$ \typelist{\farg{B}}}.
       
     \subsubsection{An Example}
     
       We can now easily define a parser for the grammar \regex{(ab)$^*$}:
 \begin{align*}
-&\fname{parse-\regex{(ab)\ensuremath{^*}}}~:~\fname{parser} \\
-&\fname{parse-\regex{(ab)\ensuremath{^*}}}~=~(\fname{terminal}~\terminal{a}~\sequencing~\fname{terminal}~\terminal{b}~\sequencing~\fname{parse-\regex{(ab)\ensuremath{^*}}})~~\fname{|||}~~\epsilon
+&\fname{parse\_\regex{(ab)\ensuremath{^*}}}~:~\fname{parser} \\
+&\fname{parse\_\regex{(ab)\ensuremath{^*}}} \functiondefeq (\fname{terminal}~\terminal{a}~\sequencing~\fname{terminal}~\terminal{b}~\sequencing~\fname{parse\_\regex{(ab)\ensuremath{^*}}})~~\fname{|||}~~\epsilon
 \end{align*}
       Note that, by putting $\epsilon$ last, we ensure that this parser returns the list in order of longest parse (shortest postfix) to shortest parse (longest postfix).
       
@@ -80,30 +80,26 @@
     Much as we defined parser combinators for the elementary operations of a grammar ($\epsilon$, terminals, sequencing, and alternatives), we can define similar combinators for defining a (lazy, or coinductive) language for a grammar.  Defining the type \fname{language} to be a set (or just a coinductive list) of strings, we have:
 \begin{align*}
 & \epsilon~:~\fname{language} \\
-& \epsilon~=~\{\str{}\} \\ \\
+& \epsilon \functiondefeq \{\str{}\} \\ \\
 & \fname{terminal}~:~\indname{Char}~\to~\fname{language} \\
-& \fname{terminal}~\farg{ch}~=~\{\farg{ch}\} \\ \\
+& \fname{terminal}~\farg{ch} \functiondefeq \{\farg{ch}\} \\ \\
 & (\fname{\sequencing})~:~\fname{language}~\to~\fname{language}~\to~\fname{language} \\
-& \mathcal{L}_0~\fname{\sequencing}~\mathcal{L}_1~=~\{~\strcat{\farg{s\ensuremath{_0}}}{\farg{s\ensuremath{_1}}}~|~\farg{s\ensuremath{_0}}\in\mathcal L_0\text{ and }\farg{s\ensuremath{_1}}\in\mathcal{L}_1 \} \\ \\
+& \mathcal{L}_0~\fname{\sequencing}~\mathcal{L}_1 \functiondefeq \{~\strcat{\farg{s\ensuremath{_0}}}{\farg{s\ensuremath{_1}}}~|~\farg{s\ensuremath{_0}}\in\mathcal L_0\text{ and }\farg{s\ensuremath{_1}}\in\mathcal{L}_1 \} \\ \\
 & (\fname{|||})~:~\fname{language}~\to~\fname{language}~\to~\fname{language} \\
-& \mathcal{L}_0~\fname{|||}~\mathcal{L}_1~=~\mathcal L_0\cup\mathcal L_1
+& \mathcal{L}_0~\fname{|||}~\mathcal{L}_1 \functiondefeq \mathcal L_0\cup\mathcal L_1
 \end{align*}
 
     The essential operations for computing derivatives are \emph{filtering} and \emph{chopping}.  To \emph{filter} a language $\mathcal L$ by a character $c$ is to take the subset of strings in $\mathcal L$ which start with $c$.  To chop a language $\mathcal L$ is to remove the first character from every string.  The derivative $D_c(\mathcal L)$ with respect to $c$ of a language $\mathcal L$ is then the language $\mathcal L$, filtered by $c$ and chopped:
-\begin{align*}
+\editedtext{\begin{align*}
 &\fname{D}_{\farg{c}}~:~\fname{language}~\to~\fname{language} \\
-&\fname{D}_{\farg{c}}~\emptyset~=~\emptyset \\
-&\fname{D}_{\farg{c}}~(\cons{(\cons{\farg{c}}{\farg{str}})}{\mathcal L})~=~\cons{\farg{str}}{(\fname{D}_{\farg{c}}~\mathcal{L})} \\
-&\fname{D}_{\farg{c}}~(\cons{\termhole}{\mathcal L})~=~\fname{D}_{\farg{c}}~\mathcal{L}
-\end{align*}
-
+&\editedtext{\fname{D}_{\farg{c}}~\ensuremath{\mathcal{L}} \functiondefeq }\bigcup_{\coqgroup{\cons{\farg{c}}{\farg{str}}}\in\mathcal L} \{\farg{str}\}
+\end{align*}}%
       We can then define a \fname{has\_parse} proposition by taking successive derivatives:
 \begin{align*}
 &\fname{has\_parse}~:~\coqtype{language}~\to~\coqtype{String}~\to~\Prop \\
-&\fname{has\_parse}~\mathcal{L}~\str{}~=~\str{}\in\mathcal{L} \\
-&\fname{has\_parse}~\mathcal{L}~(\cons{\farg{ch}}{\farg{str}})~=~\fname{has\_parse}~(\fname{D\ensuremath{_{\farg{ch}}}}~\mathcal L)~\farg{str}
+&\fname{has\_parse}~\mathcal{L}~\str{} \functiondefeq \str{}\in\mathcal{L} \\
+&\fname{has\_parse}~\mathcal{L}~(\cons{\farg{ch}}{\farg{str}}) \functiondefeq \fname{has\_parse}~(\fname{D\ensuremath{_{\farg{ch}}}}~\mathcal L)~\farg{str}
 \end{align*}
-      \todo{Use lists or sets, but not both}
       To ensure termination and good performance, \citeauthor*{Derivs} define the derivative operation on the structure of the grammar, rather than defining combinators that turn a grammar into a language, and furthermore take advantage of laziness and memoization.  After adding code to prune the resulting language of useless content, they argue that the cost of parsing with derivatives is \editedtext{reasonable}.
       
     \subsubsection{Formal Verification}

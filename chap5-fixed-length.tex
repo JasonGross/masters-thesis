@@ -17,17 +17,17 @@
     The simpler of these grammars is the one for \regex{(ab)$^*$}.  The idea is that if any rule has at most one nonterminal, then there is only one possible split: we assign one character to each terminal and the remaining characters to the single nonterminal.
 
     For any given rule, we can compute straightforwardly whether or not this is the case; Haskell-like pseudocode for doing so is:
-\begin{verbatim}
-has-at-most-one-nt : [Item] -> Bool
-has-at-most-one-nt [] = true
-has-at-most-one-nt (Terminal _)::xs = has-at-most-one-nt xs
-has-at-most-one-nt (Nonterminal _)::xs = has-only-terminals xs
-
-has-only-terminals : [Item] -> Bool
-has-only-terminals [] = true
-has-only-terminals (Terminal _)::xs = has-only-terminals xs
-has-only-terminals (Nonterminal _)::xs = false
-\end{verbatim}
+\begin{align*}
+&\fname{has\_at\_most\_one\_nt}~\oftypesep~\typelist{\indname{Item}}~\to~\Bool \\
+& \fname{has\_at\_most\_one\_nt}~~\nil\functiondefeq\true \\
+& \fname{has\_at\_most\_one\_nt}~~\coqgroup{\cons{\terminal{\farg{ch}}}{\farg{xs}}}\functiondefeq \fname{has\_at\_most\_one\_nt}~\farg{xs} \\
+& \fname{has\_at\_most\_one\_nt}~~\coqgroup{\cons{\nt{\farg{nt}}}{\farg{xs}}}\functiondefeq \fname{has\_only\_terminals}~\farg{xs} \\
+\\
+& \fname{has\_only\_terminals}~\oftypesep~\typelist{\indname{Item}}~\to~\Bool \\
+& \fname{has\_only\_terminals}~~\nil\functiondefeq \true \\
+& \fname{has\_only\_terminals}~~\coqgroup{\cons{\terminal{\farg{ch}}}{\farg{xs}}}\functiondefeq \fname{has\_only\_terminals}~\farg{xs} \\
+& \fname{has\_only\_terminals}~~\coqgroup{\cons{\nt{\farg{nt}}}{\farg{xs}}}\functiondefeq \false
+\end{align*}
 
   The code for determining the split location is even easier: if the first item of the rule is a terminal, then split at character 1; if the first item of the rule is a nonterminal, and there are $n$ remaining items in the rule, then split $n$ characters before the end of the string.
 
@@ -35,24 +35,102 @@ has-only-terminals (Nonterminal _)::xs = false
     The grammar for parenthesized numbers has only one rule with multiple nonterminals: the rule for \nt{number}~$\Coloneqq$~\nt{digit}~\nt{number?}.  The strategy here is also simple: because \nt{digit} only accepts strings of length exactly 1, we always want to split after the first character.
 
     The following pseudocode determines whether or not all strings parsed by a given item are a fixed length, and, if so, what that length is:
-    \todo{Colorize code; use macros to ensure it matches the conventions of the rest of the document}
+{%
+\catcode`\!=\active
+\makeatletter
+\def\kwn#1#2{\kw{#2}%
+\ifnum#1=1\relax
+\expandafter\@gobble
+\else
+\expandafter\@firstofone
+\fi
+{\expandafter\kwn\numexpr#1-1\relax}%
+}%
+\def\kwone#1{\kw{#1}}%
+\def\kwtwo#1#2{\kw{#1#2}}%
+\def\kwthree#1#2#3{\kw{#1#2#3}}%
+\def\kwfour#1#2#3#4{\kw{#1#2#3#4}}%
+\def!#1{%
+\ifx#1Z%
+\ensuremath{\mathbb{Z}}%
+\fi
+\ifx#1!%
+\ensuremath{\to}%
+\fi
+\ifx#1e%
+\ensuremath{\in}%
+\fi
+\ifx#11%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwone}%
+{\ifx#12%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwtwo}%
+{\ifx#13%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwthree}%
+{\ifx#14%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwfour}%
+{}%
+}%
+}%
+}%
+}%
+\makeatother
 \begin{verbatim}
-fixed-length-of : [Nonterminal] -> [Item] -> Maybe Int
-fixed-length-of valid_nonterminals [] = just 0
+fixed-length-of : [Nonterminal] !! [Item] !! option !Z
+fixed-length-of valid_nonterminals [] := Some 0
 fixed-length-of valid_nonterminals (Terminal _::xs)
-  = case fixed-length-of valid_nonterminals xs of
-      | just k -> just (1 + k)
-      | nothing -> nothing
+  := !4case fixed-length-of valid_nonterminals xs !2of
+       | Some k !! Some (1 + k)
+       | None   !! None
 fixed-length-of valid_nonterminals (Nonterminal nt::xs)
-  if nt `in` valid_nonterminals
-  then let lengths = map (fixed-length-of (remove nt valid_nonterminals)) (Lookup nt)
-       in if all of the elements of lengths are equal to L for some L
-          then case L, fixed-length-of valid_nonterminals xs of
-                | just L', just k -> just (L' + k)
-                | _, _ -> nothing
-          else nothing
-  else nothing
+  !2if nt !e valid_nonterminals
+  !4then !3let lengths :=
+             map (fixed-length-of (remove nt valid_nonterminals))
+                 (Lookup nt)
+       !2in !2if all of the elements of lengths are equal to L for some L
+          !4then !4case L, fixed-length-of valid_nonterminals xs !2of
+                | Some L', Some k !! Some (L' + k)
+                | _      , _      !! None
+          !4else None
+  !4else None
 \end{verbatim}
+}%
+%\begin{align*}
+%&\fname{fixed\_length\_of}~\oftypesep~\typelist{\indname{Nonterminal}} \to \typelist{\indname{Item}} \to \typeoption{\mathbb{N}} \\
+%&\fname{fixed\_length\_of}~~\farg{valid\_nonterminals}~~\nil~\functiondefeq~\Some{0} \\
+%&\fname{fixed\_length\_of}~~\farg{valid\_nonterminals}~~\coqgroup{\cons{\terminal{\farg{ch}}}{\farg{xs}}}\functiondefeq \\
+%& \quad\caseof{\fname{fixed\_length\_of}~~\farg{valid\_nonterminals}~~\farg{xs}} \\
+%&\quad \acase{\Some{\farg{k}}}{\Somep{1 + \farg{k}}} \\
+%&\quad\acase{\aswidthof{\None}{\Some{\farg{k}}}}{\None} % \\
+%\intertext{}
+%& \fname{fixed\_length\_of}~~\farg{valid\_nonterminals}~~\coqgroup{\cons{\nt{\farg{nt}}}{\farg{xs}}} \functiondefeq \\
+%& \quad\cif{\nt{\farg{nt}} \in  \farg{valid\_nonterminals}} \\
+%& \quad\cthen \letinlet\fname{lengths}\functiondefeq \\
+%&\phantom{\quad\cthen \letinlet}~~~ \fname{map}~\coqgroup{\fname{fixed\_length\_of}~\coqgroup{\fname{remove}~\farg{nt}~\farg{valid\_nonterminals}}} \\
+%&\phantom{\quad\cthen \letinlet~~~ \fname{map}}~\coqgroup{\fname{Lookup}~\farg{nt}} \\
+%&\phantom{\quad\cthen}\kw{in} \\
+%%       in if all of the elements of lengths are equal to L for some L
+%%          then case L, \fname{fixed\_length\_of} \farg{valid\_nonterminals} xs of
+%%                | just L', just k -> just (L' + k)
+%%                | _, _ -> nothing
+%%          else nothing
+%%  else nothing
+%\end{align*}
 
     We have proven that for any nonterminal for which this method returns \texttt{just }$k$, the only valid split of any string for this rule is at location $k$.  This is the correctness obligation that Fiat demands of us to be able to use this rule.
 

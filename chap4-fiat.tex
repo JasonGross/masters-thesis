@@ -71,18 +71,18 @@
   &\qquad\qquad\qquad\to~(\fname{has\_parse}~\farg{it}~(\fname{take}~\farg{n}~\farg{str})~\wedge~\fname{has\_parse}~\farg{its}~(\fname{drop}~\farg{n}~\farg{str})) \\
   &\qquad\qquad\qquad\to~\farg{n}\in\farg{splits}
 \end{align*}
-    where we overload \fname{has\_parse} to apply to items and productions alike.  In practice, we pass the first item and the rest of the items as separate arguments, so that we don't have to deal with the empty list case.
+    where we overload \fname{has\_parse} to apply to items and productions alike, \editedtext{and where we use \typelist{\ensuremath{\mathbb{N}}} to denote the type of lists of natural numbers.}  In practice, we pass the first item and the rest of the items as separate arguments, so that we don't have to deal with the empty list case.
     
     Let \fname{production\_is\_reachable}~\farg{G}~\farg{p} be the proposition that \farg{p} could show up during parsing, i.e., that \farg{p} is a tail of a rule associated to some valid nonterminal in the grammar; we define this by folding over the list of valid nonterminals.  The specification of the splitter, as a nondeterministic computation, for a given grammar \farg{G}, a given string \farg{str}, and a given rule \cons{\farg{it}}{\farg{its}}, is then:
 \begin{align*}
-& \{~\farg{splits}~:~\indname{list}~{\mathbb{N}} \\
+& \{~\farg{splits}~:~\typelist{\mathbb{N}} \\
 & |~\fname{production\_is\_reachable}~\farg{G}~(\cons{\farg{it}}{\farg{its}})\\
 &\phantom{|~}\to~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~\farg{it}~\farg{its}~\farg{splits}~\}
 \end{align*}
     
     We then refine this into a choice of a splitting location for each rule actually in the grammar (checking for equality with the given rule), and then can refine (implement) the splitter for each rule separately.  For example, for the grammar \regex{(ab)$^*$}, defined to have a single nonterminal \nt{(ab)$^*$} which can either be empty, or be mapped to \terminal{a}~\terminal{b}~\nt{(ab)$^*$}, we would refine this to the computation:\label{sec:if-folding}
 \newcommand{\ndcompfor}[3][]{%
-#1\{~\farg{splits}~:~\indname{list}~{\mathbb{N}} \\
+#1\{~\farg{splits}~:~\typelist{\mathbb{N}} \\
 &\phantom{#1} |~\fname{split\_list\_is\_complete}~\farg{G}~\farg{str}~#2~#3~\farg{splits}~\}
 }
 \begin{align*}
@@ -115,7 +115,7 @@
 & \fname{Else~If}~\valuelist{\terminal{a},~\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
 &\ndcompfor[\qquad]{\terminal{a}}{\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}} \\
 & \fname{Else} \\
-&\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\}
+&\qquad\{~\farg{dummy\_splits}~:~\typelist{\mathbb{N}}~|~\True~\}
 \end{align*}
 into
 \begin{align*}
@@ -126,7 +126,7 @@ into
 & \fname{Else~If}~\valuelist{\terminal{a},~\terminal{b},~\nt{(ab)\ensuremath{^*}}}~=_p~\cons{\farg{it}}{\farg{its}}~\fname{Then} \\
 &\ndcompfor[\qquad]{\terminal{a}}{\valuelist{\terminal{b},~\nt{(ab)\ensuremath{^*}}}} \\
 & \fname{Else} \\
-&\qquad\{~\farg{dummy\_splits}~:~\indname{list}~\mathbb{N}~|~\True~\}
+&\qquad\{~\farg{dummy\_splits}~:~\typelist{\mathbb{N}}~|~\True~\}
 \end{align*}
     \newtext[1]{Note that the only change is in the computation returned in the first branch of the conditional.}
 

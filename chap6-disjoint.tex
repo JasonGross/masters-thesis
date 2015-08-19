@@ -12,48 +12,169 @@
   The only rule not handled by the strategies of the previous chapter is the rule \nt{expr}~$\Coloneqq$~\nt{number}~\nt{+expr?}.  We can handle this rule by noticing that the set of characters in the strings accepted by \nt{number} is disjoint from the set of possible first characters of the strings accepted by \nt{+expr?}.  Namely, all characters in strings accepted by \nt{number} are digits, while the first character of a string accepted by \nt{+expr?} can only be \terminal{+}.
   
   The following code computes the set of possible characters of a rule:
+{%
+\catcode`\!=\active
+\makeatletter
+\def\kwn#1#2{\kw{#2}%
+\ifnum#1=1\relax
+\expandafter\@gobble
+\else
+\expandafter\@firstofone
+\fi
+{\expandafter\kwn\numexpr#1-1\relax}%
+}%
+\def\kwone#1{\kw{#1}}%
+\def\kwtwo#1#2{\kw{#1#2}}%
+\def\kwthree#1#2#3{\kw{#1#2#3}}%
+\def\kwfour#1#2#3#4{\kw{#1#2#3#4}}%
+\def!#1{%
+\ifx#1Z%
+\ensuremath{\mathbb{Z}}%
+\fi
+\ifx#1!%
+\ensuremath{\to}%
+\fi
+\ifx#1U%
+\ensuremath{\cup}%
+\fi
+\ifx#1e%
+\ensuremath{\in}%
+\fi
+\ifx#11%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwone}%
+{\ifx#12%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwtwo}%
+{\ifx#13%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwthree}%
+{\ifx#14%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwfour}%
+{}%
+}%
+}%
+}%
+}%
+\makeatother
 \begin{verbatim}
-possible-terminals' : [Nonterminal] -> [Item] -> [Char]
-possible-terminals' _ [] = []
-possible-terminals' valid_nonterminals (Terminal ch :: xs)
-  = [ch] `union` possible-terminals' valid_nonterminals xs
-possible-terminals' valid_nonterminals (Nonterminal nt :: xs)
-  = if nt `in` valid_nonterminals
-    then fold
-           union
-           (possible-terminals' valid_nonterminals xs)
-           (map (possible-terminals' (remove nt valid_nonterminals)) (Lookup nt))
-    else possible-terminals' valid_nonterminals xs
+possible-terminals' : [Nonterminal] !! [Item] !! [Char]
+possible-terminals' _ [] := []
+possible-terminals' valid_nonterminals ('ch' :: xs)
+  := [ch] !U possible-terminals' valid_nonterminals xs
+possible-terminals' valid_nonterminals (nt :: xs)
+  := !2if nt !e valid_nonterminals
+     !4then fold
+            (!U)
+            (possible-terminals' valid_nonterminals xs)
+            (map (possible-terminals' (remove nt valid_nonterminals))
+                 (Lookup nt))
+     !4else possible-terminals' valid_nonterminals xs
 
-possible-terminals : Grammar -> [Item] -> [Char]
-possible-terminals G its = possible-terminals' (valid_nonterminals_of G) its
+possible-terminals : Grammar !! [Item] !! [Char]
+possible-terminals G its
+  := possible-terminals' (valid_nonterminals_of G) its
 \end{verbatim}
+}%
     In the case where the nonterminal is not in the list of valid nonterminals, we assume that we have already seen that nonterminal higher up the chain of recursion (which we will have, if it is valid according to the initial list), and thus don't have to recompute its possible terminals.
 
   The following code computes the set of possible first characters of a rule:
+{%
+\catcode`\!=\active
+\makeatletter
+\def\kwn#1#2{\kw{#2}%
+\ifnum#1=1\relax
+\expandafter\@gobble
+\else
+\expandafter\@firstofone
+\fi
+{\expandafter\kwn\numexpr#1-1\relax}%
+}%
+\def\kwone#1{\kw{#1}}%
+\def\kwtwo#1#2{\kw{#1#2}}%
+\def\kwthree#1#2#3{\kw{#1#2#3}}%
+\def\kwfour#1#2#3#4{\kw{#1#2#3#4}}%
+\def!#1{%
+\ifx#1Z%
+\ensuremath{\mathbb{Z}}%
+\fi
+\ifx#1!%
+\ensuremath{\to}%
+\fi
+\ifx#1U%
+\ensuremath{\cup}%
+\fi
+\ifx#1e%
+\ensuremath{\in}%
+\fi
+\ifx#11%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwone}%
+{\ifx#12%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwtwo}%
+{\ifx#13%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwthree}%
+{\ifx#14%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwfour}%
+{}%
+}%
+}%
+}%
+}%
+\makeatother
 \begin{verbatim}
-possible-first-terminals' : [Nonterminal] -> [Item] -> [Char]
-possible-first-terminals' _ [] = []
-possible-first-terminals' valid_nonterminals (Terminal ch :: xs)
-  = [ch]
-possible-first-terminals' valid_nonterminals (Nonterminal nt :: xs)
-  = (if nt `in` valid_nonterminals
-     then fold
-            union
-            []
-            (map (possible-first-terminals' (remove nt valid_nonterminals))
-                 (Lookup nt))
-     else [])
-    `union`
-    (if has_parse nt ""
-     then possible-first-terminals' valid_nonterminals xs
-     else [])
+possible-first-terminals' : [Nonterminal] !! [Item] !! [Char]
+possible-first-terminals' _ [] := []
+possible-first-terminals' valid_nonterminals ('ch' :: xs)
+  := [ch]
+possible-first-terminals' valid_nonterminals (nt :: xs)
+  := (!2if nt !e valid_nonterminals
+      !4then
+        fold
+          (!U)
+          []
+          (map (possible-first-terminals' (remove nt valid_nonterminals))
+               (Lookup nt))
+      !4else [])
+     !U
+     (!2if has_parse nt ""
+      !4then possible-first-terminals' valid_nonterminals xs
+      !4else [])
      
 
-possible-first-terminals : Grammar -> [Item] -> [Char]
+possible-first-terminals : Grammar !! [Item] !! [Char]
 possible-first-terminals G its
-  = possible-first-terminals' (valid_nonterminals_of G) its
+  := possible-first-terminals' (valid_nonterminals_of G) its
 \end{verbatim}
+}%
    We can decide \verb|has_parse| at refinement time with the brute-force parser, which tries every split; when the string we're parsing is empty, $\mathcal O(\text{length}!)$ is not that long.  The idea is that we recursively look at the first element of each production; if it is a terminal, then that is the only possible first terminal of that production.  If it's a nonterminal, then we have to fold the recursive call over the alternatives.  Additionally, if the nonterminal might end up parsing the empty string, then we have to also move on to the next item in the production and see what its first characters might be.
    
    By computing whether or not these two lists are disjoint, we can decide whether or not this rule applies.  When it applies, we can either look for the first character not in the first list (in this example, the list of digits), or we can look for the first character which is in the second list (in this case, the \terminal{+}).  Since there are two alternatives, we leave it up to the user to decide which one to use.
@@ -64,7 +185,8 @@ possible-first-terminals G its
 \end{align*}
    by folding over the string.  We can then phrase the refinement rule as having type
 \begin{align*}
-&\fname{is\_disjoint}~(\fname{possible-terminals}~\farg{G}~\valuelist{\farg{it}})~(\fname{possible-first-terminals}~\farg{G}~\farg{its})~=~\true \\
+&\fname{is\_disjoint}~(\fname{possible-terminals}~\farg{G}~\valuelist{\farg{it}})~(\fname{possible-first-terminals}~\farg{G}~\farg{its}) \\
+& \qquad=~\true \\
 &\to~~\fname{ret}~\valuelist{\fname{index\_of\_first\_character\_in}~\farg{str}~(\fname{possible-first-terminals}~\farg{G}~\farg{its})} \\
 &\phantom{\to~}\subseteq \\
 &\ndcompfor[\phantom{\to~~}]{\farg{it}}{\farg{its}}
@@ -111,7 +233,7 @@ possible-first-terminals G its
 %: refine {splits : list nat
 %         | split_list_is_complete
 %             G str
-%             (Nonterminal nt)
+%             (nt)
 %             its splits}
 %         (ret [find_first_char_such_that str (fun ch => list_bin ascii_beq ch (possible_first_terminals_of_production G its))]).
 %
@@ -123,7 +245,7 @@ possible-first-terminals G its
 %: refine {splits : list nat
 %         | split_list_is_complete
 %             G str
-%             (Nonterminal nt)
+%             (nt)
 %             its splits}
 %         (ret [find_first_char_such_that str (fun ch => negb (list_bin ascii_beq ch (possible_terminals_of G nt)))]).
 %

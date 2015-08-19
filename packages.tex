@@ -2,6 +2,7 @@
 \usepackage{amssymb}
 \usepackage{hyperref}
 \usepackage[svgnames]{xcolor}
+\usepackage{xstring}
 \usepackage{bussproofs}
 \usepackage{graphicx}
 \usepackage{listings}
@@ -148,7 +149,8 @@
 \newcommand{\fst}[1]{\texttt{fst}~#1}
 \newcommand{\snd}[1]{\texttt{snd}~#1}
 \newcommand{\proj}[2]{#2\ensuremath{_{\kw{#1}}}}
-\newcommand{\caseof}[1]{\kw{case}~~~#1~~~\kw{of}}
+\newcommand{\precaseof}{\kw{case}~~~}
+\newcommand{\caseof}[1]{\precaseof#1~~~\kw{of}}
 \newcommand{\acase}[3][\big]{~#1|{~{#2}~~\ensuremath{\to}~~{#3}}}
 \newcommand{\cif}{\kw{if}~~~}
 \newcommand{\cifindent}[1][]{\aswidthof{#1}{\kw{then}}~~~}
@@ -158,6 +160,7 @@
 \newcommand{\Ltac}{\ensuremath{\mathcal{L}_{\text{\textit{tac}}}}}
 \newcommand{\coqgroupb}[1]{\texttt{\ensuremath{\left(\text{#1}\right)}}}
 \newcommand{\coqgroup}[1]{\texttt{(#1)}}
+\newcommand{\functiondefeq}{~\ensuremath{\operatorname{\texttt{\ensuremath{\defeq}}}}~}
 
 \usepackage[all]{xy}
 % highlight overfull hboxes
@@ -191,3 +194,4 @@
 }
 
 \makeatother
+\allowdisplaybreaks

@@ -55,17 +55,15 @@
   
   \todo{Fix the figure so it fits on one page}
 
-\begin{figure*} \caption{The dependently typed interface of our parser}\label{fig:parser-interface}
+\begin{figure*} \caption{The dependently typed interface of our parser, Part 1 of 2}\label{fig:parser-interface}
 We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\str{a} $\in$ \terminal{a}}''; a query consists of a string and a grammar rule the string might be parsed into.  We use the same notation for \ParseQuery{} and \indname{ParseTree} inhabitants.  All \fname{*\_success} and \fname{*\_failure} type signatures are implicitly parameterized over a string \farg{s$_0$} and a list of nonterminals \farg{unseen}.  We assume we are given \oftype{\fname{unseen$_0$}}{\typelist{\Nonterminal}}.
-\begin{align*}
+\editedtext{\begin{align*}
   \fname{T$_{\fname{success}}$},~~\fname{T$_{\fname{failure}}$} & \oftypesep \String \typeto \typelist{\Nonterminal} \typeto \ParseQuery \typeto \Type \\
   %\\
   \fname{split} & \oftypesep \String \typeto \typelist{\Nonterminal} \typeto \ParseQuery \typeto \typelist{\nat} \\ \\
   \fname{terminal\_success} & \oftypesep (\oftype{\farg{ch}}{\Terminal})
    \typeto \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~ \left(\parsetreetype{\terminal{\farg{ch}}}{\str{\farg{ch}}}\right) \\
-  \fname{terminal\_failure} & \oftypesep (\oftype{\farg{ch}}{\Terminal})
-   \typeto (\oftype{\farg{s}}{\String})
-   \typeto \farg{s} \ne \str{\farg{ch}}
+  \fname{terminal\_failure} & \oftypesep \forall~\farg{ch}~\farg{s},~\farg{s} \ne \str{\farg{ch}}
    \typeto \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~ \left(\parsetreetype{\terminal{\farg{ch}}}{\farg{s}}\right) \\
   %\\
   \fname{nil\_success} & \oftypesep \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\epsilon}{\str{}}\right) \\
@@ -75,8 +73,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
    \\
   \fname{cons\_success} & \oftypesep (\oftype{\farg{it}}{\indname{Item}})
    \typeto (\oftype{\farg{its}}{\typelist{\indname{Item}}})
-   \typeto (\oftype{\farg{s$_1$}}{\String})
-   \typeto (\oftype{\farg{s$_2$}}{\String}) \\
+   \typeto (\oftype{\farg{s$_1$}~\farg{s$_2$}}{\String}) \\
    & \typeto \strcat{\farg{s$_1$}}{\farg{s$_2$}} \le \farg{s$_0$} \\
    & \typeto \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{it}}{\farg{s$_1$}}\right) \\
    & \typeto \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{its}}{\farg{s$_2$}}\right) \\
@@ -87,8 +84,8 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
    & \typeto \farg{s} \le \farg{s$_0$} \\
    & \typeto \big(\forall~(\farg{s$_1$}, \farg{s$_2$}) \in \fname{split}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}}\right), \\
    & \phantom{{}\typeto\left(\forall\vphantom{\parsetreetype{}{}}{}\right.}~~
-     \typesum{\fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{it}}{\farg{s$_1$}}\right)}
-     {\fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{its}}{\farg{s$_2$}}\right)}\big) \\
+     \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{it}}{\farg{s$_1$}}\right) \\
+   & \phantom{{}\typeto\left(\forall\vphantom{\parsetreetype{}{}}{}\right.}~~\typesumsep {\fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{its}}{\farg{s$_2$}}\right)}\big) \\
    & \typeto \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\cons{\farg{it}}{\farg{its}}}{\farg{s}}\right) \\
    \\
   \fname{production\_success$_<$} & \oftypesep
@@ -108,20 +105,26 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
    & \typeto \farg{nt} \in \farg{unseen} \\
    & \typeto \left(\oftype{\farg{p}}{\text{a production mapping \farg{nt} to \farg{its}}}\right) \\
    & \typeto \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\left(\farg{unseen} - \{\farg{nt}\}\right)~~\left(\parsetreetype{\farg{its}}{\farg{s}}\right) \\
-   & \typeto \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{nt}}{\farg{s}}\right) \\
+   & \typeto \fname{T$_{\fname{success}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{nt}}{\farg{s}}\right)
+\end{align*}}
+\end{figure*}
+\begin{figure*}\caption{The dependently typed interface of our parser, Part 2 of 2}\label{fig:parser-interface-2}
+\editedtext{\begin{align*}
   \fname{production\_failure$_<$} & \oftypesep
    (\oftype{\farg{nt}}{\Nonterminal})
    \typeto (\oftype{\farg{s}}{\String})
    \\
    & \typeto \farg{s} < \farg{s$_0$} \\
-   & \typeto \big(\forall~(\oftype{\farg{its}}{\typelist{\indname{Item}}})~(\oftype{\farg{p}}{\text{a production mapping \farg{nt} to \farg{its}}}),~
+   & \typeto \big(\forall~(\oftype{\farg{its}}{\typelist{\indname{Item}}})~(\oftype{\farg{p}}{\text{a production mapping \farg{nt} to \farg{its}}}), \\
+   &\phantom{\typeto\big(\forall~(}~~
      \fname{T$_{\fname{failure}}$}~~\farg{s}~~\fname{unseen$_0$}~~\left(\parsetreetype{\farg{its}}{\farg{s}}\right)\big) \\
    & \typeto \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{nt}}{\farg{s}}\right) \\
   \fname{production\_failure$_=$} & \oftypesep
    (\oftype{\farg{nt}}{\Nonterminal})
    \typeto (\oftype{\farg{s}}{\String}) \\
    & \typeto \farg{s} = \farg{s$_0$} \\
-   & \typeto \big(\forall~(\oftype{\farg{its}}{\typelist{\indname{Item}}})~(\oftype{\farg{p}}{\text{a production mapping \farg{nt} to \farg{its}}}),~
+   & \typeto \big(\forall~(\oftype{\farg{its}}{\typelist{\indname{Item}}})~(\oftype{\farg{p}}{\text{a production mapping \farg{nt} to \farg{its}}}), \\
+   & \phantom{\typeto\big(\forall~(}~~
         \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\left(\farg{unseen} - \{\farg{nt}\}\right)~~\left(\parsetreetype{\farg{its}}{\farg{s}}\right)\big) \\
    & \typeto \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{nt}}{\farg{s}}\right) \\
   \fname{production\_failure$_{\not\in}$} & \oftypesep
@@ -130,7 +133,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
    & \typeto \farg{s} = \farg{s$_0$} \\
    & \typeto \farg{nt}\not\in \farg{unseen} \\
    & \typeto \fname{T$_{\fname{failure}}$}~~\farg{s$_0$}~~\farg{unseen}~~\left(\parsetreetype{\farg{nt}}{\farg{s}}\right)
-\end{align*}
+\end{align*}}
 \end{figure*}
 
   Since we want to be able to specialize our parser to return either \typeoption{\!\indname{ParseTree}} or \Bool, we want to be able to reuse our soundness and completeness proofs for both.  Our strategy for generalization is to parameterize on dependent type families for ``success'' and ``failure'', so we can use relational parametricity to ensure that all instantiations of the parser succeed or fail together.  The parser has the rough type signature
@@ -226,8 +229,8 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
   \subsection{Example} \label{sec:example-min-execution}
 
 \label{sec:parser-impl}
-\begin{figure*}\caption{Pseudo-Implementation of our parser.  We take the convention that dependent indices to functions (e.g., \fname{unseen}) are implicit.}\label{fig:parser-impl}
-  \begin{align*}
+\begin{figure*}\caption{Pseudo-Implementation of our parser.  We take the convention that dependent indices to functions (e.g., \fname{unseen}) are implicit.}\label{fig:parser-impl}%
+  \editedtext{\begin{align*}
     & \fname{parse}~~\farg{nt}~~\farg{s} \defeq \fname{parse$'$}~~(\farg{s$_0$}\defeq\farg{s})~~(\farg{unseen}\defeq\fname{unseen$_0$})~~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
     \\
     & \fname{parse$'$}~~(\parsetreetype{\terminal{\farg{ch}}}{\str{\farg{ch}}}) \defeq \inl{~\fname{terminal\_success}} \\
@@ -240,22 +243,22 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
     & \qquad\acase{\inr{\farg{ret}}}{\inrp{\fname{cons\_failure}~~\termhole~~\farg{ret}}} \\
     & \fname{parse$'$}~~(\parsetreetype{\farg{nt}}{\farg{s}}) \defeq \\
     & \qquad \cif\farg{s} < \farg{s$_0$} \\
-    & \qquad \cthen\cif\left(\fname{parse$'$}~~(\farg{s$_0$}\defeq\farg{s})~~(\farg{unseen}\defeq\fname{unseen$_0$})~~(\parsetreetype{\farg{its}}{\farg{s}})\right)~~\text{succeeds returning}~~\farg{d} \\
-    & \qquad\cifindent\cifindent\qquad\qquad\text{for any production \farg{p} mapping \farg{nt} to \farg{its}}  \\
+    & \qquad \cthen\cif\left(\fname{parse$'$}~~(\farg{s$_0$}\defeq\farg{s})~~(\farg{unseen}\defeq\fname{unseen$_0$})~~(\parsetreetype{\farg{its}}{\farg{s}})\right)~~\text{succeeds} \\
+    & \qquad\cifindent\cifindent\qquad\text{ returning}~~\farg{d}~~\text{for any production \farg{p} mapping \farg{nt} to \farg{its}}  \\
     & \qquad\cifindent\cthen\inlp{\fname{production\_success$_<$}~~\termhole~~\farg{p}~~\farg{d}} \\
     & \qquad\cifindent\celse\inrp{\fname{production\_failure$_<$}~~\termhole~~\termhole} \\
     & \qquad\celse\cif\farg{nt}\in\farg{unseen} \\
-    & \qquad\cifindent\cthen\cif\left(\fname{parse$'$}~~(\farg{unseen}\defeq\fname{unseen} - \{\farg{nt}\})~~(\parsetreetype{\farg{its}}{\farg{s}})\right)~~\text{succeeds returning}~~\farg{d} \\
-    & \qquad\cifindent\cifindent\cifindent\qquad\qquad\text{for any production \farg{p} mapping \farg{nt} to \farg{its}}  \\
+    & \qquad\cifindent\cthen\cif\left(\fname{parse$'$}~~(\farg{unseen}\defeq\fname{unseen} - \{\farg{nt}\})~~(\parsetreetype{\farg{its}}{\farg{s}})\right)~~\text{succeeds} \\
+    & \qquad\cifindent\cifindent\cifindent\text{returning}~~\farg{d}~~\text{for any production \farg{p} mapping \farg{nt} to \farg{its}}  \\
     & \qquad\cifindent\cifindent\cthen\inlp{\fname{production\_success$_=$}~~\termhole~~\farg{p}~~\farg{d}} \\
     & \qquad\cifindent\cifindent\celse\inrp{\fname{production\_failure$_=$}~~\termhole~~\termhole} \\
     & \qquad\cifindent\celse\inrp{\fname{production\_failure$_{\not\in}$}~~\termhole~~\termhole} \\
-    \\
+    %\\
     & \fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\nil \defeq \inrp{\afun{\oftype{\termhole}{(\termhole\in\nil)}}{\text{\Lightning}}} \\
     & \fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\left(\cons{\farg{x}}{\farg{xs}}\right) \defeq \\
     & \qquad\caseof{\fname{parse$'$}~~(\parsetreetype{\farg{it}}{\fname{take}\ensuremath{{}_{\farg{x}}}~~\farg{s}})
         \textbf{,}~~\fname{parse$'$}~~(\parsetreetype{\farg{its}}{\fname{drop}\ensuremath{{}_{\farg{x}}}~~\farg{s}})
-        \textbf{,}~~\fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\farg{xs}} \\
+        \textbf{,} \\ & \qquad\phantom{\precaseof}\fname{any\_parse}~~\farg{s}~~\farg{it}~~\farg{its}~~\farg{xs}} \\
     & \qquad\acase{\inl{\farg{ret$_1$}}
         \textbf{,}~~\inl{\farg{ret$_2$}}
         \textbf{,}~~\aswidthof{\termhole}{\inl{\farg{ret$'$}}}}
@@ -268,9 +271,9 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
         \textbf{,}~~\aswidthof{\farg{ret$_2$}}{\inr{\farg{ret$_2$}}}
         \textbf{,}~~\inr{\farg{ret$'$}}}
         {\inr{\termhole}}
-  \end{align*}
-  where the hole on the last line constructs a proof of
-  $$\forall~\farg{x$'$} \in \left(\cons{\farg{x}}{\farg{xs}}\right),~~\typesum{\fname{T$_{\fname{failure}}$}~~\termhole~~\termhole~~(\parsetreetype{\farg{it}}{\fname{take}_{\farg{x$'$}}~~\farg{s}})}{\fname{T$_{\fname{failure}}$}~~\termhole~~\termhole~~(\parsetreetype{\farg{its}}{\fname{drop}_{\farg{x$'$}}~~\farg{s}})}$$
+  \end{align*}}
+  where the hole on the last line constructs a proof of \\
+  {\hfill $\forall~\farg{x$'$} \in \left(\cons{\farg{x}}{\farg{xs}}\right),~~\typesum{\fname{T$_{\fname{failure}}$}~~\termhole~~\termhole~~(\parsetreetype{\farg{it}}{\fname{take}_{\farg{x$'$}}~~\farg{s}})}{\fname{T$_{\fname{failure}}$}~~\termhole~~\termhole~~(\parsetreetype{\farg{its}}{\fname{drop}_{\farg{x$'$}}~~\farg{s}})}$\hfill} \\
   by using \farg{ret$'$} directly when $\farg{x$'$}\in \farg{xs}$, and using whichever one of \farg{ret$_1$} and \farg{ret$_2$} is on the right when $\farg{x$'$} = \farg{x}$.  While straightforward, the use of sum types makes it painfully verbose without actually adding any insight; we prefer to elide the actual term.
   %% \begin{align*}
   %%   & \qquad\acase{\inr{\farg{ret$_1$}}

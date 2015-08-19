@@ -82,16 +82,16 @@
     Assuming we have a function $\oftype{\fname{split}}{\String \typeto \typelistp{\typeprod{\String}{\String}}}$ which is our splitting oracle, we may write out a potentially divergent parser specialized to this grammar.
     \begin{align*}
       & \fname{any\_parses} \oftypesep \typelistp{\typeprod{\String}{\String}} \typeto \Bool \\
-      & \fname{any\_parses}~\nil \defeq \false \\
-      & \fname{any\_parses}~(\cons{(\str{a}, \str{b})}{\termhole}) \defeq \true \\
+      & \fname{any\_parses}~\nil \functiondefeq \false \\
+      & \fname{any\_parses}~(\cons{(\str{a}, \str{b})}{\termhole}) \functiondefeq \true \\
       & \fname{any\_parses}~(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{rest\_splits}}) \\
-      & \phantom{\fname{any}} \defeq \left(\fname{parses}~\farg{s$_1$} \booland \fname{parses}~\farg{s$_2$}\right) \boolor \fname{any\_parses}~\farg{rest\_splits} \\
+      & \phantom{\fname{any}} \functiondefeq \left(\fname{parses}~\farg{s$_1$} \booland \fname{parses}~\farg{s$_2$}\right) \boolor \fname{any\_parses}~\farg{rest\_splits} \\
       \\
       & \fname{parses} \oftypesep \String \typeto \Bool \\
-      & \fname{parses}~\str{} \defeq \true \\
-      & \fname{parses}~\farg{str} \defeq \fname{any\_parses}~(\fname{split}~\farg{str})
+      & \fname{parses}~\str{} \functiondefeq \true \\
+      & \fname{parses}~\farg{str} \functiondefeq \fname{any\_parses}~(\fname{split}~\farg{str})
     \end{align*}
-    Here and throughout this thesis, we take the Haskell convention of using \typelist{\coqtype{T}} to denote a list whose elements are of type \coqtype{T}.
+    Here and throughout this thesis, we take the Haskell convention of using \typelist{\farg{\coqtype{T}}} to denote a list whose elements are of type \farg{\coqtype{T}}.
 
     If \fname{split} returns $(\str{}, \str{ab})$ as the first item in its list when given \str{ab}, then \fname{parses} will diverge in the way demonstrated above with the infinite derivation tree.
 
@@ -101,16 +101,16 @@
     For our example grammar, since there is only one nonterminal, we only need to keep track of the current string.  We refactor the above code to introduce a new parameter \farg{prev\_s}, recording the previous string we were parsing.  We use $\farg{s} < \farg{prev\_s}$ to denote the test that \farg{s} is strictly shorter than \farg{prev\_s}. \label{sec:valid-param-parser}
     \begin{align*}
       & \fname{any\_parses} \oftypesep \String \typeto \typelistp{\typeprod{\String}{\String}} \typeto \Bool \\
-      & \fname{any\_parses}~~\termhole~~\nil \defeq \false \\
-      & \fname{any\_parses}~~\termhole~~(\cons{(\str{a}, \str{b})}{\termhole}) \defeq \true \\
+      & \fname{any\_parses}~~\termhole~~\nil \functiondefeq \false \\
+      & \fname{any\_parses}~~\termhole~~(\cons{(\str{a}, \str{b})}{\termhole}) \functiondefeq \true \\
       & \fname{any\_parses}~~\farg{prev\_s}~~(\cons{(\farg{s$_1$}, \farg{s$_2$})}{\farg{rest\_splits}}) \\
-      & \quad \defeq \left( \farg{s$_1$} < \farg{prev\_s} \booland \farg{s$_2$} < \farg{prev\_s} \right. \\
-      & \phantom{\quad \defeq \left(\right.} \left.\booland \fname{parses}~~\farg{s$_1$} \booland \fname{parses}~~\farg{s$_2$}\right) \\
-      & \phantom{\quad \defeq {}} \boolor \fname{any\_parses}~~\farg{prev\_s}~~\farg{rest\_splits} \\
+      & \quad \functiondefeq \left( \farg{s$_1$} < \farg{prev\_s} \booland \farg{s$_2$} < \farg{prev\_s} \right. \\
+      & \phantom{\quad \functiondefeq \left(\right.} \left.\booland \fname{parses}~~\farg{s$_1$} \booland \fname{parses}~~\farg{s$_2$}\right) \\
+      & \phantom{\quad \functiondefeq {}} \boolor \fname{any\_parses}~~\farg{prev\_s}~~\farg{rest\_splits} \\
       \\
       & \fname{parses} \oftypesep \String \typeto \Bool \\
-      & \fname{parses}~~\aswidthof{\str{}}{\farg{str}} \defeq \true \\
-      & \fname{parses}~~\farg{str} \defeq \fname{any\_parses}~~\farg{str}~~(\fname{split}~~\farg{str})
+      & \fname{parses}~~\aswidthof{\str{}}{\farg{str}} \functiondefeq \true \\
+      & \fname{parses}~~\farg{str} \functiondefeq \fname{any\_parses}~~\farg{str}~~(\fname{split}~~\farg{str})
     \end{align*}
 
     We can convince Coq that this definition is total via well-founded recursion on the length of the string passed to \fname{parses}.  For a more complicated grammar, we would need to use a well-founded relation that also included the number of nonterminals not yet tried for this string; we do this in \autoref{fig:parser-impl} in \autoref{sec:parser-impl}.

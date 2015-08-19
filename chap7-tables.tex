@@ -108,33 +108,33 @@
       
       How do we get around computing a new table on splits?  We pull the same trick here that we pulled on strings; we refer only to the table that is built from the initial string, and describe the correctness condition on the table in terms of arbitrary substrings of that string.
       
-      Fiat presents us with a goal involving a statement of the form ``nondeterministically pick a list of splitting locations that is complete for the substring of \farg{str} starting at \farg{n} and ending at \farg{m}, for the rule \nt{pexpr}\nt{+expr}.''  In code form, this is:\todo{reuse macro from earlier to uniformize code}
-\begin{verbatim}
-{splits : list nat
-| split_list_is_complete
-    G
-    (substring n m str)
-    (Nonterminal nt)
-    (Terminal ch :: its)
-    splits}
-\end{verbatim}
+      Fiat presents us with a goal involving a statement of the form ``nondeterministically pick a list of splitting locations that is complete for the substring of \farg{str} starting at \farg{n} and ending at \farg{m}, for the rule \nt{pexpr}\nt{+expr}.''  In code form, this is:
+\begin{align*}
+&\{~\fname{splits}~\oftypesep~\typelist{\mathbb{N}} \\
+&|~\fname{split\_list\_is\_complete} \\
+&\qquad\farg{G} \\
+&\qquad\coqgroup{\fname{substring}~\farg{n}~\farg{m}~\farg{str}} \\
+&\qquad\nt{\farg{nt}} \\
+&\qquad\coqgroup{\cons{\terminal{\farg{ch}}}{\farg{its}}} \\
+&\qquad\fname{splits}~\}
+\end{align*}
     \newtext[1]{This code, which matches our current implementation, doesn't quite allow us to handle what we claim to handle in this section; we should be able to handle any rule that starts with a nonterminal \nt{nt}, such that the set of possible characters in any string which can be parsed as \nt{nt} is disjoint from the set of possible first characters of any string parsed by the rest of the rule.  This code only handles the case where the rest of the rule begins with a terminal.}
     
     The final refinement rule, which we use with \tactic{setoid\_rewrite}, says that this is refined by a lookup into a suitably defined \farg{table}:
-\todo{Standardize notation for goals, or drop code}
-\begin{verbatim}
-refine {splits : list nat
-       | split_list_is_complete
-           G
-           (substring n m str)
-           (Nonterminal nt)
-           (Terminal ch :: its)
-           splits}
-       (ret [match List.nth n table None with
-               | Some idx => idx
-               | None => dummy_value
-             end])
-\end{verbatim}
+\begin{align*}
+& \texttt{(}\fname{ret}~\texttt{[}\caseof{\fname{List.nth}~\farg{n}~\farg{table}~\None} \\
+&\phantom{\texttt{(}\fname{ret}~\texttt{[}}\acase{\Some{\farg{idx}}}{\farg{idx}} \\
+&\phantom{\texttt{(}\fname{ret}~\texttt{[}}\acase{\aswidthof{\None}{\Some{\farg{idx}}}}{\farg{dummy\_value}} \\
+&\phantom{\texttt{(}\fname{ret}~}\texttt{])} \\
+& \subseteq \\
+& \{~\fname{splits}~\oftypesep~\typelist{\mathbb{N}} \\
+&|~\fname{split\_list\_is\_complete} \\
+&\qquad\farg{G} \\
+&\qquad\coqgroup{\fname{substring}~\farg{n}~\farg{m}~\farg{str}} \\
+&\qquad\nt{\farg{nt}} \\
+&\qquad\coqgroup{\cons{\terminal{\farg{ch}}}{\farg{its}}} \\
+&\qquad\fname{splits}~\}     
+\end{align*}
 
     By phrasing the rule in terms of \fname{substring}~\farg{n}~\farg{m}~\farg{str}, rather than in terms of an arbitrary string, the computation of the table is the same in every call to the splitter.  All that remains is to lift the computation of the table to a location outside the recursive call to the parsing function; we plan to implement code to do this during the extraction phase soon.\label{sec:must-lift-table-mention}
     
@@ -144,33 +144,92 @@ refine {splits : list nat
     To prove the correctness condition on the table, we need to know some things about the grammar that we are handling.  In particular, we need to know that if we are trying to parse a string as a rule analogous to \nt{pexpr}, then there can be no exposed \terminal{+} characters, and, furthermore, that every such parseable string has well-balanced parentheses.  To allow discharging the side conditions trivially, we define a function that computes whether or not this is the case for a given nonterminal in a given grammar.  We then prove that, whenever this function returns \true, valid tables yield complete lists of splitting locations.
     
     To make things simple, we approximate which grammars are valid; we require that every open parenthesis be closed in the same rule (rather than deeply nested in further nonterminals).  In Haskell-like pseudocode, the function we use to check validity of a grammar can be written as:
+{%
+\catcode`\!=\active
+\makeatletter
+\def\kwn#1#2{\kw{#2}%
+\ifnum#1=1\relax
+\expandafter\@gobble
+\else
+\expandafter\@firstofone
+\fi
+{\expandafter\kwn\numexpr#1-1\relax}%
+}%
+\def\kwone#1{\kw{#1}}%
+\def\kwtwo#1#2{\kw{#1#2}}%
+\def\kwthree#1#2#3{\kw{#1#2#3}}%
+\def\kwfour#1#2#3#4{\kw{#1#2#3#4}}%
+\def!#1{%
+\ifx#1Z%
+\ensuremath{\mathbb{Z}}%
+\fi
+\ifx#1!%
+\ensuremath{\to}%
+\fi
+\ifx#1U%
+\ensuremath{\cup}%
+\fi
+\ifx#1e%
+\ensuremath{\in}%
+\fi
+\ifx#11%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwone}%
+{\ifx#12%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwtwo}%
+{\ifx#13%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwthree}%
+{\ifx#14%
+\expandafter\@firstoftwo
+\else
+\expandafter\@secondoftwo
+\fi
+{\kwfour}%
+{}%
+}%
+}%
+}%
+}%
+\makeatother
 \begin{verbatim}
-grammar-and-nonterminal-is-valid : Grammar -> Nonterminal -> Bool
+grammar-and-nonterminal-is-valid : Grammar !! Nonterminal !! Bool
 grammar-and-nonterminal-is-valid G nt
-  = fold (&&) true (map (paren-balanced-hiding G) (G.(Lookup) nt))
+  := fold (&&) true (map (paren-balanced-hiding G) (G.(Lookup) nt))
 
-pb' : Grammar -> Nat -> [Item] -> Bool
-pb' G n []         = (n == 0)
+pb' : Grammar !! Nat !! [Item] !! Bool
+pb' G n []         := (n == 0)
 pb' G n (Nonterminal nt :: s)
-  = fold (&&) (pb' G 0) (G.(Lookup) nt) && pb' G n s
-pb' G n ('(' :: s) = pb' G (n + 1) s
-pb' G n (')' :: s) = n > 0 && pb' G (n - 1) s
-pb' G n (_ :: s)   = pb' G n s
+  := fold (&&) (pb' G 0) (G.(Lookup) nt) && pb' G n s
+pb' G n ('(' :: s) := pb' G (n + 1) s
+pb' G n (')' :: s) := n > 0 && pb' G (n - 1) s
+pb' G n (_ :: s)   := pb' G n s
 
-paren-balanced G = pb' G 0
+paren-balanced G := pb' G 0
 
-pbh' : Grammar -> Nat -> [Item] -> Bool
-pbh' G n []         = (n == 0)
+pbh' : Grammar !! Nat !! [Item] !! Bool
+pbh' G n []         := (n == 0)
 pbh' G n (Nonterminal nt :: s)
-  = fold (pbh' G 0) (G.(Lookup) nt) && pb' G n s
-pbh' G n ('+' :: s) = n > 0 && pbh' G n s
-pbh' G n ('(' :: s) = pbh' G (n + 1) s
-pbh' G n (')' :: s) = n > 0 && pbh' G (n - 1) s
-pbh' G n (_ :: s)   = pbh' G n s
+  := fold (pbh' G 0) (G.(Lookup) nt) && pb' G n s
+pbh' G n ('+' :: s) := n > 0 && pbh' G n s
+pbh' G n ('(' :: s) := pbh' G (n + 1) s
+pbh' G n (')' :: s) := n > 0 && pbh' G (n - 1) s
+pbh' G n (_ :: s)   := pbh' G n s
 
-paren-balanced-hiding G = pbh' G 0
+paren-balanced-hiding G := pbh' G 0
 \end{verbatim}
-    
+}%    
+
     There is one subtlety here, that was swept under the rug in the above code: this computation might not terminate!  We could deal with this by memoizing this computation in much the same way that we memoized the parser to deal with potentially infinite parse trees.  Rather than dealing with the subtleties of figuring out what to do when we hit repeated nonterminals, we perform the computation in two steps.  First, we trace the algorithm above, building up a list of which nonterminals need to be paren-balanced, and which ones need to be paren-balanced-hiding.  Second, we fold the computation over these lists, replacing the recursive calls for nonterminals with list membership tests.
     
   \subsubsection{Automatic Discovery of Arguments}

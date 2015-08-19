@@ -57,7 +57,9 @@ H := ?88 : hiddenT
        The general code for computing the goal the user is presented with, after \tactic{start honing parser using indexed representation}, is:
 \begin{verbatim}
 Definition expanded_fallback_list'
-           (P : String -> item Ascii.ascii -> production Ascii.ascii -> item Ascii.ascii -> production Ascii.ascii -> list nat -> Prop)
+           (P : String -> item Ascii.ascii -> production Ascii.ascii
+                -> item Ascii.ascii -> production Ascii.ascii
+                -> list nat -> Prop)
            (s : T)
            (it : item Ascii.ascii) (its : production Ascii.ascii)
            (dummy : list nat)
@@ -65,29 +67,28 @@ Definition expanded_fallback_list'
   := (ls <- (forall_reachable_productions
                G
                (fun p else_case
-                => If production_beq ascii_beq p (it::its)
-                   Then (match p return Comp (list nat) with
-                           | nil => ret dummy
-                           | _::nil => ret [ilength s]
-                           | (Terminal _):: _ :: _ => ret [1]
-                           | (Nonterminal nt):: p'
-                             => If has_only_terminals p'
-                                Then
-                                  ret [(ilength s - Datatypes.length p')%natr]
-                                Else
-                                (option_rect
-                                   (fun _ => Comp (list nat))
-                                   (fun (n : nat) => ret [n])
-                                   { splits : list nat
-                                   | P
-                                       (string_of_indexed s)
-                                       (Nonterminal nt)
-                                       p'
-                                       it
-                                       its
-                                       splits }%comp
-                                   (length_of_any G nt))
-                         end)
+                => If production_beq ascii_beq p (it::its) Then
+                     (match p return Comp (list nat) with
+                        | nil => ret dummy
+                        | _::nil => ret [ilength s]
+                        | (Terminal _):: _ :: _ => ret [1]
+                        | (Nonterminal nt):: p'
+                => If has_only_terminals p' Then
+                     ret [(ilength s - Datatypes.length p')%natr]
+                   Else
+                     (option_rect
+                       (fun _ => Comp (list nat))
+                       (fun (n : nat) => ret [n])
+                       { splits : list nat
+                       | P
+                           (string_of_indexed s)
+                           (Nonterminal nt)
+                           p'
+                           it
+                           its
+                           splits }%comp
+                       (length_of_any G nt))
+                      end)
                    Else else_case)
                (ret dummy));
       ret (s, ls))%comp.
