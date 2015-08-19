@@ -90,9 +90,9 @@
 \end{align*}
 
     The essential operations for computing derivatives are \emph{filtering} and \emph{chopping}.  To \emph{filter} a language $\mathcal L$ by a character $c$ is to take the subset of strings in $\mathcal L$ which start with $c$.  To chop a language $\mathcal L$ is to remove the first character from every string.  The derivative $D_c(\mathcal L)$ with respect to $c$ of a language $\mathcal L$ is then the language $\mathcal L$, filtered by $c$ and chopped:
-\editedtext{\begin{align*}
+\editedtext[3]{\begin{align*}
 &\fname{D}_{\farg{c}}~:~\fname{language}~\to~\fname{language} \\
-&\editedtext{\fname{D}_{\farg{c}}~\ensuremath{\mathcal{L}} \functiondefeq }\bigcup_{\coqgroup{\cons{\farg{c}}{\farg{str}}}\in\mathcal L} \{\farg{str}\}
+&\editedtext[3]{\fname{D}_{\farg{c}}~\ensuremath{\mathcal{L}} \functiondefeq }\bigcup_{\coqgroup{\cons{\farg{c}}{\farg{str}}}\in\mathcal L} \{\farg{str}\}
 \end{align*}}%
       We can then define a \fname{has\_parse} proposition by taking successive derivatives:
 \begin{align*}
@@ -100,7 +100,7 @@
 &\fname{has\_parse}~\mathcal{L}~\str{} \functiondefeq \str{}\in\mathcal{L} \\
 &\fname{has\_parse}~\mathcal{L}~(\cons{\farg{ch}}{\farg{str}}) \functiondefeq \fname{has\_parse}~(\fname{D\ensuremath{_{\farg{ch}}}}~\mathcal L)~\farg{str}
 \end{align*}
-      To ensure termination and good performance, \citeauthor*{Derivs} define the derivative operation on the structure of the grammar, rather than defining combinators that turn a grammar into a language, and furthermore take advantage of laziness and memoization.  After adding code to prune the resulting language of useless content, they argue that the cost of parsing with derivatives is \editedtext{reasonable}.
+      To ensure termination and good performance, \citeauthor*{Derivs} define the derivative operation on the structure of the grammar, rather than defining combinators that turn a grammar into a language, and furthermore take advantage of laziness and memoization.  After adding code to prune the resulting language of useless content, they argue that the cost of parsing with derivatives is \editedtext[3]{reasonable}.
       
     \subsubsection{Formal Verification}
       \Citeauthor{DerivsCoq} formally verify, in Coq, finite automata for parsing the fragment of derivative-based parsing which applies to regular expressions~\cite{DerivsCoq}.  This fragment dates back to Brzozowski's original presentation of derivatives~\cite{BrzozowskiDerivs}.

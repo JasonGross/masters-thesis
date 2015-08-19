@@ -71,7 +71,7 @@
   &\qquad\qquad\qquad\to~(\fname{has\_parse}~\farg{it}~(\fname{take}~\farg{n}~\farg{str})~\wedge~\fname{has\_parse}~\farg{its}~(\fname{drop}~\farg{n}~\farg{str})) \\
   &\qquad\qquad\qquad\to~\farg{n}\in\farg{splits}
 \end{align*}
-    where we overload \fname{has\_parse} to apply to items and productions alike, \editedtext{and where we use \typelist{\ensuremath{\mathbb{N}}} to denote the type of lists of natural numbers.}  In practice, we pass the first item and the rest of the items as separate arguments, so that we don't have to deal with the empty list case.
+    where we overload \fname{has\_parse} to apply to items and productions alike, \editedtext[3]{and where we use \typelist{\ensuremath{\mathbb{N}}} to denote the type of lists of natural numbers.}  In practice, we pass the first item and the rest of the items as separate arguments, so that we don't have to deal with the empty list case.
     
     Let \fname{production\_is\_reachable}~\farg{G}~\farg{p} be the proposition that \farg{p} could show up during parsing, i.e., that \farg{p} is a tail of a rule associated to some valid nonterminal in the grammar; we define this by folding over the list of valid nonterminals.  The specification of the splitter, as a nondeterministic computation, for a given grammar \farg{G}, a given string \farg{str}, and a given rule \cons{\farg{it}}{\farg{its}}, is then:
 \begin{align*}

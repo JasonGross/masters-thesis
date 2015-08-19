@@ -172,3 +172,5 @@ mathtools.sty
 mhsetup.sty
 mathtools.zip
 mathtools/
+
+*.bak

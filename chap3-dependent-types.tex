@@ -23,7 +23,7 @@
     \fname{min\_parse$_{\terminal{\farg{ch}}}$} & \oftypesep \indname{MinParseTreeOf}~~\farg{s$_0$}~~\farg{unseen}~~\terminal{\farg{ch}}~~\str{\farg{ch}}
   \end{align*}
 
-  For any production \farg{rule} mapping a nonterminal \farg{nt} to a sequence of items \farg{its}, any string \farg{s$_0$}, any list of nonterminals \farg{unseen}, and any string \farg{s}, we have two constructors, corresponding to the two ways of progressing with respect to the well-founded relation.  \editedtext{We} have the following, where we interpret the $<$ relation on strings in terms of lengths.
+  For any production \farg{rule} mapping a nonterminal \farg{nt} to a sequence of items \farg{its}, any string \farg{s$_0$}, any list of nonterminals \farg{unseen}, and any string \farg{s}, we have two constructors, corresponding to the two ways of progressing with respect to the well-founded relation.  \editedtext[3]{We} have the following, where we interpret the $<$ relation on strings in terms of lengths.
   \begin{align*}
     (\farg{rule})_< & \oftypesep \farg{s} < \farg{s$_0$} \\
     & \typeto \indname{MinItemsTreeOf}~~\farg{s}~~\farg{unseen$_0$}~~\farg{its}~~\farg{s} \\
@@ -53,11 +53,9 @@
 
   The type signatures in the interface are presented in \autoref{fig:parser-interface}.  We explain each type one by one, presenting various instantiations as examples.  Note that the interface we actually implemented is also parameterized over a type of \String s, which we will instantiate with parse trees later in this chapter.  The interface we present here fixes \String, for conciseness.
   
-  \todo{Fix the figure so it fits on one page}
-
 \begin{figure*} \caption{The dependently typed interface of our parser, Part 1 of 2}\label{fig:parser-interface}
 We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\str{a} $\in$ \terminal{a}}''; a query consists of a string and a grammar rule the string might be parsed into.  We use the same notation for \ParseQuery{} and \indname{ParseTree} inhabitants.  All \fname{*\_success} and \fname{*\_failure} type signatures are implicitly parameterized over a string \farg{s$_0$} and a list of nonterminals \farg{unseen}.  We assume we are given \oftype{\fname{unseen$_0$}}{\typelist{\Nonterminal}}.
-\editedtext{\begin{align*}
+\editedtext[3]{\begin{align*}
   \fname{T$_{\fname{success}}$},~~\fname{T$_{\fname{failure}}$} & \oftypesep \String \typeto \typelist{\Nonterminal} \typeto \ParseQuery \typeto \Type \\
   %\\
   \fname{split} & \oftypesep \String \typeto \typelist{\Nonterminal} \typeto \ParseQuery \typeto \typelist{\nat} \\ \\
@@ -109,7 +107,7 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
 \end{align*}}
 \end{figure*}
 \begin{figure*}\caption{The dependently typed interface of our parser, Part 2 of 2}\label{fig:parser-interface-2}
-\editedtext{\begin{align*}
+\editedtext[3]{\begin{align*}
   \fname{production\_failure$_<$} & \oftypesep
    (\oftype{\farg{nt}}{\Nonterminal})
    \typeto (\oftype{\farg{s}}{\String})
@@ -229,8 +227,8 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
   \subsection{Example} \label{sec:example-min-execution}
 
 \label{sec:parser-impl}
-\begin{figure*}\caption{Pseudo-Implementation of our parser.  We take the convention that dependent indices to functions (e.g., \fname{unseen}) are implicit.}\label{fig:parser-impl}%
-  \editedtext{\begin{align*}
+\begin{figure*}\caption{Pseudo-Implementation of our parser.  We \editedtext{adopt} the convention that dependent indices to functions (e.g., \fname{unseen}) are implicit.}\label{fig:parser-impl}%
+  \editedtext[3]{\begin{align*}
     & \fname{parse}~~\farg{nt}~~\farg{s} \defeq \fname{parse$'$}~~(\farg{s$_0$}\defeq\farg{s})~~(\farg{unseen}\defeq\fname{unseen$_0$})~~(\parsetreetype{\farg{nt}}{\farg{s}}) \\
     \\
     & \fname{parse$'$}~~(\parsetreetype{\terminal{\farg{ch}}}{\str{\farg{ch}}}) \defeq \inl{~\fname{terminal\_success}} \\
@@ -535,6 +533,6 @@ We use \ParseQuery\space to denote the type of all propositions like ``\texttt{\
   \subsection{Minimal Parse Trees vs.~Parallel Traces}
     Taking another step back, our biggest misstep actually came before we finished the completeness proof for our simply typed Boolean recognizer.
 
-    When first constructing the type \indname{MinParseTree}, we thought of them genuinely as minimal parse trees (ones without a duplicate label in any single path).  After much head-banging, of knowledge that a theorem was obviously true, against proof goals that were obviously impossible, we discovered the single biggest insight---albeit a technical one---of the project.  The type of ``minimal parse trees'' we had originally formulated did not match the parse trees produced by our algorithm.  A careful examination of the algorithm execution in \autoref{sec:example-min-execution} should reveal the difference.\footnote{For readers wanting to skip that examination: the algorithm we described allows a label (\parsetreetype{\farg{nt}}{\farg{s}}) to appear one extra time along a path if, the first time it appears, its parent node's label, (\parsetreetype{\farg{nt$'$}}{\farg{s$'$}}), satisfies $\farg{s} < \farg{s\ensuremath{'}}$.  That is, \editedtext{between shrinking the string being parsed, and shrinking it again, the first nonterminal that appears may be duplicated once}.}  Our insight, thus, was to conceptualize the data type as the type of traces of parallel executions of our particular parser, rather than as truly minimal parse trees.
+    When first constructing the type \indname{MinParseTree}, we thought of them genuinely as minimal parse trees (ones without a duplicate label in any single path).  After much head-banging, of knowledge that a theorem was obviously true, against proof goals that were obviously impossible, we discovered the single biggest insight---albeit a technical one---of the project.  The type of ``minimal parse trees'' we had originally formulated did not match the parse trees produced by our algorithm.  A careful examination of the algorithm execution in \autoref{sec:example-min-execution} should reveal the difference.\footnote{For readers wanting to skip that examination: the algorithm we described allows a label (\parsetreetype{\farg{nt}}{\farg{s}}) to appear one extra time along a path if, the first time it appears, its parent node's label, (\parsetreetype{\farg{nt$'$}}{\farg{s$'$}}), satisfies $\farg{s} < \farg{s\ensuremath{'}}$.  That is, \editedtext[3]{between shrinking the string being parsed and shrinking it again, the first nonterminal that appears may be duplicated once}.}  Our insight, thus, was to conceptualize the data type as the type of traces of parallel executions of our particular parser, rather than as truly minimal parse trees.
 
     This may be an instance of a more general phenomenon present when programming with dependent types: subtle friction between what you think you are doing and what you are actually doing often manifests as impossible proof goals.
